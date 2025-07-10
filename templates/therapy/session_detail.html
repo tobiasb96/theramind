@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ session.patient.full_name }} - {{ session.date|date:"d.m.Y" }} - PsychDocs{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Session Header -->
+    <c-card class="mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ session.patient.full_name }}</h1>
+                <p class="text-lg text-gray-600">{{ session.date|date:"d.m.Y H:i" }} Uhr</p>
+                {% if session.title %}
+                    <p class="text-lg text-gray-800 mt-2">{{ session.title }}</p>
+                {% endif %}
+            </div>
+            <div class="text-right">
+                <p class="text-sm text-gray-500">Dauer: {{ session.duration }} Minuten</p>
+                <div class="flex space-x-2 mt-3">
+                    <c-button size="sm">
+                        <a href="{% url 'therapy:session_edit' session.pk %}">Bearbeiten</a>
+                    </c-button>
+                    <c-button variant="destructive" size="sm">
+                        <a href="{% url 'therapy:session_delete' session.pk %}">Löschen</a>
+                    </c-button>
+                </div>
+            </div>
+        </div>
+        
+        {% if session.notes %}
+        <div class="mt-4 pt-4 border-t">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Notizen:</h3>
+            <p class="text-gray-800 whitespace-pre-wrap">{{ session.notes }}</p>
+        </div>
+        {% endif %}
+        
+        {% if session.summary %}
+        <div class="mt-4 pt-4 border-t">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">KI-Zusammenfassung:</h3>
+            <c-alert class="bg-blue-50">
+                <p class="text-gray-800 whitespace-pre-wrap">{{ session.summary }}</p>
+            </c-alert>
+        </div>
+        {% endif %}
+    </c-card>
+
+    <!-- Audio Upload -->
+    <c-card class="mb-6">
+        <c-card.header>
+            <c-card.title>Audio-Aufnahme hochladen</c-card.title>
+        </c-card.header>
+        <c-card.content>
+        
+        <form method="post" action="{% url 'therapy:audio_upload' session.pk %}" enctype="multipart/form-data" class="mb-4">
+            {% csrf_token %}
+            <div class="flex items-end space-x-4">
+                <div class="flex-1">
+                    <label for="{{ upload_form.audio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Audio-Datei auswählen
+                    </label>
+                    {{ upload_form.audio }}
+                </div>
+                <c-button type="submit" variant="default">
+                    Hochladen
+                </c-button>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">
+                Unterstützte Formate: MP3, WAV, M4A, FLAC (max. 25MB)
+            </p>
+        </form>
+
+        <!-- Web Recording Interface -->
+        <div class="border-t pt-4">
+            <h3 class="text-md font-medium text-gray-700 mb-3">Oder direkt aufnehmen:</h3>
+            <div id="audio-recorder" class="flex items-center space-x-4">
+                <c-button id="start-recording" variant="destructive">
+                    🎤 Aufnahme starten
+                </c-button>
+                <c-button id="stop-recording" variant="secondary" disabled>
+                    ⏹️ Aufnahme stoppen
+                </c-button>
+                <span id="recording-time" class="text-sm text-gray-500">00:00</span>
+            </div>
+            <div id="audio-preview" class="mt-4 hidden">
+                <audio id="recorded-audio" controls class="w-full"></audio>
+                <c-button id="upload-recording" class="mt-2">
+                    Aufnahme hochladen
+                </c-button>
+            </div>
+        </c-card.content>
+    </c-card>
+
+    <!-- Audio Recordings -->
+    <c-card>
+        <c-card.header>
+            <div class="flex justify-between items-center">
+                <c-card.title>Audio-Aufnahmen ({{ recordings.count }})</c-card.title>
+                {% if recordings %}
+                    <c-button onclick="summarizeSession()" variant="secondary">
+                        🤖 Sitzung zusammenfassen
+                    </c-button>
+                {% endif %}
+            </div>
+        </c-card.header>
+        <c-card.content>
+        
+        {% if recordings %}
+            <div class="space-y-4">
+                {% for recording in recordings %}
+                <div class="border rounded p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="font-medium text-gray-900">{{ recording.filename }}</h3>
+                            <p class="text-sm text-gray-500">
+                                Hochgeladen: {{ recording.created_at|date:"d.m.Y H:i" }}
+                                {% if recording.file_size %}
+                                    | Größe: {{ recording.file_size|filesizeformat }}
+                                {% endif %}
+                                {% if recording.duration_seconds %}
+                                    | Dauer: {{ recording.duration_seconds }}s
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="flex space-x-2">
+                            {% if not recording.is_processed %}
+                                <c-button onclick="transcribeAudio({{ recording.pk }})" size="sm">
+                                    Transkribieren
+                                </c-button>
+                            {% endif %}
+                            <c-button variant="outline" size="sm">
+                                <a href="{% url 'therapy:audio_download' recording.pk %}">Download</a>
+                            </c-button>
+                        </div>
+                    </div>
+                    
+                    <!-- Audio Player -->
+                    <audio controls class="w-full mb-3">
+                        <source src="{{ recording.audio.url }}" type="audio/mpeg">
+                        Ihr Browser unterstützt keine Audio-Wiedergabe.
+                    </audio>
+                    
+                    <!-- Transcription -->
+                    {% if recording.transcription %}
+                        <div class="bg-gray-50 p-3 rounded">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-sm font-medium text-gray-700">Transkription</h4>
+                                <span class="text-xs text-gray-500">
+                                    {% if recording.transcription.processing_time_seconds %}
+                                        Verarbeitet in {{ recording.transcription.processing_time_seconds|floatformat:1 }}s
+                                    {% endif %}
+                                    {% if recording.transcription.confidence %}
+                                        | Genauigkeit: {{ recording.transcription.confidence|floatformat:2 }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <p class="text-gray-800 text-sm whitespace-pre-wrap">{{ recording.transcription.text }}</p>
+                        </div>
+                    {% else %}
+                        {% if recording.is_processed %}
+                            <div class="bg-yellow-50 p-3 rounded">
+                                <p class="text-sm text-yellow-800">Transkription wird verarbeitet...</p>
+                            </div>
+                        {% else %}
+                            <div class="bg-gray-50 p-3 rounded">
+                                <p class="text-sm text-gray-600">Noch nicht transkribiert</p>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500 text-center py-8">Noch keine Audio-Aufnahmen vorhanden.</p>
+        {% endif %}
+        </c-card.content>
+    </c-card>
+</div>
+
+<script>
+// Audio Recording
+let mediaRecorder;
+let recordedChunks = [];
+let recordingTimer;
+let recordingSeconds = 0;
+
+document.getElementById('start-recording').addEventListener('click', startRecording);
+document.getElementById('stop-recording').addEventListener('click', stopRecording);
+document.getElementById('upload-recording').addEventListener('click', uploadRecording);
+
+async function startRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        recordedChunks = [];
+        
+        mediaRecorder.ondataavailable = event => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+        
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+            const url = URL.createObjectURL(blob);
+            document.getElementById('recorded-audio').src = url;
+            document.getElementById('audio-preview').classList.remove('hidden');
+        };
+        
+        mediaRecorder.start();
+        document.getElementById('start-recording').disabled = true;
+        document.getElementById('stop-recording').disabled = false;
+        
+        // Start timer
+        recordingSeconds = 0;
+        recordingTimer = setInterval(() => {
+            recordingSeconds++;
+            const minutes = Math.floor(recordingSeconds / 60);
+            const seconds = recordingSeconds % 60;
+            document.getElementById('recording-time').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
+        
+    } catch (error) {
+        alert('Fehler beim Zugriff auf das Mikrofon: ' + error.message);
+    }
+}
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+    
+    document.getElementById('start-recording').disabled = false;
+    document.getElementById('stop-recording').disabled = true;
+    
+    if (recordingTimer) {
+        clearInterval(recordingTimer);
+    }
+}
+
+function uploadRecording() {
+    if (recordedChunks.length === 0) return;
+    
+    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+    const formData = new FormData();
+    formData.append('audio', blob, 'recording.webm');
+    
+    fetch("{% url 'therapy:audio_upload' session.pk %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Fehler beim Hochladen der Aufnahme');
+        }
+    })
+    .catch(error => {
+        alert('Fehler beim Hochladen: ' + error.message);
+    });
+}
+
+// Transcription
+function transcribeAudio(recordingId) {
+    console.log('Starting transcription for recording:', recordingId);
+    
+    fetch(`/therapy/recordings/${recordingId}/transcribe/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        console.log('Transcription response status:', response.status);
+        if (response.ok) {
+            alert('Transkription gestartet. Die Seite wird neu geladen...');
+            location.reload();
+        } else {
+            response.text().then(text => {
+                console.error('Transcription error response:', text);
+                alert('Fehler bei der Transkription: ' + response.status);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Transcription error:', error);
+        alert('Fehler: ' + error.message);
+    });
+}
+
+// Session Summary
+function summarizeSession() {
+    console.log('Starting session summary for session:', {{ session.pk }});
+    
+    fetch(`/ai/summarize/{{ session.pk }}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        console.log('Summary response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Summary response data:', data);
+        if (data.success) {
+            alert('Zusammenfassung erstellt. Die Seite wird neu geladen...');
+            location.reload();
+        } else {
+            alert('Fehler bei der Zusammenfassung: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Summary error:', error);
+        alert('Fehler: ' + error.message);
+    });
+}
+</script>
+{% endblock %}

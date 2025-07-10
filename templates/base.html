@@ -1,0 +1,31 @@
+{% load static %}
+{% load cotton %}
+<!doctype html>
+<html lang="de" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <title>{% block title %}PsychDocs{% endblock %}</title>
+</head>
+<body class="h-full bg-muted/40">
+  <div class="container mx-auto px-6 py-4">
+    {% include 'partials/navbar.html' %}
+    
+    {% if messages %}
+      <div class="mb-4">
+        {% for message in messages %}
+          <c-alert class="mb-2" variant="{% if message.tags == 'error' %}destructive{% else %}default{% endif %}">
+            {{ message }}
+          </c-alert>
+        {% endfor %}
+      </div>
+    {% endif %}
+    
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>
