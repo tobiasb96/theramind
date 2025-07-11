@@ -127,15 +127,18 @@
         </div>
         
         <!-- Session Notes Editor -->
-        <div class="mb-4">
-            <textarea id="session-notes-editor" rows="20" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Sitzungsnotizen werden hier angezeigt und können bearbeitet werden...">{{ session.notes }}</textarea>
-        </div>
-        
-        <div class="flex justify-end">
-            <button onclick="saveSessionNotes()" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                Notizen speichern
-            </button>
-        </div>
+        <form method="post" action="{% url 'therapy:session_save_notes' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <textarea name="session_notes" rows="20" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Sitzungsnotizen werden hier angezeigt und können bearbeitet werden...">{{ session.notes }}</textarea>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                    Notizen speichern
+                </button>
+            </div>
+        </form>
     </div>
 
     <!-- Audio Recordings Section (list only) -->
@@ -234,7 +237,7 @@
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
-                <form id="audio-upload-form" class="p-4 md:p-5" method="post" enctype="multipart/form-data" action="{% url 'therapy:session_audio_upload' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}" hx-post="{% url 'therapy:session_audio_upload' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}" hx-target="body" hx-swap="none">
+                <form id="audio-upload-form" class="p-4 md:p-5" method="post" enctype="multipart/form-data" action="{% url 'therapy:session_audio_upload' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}">
                     {% csrf_token %}
                     <div class="flex mb-4 gap-2">
                         <button id="tab-record" type="button" class="flex-1 px-3 py-2 rounded-t-lg bg-blue-50 text-blue-700 font-medium">Aufnahme starten</button>
@@ -479,46 +482,33 @@ document.getElementById('record-toggle').onclick = async function() {
     }
 };
 
-document.getElementById('upload-recording').onclick = function(e) {
-    e.preventDefault();
-    if (modalRecordedChunks.length === 0) return;
-    const blob = new Blob(modalRecordedChunks, { type: 'audio/webm' });
-    const file = new File([blob], 'aufnahme.webm', { type: 'audio/webm' });
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(file);
-    document.getElementById('modal-audio-upload').files = dataTransfer.files;
-    document.getElementById('audio-upload-form').submit();
-};
-
 document.getElementById('audio-upload-form').onsubmit = function(e) {
-    e.preventDefault();
-    let formData = new FormData(this);
-    let mode = document.getElementById('record-section').classList.contains('hidden') ? 'upload' : 'record';
-    if (mode === 'record') {
-        if (modalRecordedChunks.length === 0) { alert('Bitte nehmen Sie zuerst etwas auf.'); return; }
-        const blob = new Blob(modalRecordedChunks, { type: 'audio/webm' });
-        formData.append('audio', blob, 'aufnahme.webm');
-    } else {
-        const fileInput = document.getElementById('modal-audio-upload');
-        if (!fileInput.files[0]) { alert('Bitte wählen Sie eine Datei aus.'); return; }
-        formData.append('audio', fileInput.files[0]);
-    }
-    const observations = document.getElementById('modal-observations').value;
-    if (observations) formData.append('observations', observations);
-    fetch(this.action, {
-        method: 'POST',
-        body: formData,
-        headers: { 'X-CSRFToken': getCsrfToken() }
-    })
-    .then(response => {
-        if (response.ok) {
-            document.getElementById('audio-modal').classList.add('hidden');
-            location.reload();
-        } else {
-            alert('Fehler beim Hochladen');
+    // For recorded audio, we need to set the blob as a file before submitting
+    if (!document.getElementById('record-section').classList.contains('hidden')) {
+        // We're in record mode
+        if (modalRecordedChunks.length === 0) {
+            e.preventDefault();
+            alert('Bitte nehmen Sie zuerst etwas auf.');
+            return;
         }
-    })
-    .catch(error => alert('Fehler: ' + error.message));
+        
+        // Create a file from the recorded blob and set it to the file input
+        const blob = new Blob(modalRecordedChunks, { type: 'audio/webm' });
+        const file = new File([blob], 'aufnahme.webm', { type: 'audio/webm' });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        document.getElementById('modal-audio-upload').files = dataTransfer.files;
+    } else {
+        // We're in upload mode, check if a file is selected
+        const fileInput = document.getElementById('modal-audio-upload');
+        if (!fileInput.files[0]) {
+            e.preventDefault();
+            alert('Bitte wählen Sie eine Datei aus.');
+            return;
+        }
+    }
+    
+    // Let the form submit naturally - no preventDefault()
 };
 
 // Utility to get CSRF token from cookies

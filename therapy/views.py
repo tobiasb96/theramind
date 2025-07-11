@@ -317,53 +317,83 @@ class AudioUploadView(View):
         session = get_object_or_404(
             Session, pk=session_pk, therapy__pk=therapy_pk, therapy__patient__pk=patient_pk
         )
-        
         if 'audio' not in request.FILES:
-            return JsonResponse({'error': 'Keine Audio-Datei hochgeladen'}, status=400)
+            if request.headers.get("HX-Request"):
+                return JsonResponse({"error": "Keine Audio-Datei hochgeladen"}, status=400)
+            else:
+                messages.error(request, "Keine Audio-Datei hochgeladen")
+                return redirect(
+                    "therapy:session_detail",
+                    patient_pk=patient_pk,
+                    therapy_pk=therapy_pk,
+                    session_pk=session_pk,
+                )
         
         audio_file = request.FILES['audio']
-        
-        # Create audio recording
-        recording = AudioRecording.objects.create(
-            session=session,
-            audio=audio_file,
-            file_size=audio_file.size
-        )
-        
-        # Auto-transcribe if enabled
-        from patients.models import Settings
-        settings = Settings.get_settings()
 
-        transcription_service = get_transcription_service()
-        if settings.auto_transcribe and transcription_service.is_available():
-            try:
-                # Transcribe audio
-                file_path = recording.audio.path
-                transcribed_text, processing_time = transcription_service.transcribe(file_path)
+        try:
+            # Create audio recording
+            recording = AudioRecording.objects.create(
+                session=session, audio=audio_file, file_size=audio_file.size
+            )
 
-                # Create transcription
-                Transcription.objects.create(
-                    recording=recording,
-                    text=transcribed_text,
-                    processing_time_seconds=processing_time,
-                )
+            # Auto-transcribe if enabled
+            from patients.models import Settings
 
-                recording.is_processed = True
-                recording.save()
+            settings = Settings.get_settings()
 
-                # Auto-summarize if enabled
-                if settings.auto_summarize and transcribed_text:
-                    summary = transcription_service.summarize(transcribed_text)
-                    if summary:
-                        session.summary = summary
-                        session.save()
+            transcription_service = get_transcription_service()
+            if settings.auto_transcribe and transcription_service.is_available():
+                try:
+                    # Transcribe audio
+                    file_path = recording.audio.path
+                    transcribed_text, processing_time = transcription_service.transcribe(file_path)
 
-                messages.success(request, "Audio wurde hochgeladen und transkribiert.")
+                    # Create transcription
+                    Transcription.objects.create(
+                        recording=recording,
+                        text=transcribed_text,
+                        processing_time_seconds=processing_time,
+                    )
 
-            except Exception as e:
-                messages.error(request, f"Fehler bei der Transkription: {str(e)}")
-        else:
-            messages.success(request, "Audio wurde hochgeladen.")
+                    recording.is_processed = True
+                    recording.save()
+
+                    # Auto-summarize if enabled
+                    if settings.auto_summarize and transcribed_text:
+                        summary = transcription_service.summarize(transcribed_text)
+                        if summary:
+                            session.summary = summary
+                            session.save()
+
+                    if request.headers.get("HX-Request"):
+                        return JsonResponse(
+                            {
+                                "success": True,
+                                "message": "Audio wurde hochgeladen und transkribiert.",
+                            }
+                        )
+                    else:
+                        messages.success(request, "Audio wurde hochgeladen und transkribiert.")
+
+                except Exception as e:
+                    if request.headers.get("HX-Request"):
+                        return JsonResponse(
+                            {"error": f"Fehler bei der Transkription: {str(e)}"}, status=400
+                        )
+                    else:
+                        messages.error(request, f"Fehler bei der Transkription: {str(e)}")
+            else:
+                if request.headers.get("HX-Request"):
+                    return JsonResponse({"success": True, "message": "Audio wurde hochgeladen."})
+                else:
+                    messages.success(request, "Audio wurde hochgeladen.")
+
+        except Exception as e:
+            if request.headers.get("HX-Request"):
+                return JsonResponse({"error": f"Fehler beim Hochladen: {str(e)}"}, status=400)
+            else:
+                messages.error(request, f"Fehler beim Hochladen: {str(e)}")
 
         return redirect(
             "therapy:session_detail",
@@ -542,14 +572,20 @@ class SaveSessionNotesView(View):
         )
 
         try:
-            data = json.loads(request.body)
-            session_notes = data.get("session_notes", "")
+            session_notes = request.POST.get("session_notes", "")
 
             # Save session notes
             session.notes = session_notes
             session.save()
 
-            return JsonResponse({"success": True})
+            messages.success(request, "Notizen wurden erfolgreich gespeichert.")
 
         except Exception as e:
-            return JsonResponse({"error": f"Fehler beim Speichern: {str(e)}"}, status=400)
+            messages.error(request, f"Fehler beim Speichern: {str(e)}")
+
+        return redirect(
+            "therapy:session_detail",
+            patient_pk=patient_pk,
+            therapy_pk=therapy_pk,
+            session_pk=session_pk,
+        )
