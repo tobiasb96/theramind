@@ -5,8 +5,8 @@ from django.urls import reverse_lazy
 from django.http import JsonResponse, HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from .models import Session, AudioRecording, Transcription, Therapy, Document
-from .forms import SessionForm, AudioUploadForm, TherapyForm, DocumentForm
+from .models import Session, AudioRecording, Transcription, Therapy
+from .forms import SessionForm, AudioUploadForm, TherapyForm
 from ai.services import get_ai_service
 from ai.prompts import get_available_templates
 import json
@@ -308,70 +308,6 @@ class SessionDeleteView(DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(request, "Sitzung wurde erfolgreich gelöscht.")
         return super().delete(request, *args, **kwargs)
-
-
-# Document Views
-class DocumentListView(ListView):
-    model = Document
-    template_name = 'therapy/document_list.html'
-    context_object_name = 'documents'
-    paginate_by = 20
-    
-    def get_queryset(self):
-        return Document.objects.select_related('therapy__patient').order_by('-created_at')
-
-
-class DocumentDetailView(DetailView):
-    model = Document
-    template_name = 'therapy/document_detail.html'
-    context_object_name = 'document'
-
-
-class DocumentCreateView(CreateView):
-    model = Document
-    form_class = DocumentForm
-    template_name = 'therapy/document_form.html'
-    
-    def get_initial(self):
-        initial = super().get_initial()
-        therapy_id = self.request.GET.get('therapy')
-        if therapy_id:
-            try:
-                therapy = Therapy.objects.get(pk=therapy_id)
-                initial['therapy'] = therapy
-            except Therapy.DoesNotExist:
-                pass
-        return initial
-    
-    def get_success_url(self):
-        return reverse_lazy('therapy:document_detail', kwargs={'pk': self.object.pk})
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'Dokument wurde erfolgreich angelegt.')
-        return super().form_valid(form)
-
-
-class DocumentUpdateView(UpdateView):
-    model = Document
-    form_class = DocumentForm
-    template_name = 'therapy/document_form.html'
-    
-    def get_success_url(self):
-        return reverse_lazy('therapy:document_detail', kwargs={'pk': self.object.pk})
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'Dokument wurde erfolgreich aktualisiert.')
-        return super().form_valid(form)
-
-
-class DocumentDeleteView(DeleteView):
-    model = Document
-    template_name = 'therapy/document_confirm_delete.html'
-    success_url = reverse_lazy('therapy:document_list')
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'Dokument wurde erfolgreich gelöscht.')
-        return super().form_valid(form)
 
 
 @method_decorator(csrf_exempt, name='dispatch')

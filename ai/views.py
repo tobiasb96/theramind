@@ -42,10 +42,8 @@ class TranscribeAudioView(View):
             transcribed_text, processing_time = ai_service.transcribe(file_path)
             
             # Create transcription
-            transcription = Transcription.objects.create(
-                recording=recording,
-                text=transcribed_text,
-                processing_time_seconds=processing_time
+            Transcription.objects.create(
+                recording=recording, text=transcribed_text, processing_time_seconds=processing_time
             )
             
             recording.is_processed = True

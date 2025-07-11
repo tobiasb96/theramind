@@ -19,26 +19,17 @@
         </a>
       </li>
       <li>
-        <button type="button" class="flex items-center p-2 w-full text-base font-normal text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100" aria-controls="dropdown-patients" data-collapse-toggle="dropdown-patients" aria-expanded="false">
+        <a href="{% url 'core:patient_list' %}" 
+           class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group {% if request.resolver_match.app_name == 'core' and request.resolver_match.url_name in 'patient_list,patient_detail,patient_create,patient_edit' %}bg-gray-100{% endif %}">
           <svg aria-hidden="true" class="flex-shrink-0 w-6 h-6 text-gray-400 transition duration-75 group-hover:text-gray-900" fill="currentColor" viewBox="0 0 20 18" xmlns="http://www.w3.org/2000/svg">
             <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
           </svg>
           <span class="flex-1 ml-3 text-left whitespace-nowrap">Patienten</span>
-          <svg aria-hidden="true" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-          </svg>
-        </button>
-        <ul id="dropdown-patients" class="hidden py-2 space-y-2">
-          <li>
-            <a href="{% url 'core:patient_list' %}" class="flex items-center p-2 pl-11 w-full text-base font-normal text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100">Alle Patienten</a>
-          </li>
-          <li>
-            <a href="{% url 'core:patient_create' %}" class="flex items-center p-2 pl-11 w-full text-base font-normal text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100">Neuer Patient</a>
-          </li>
-        </ul>
+        </a>
       </li>
       <li>
-        <a href="#" class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group">
+        <a href="{% url 'documents:document_list' %}" 
+           class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group {% if request.resolver_match.app_name == 'documents' %}bg-gray-100{% endif %}">
           <svg aria-hidden="true" class="flex-shrink-0 w-6 h-6 text-gray-400 transition duration-75 group-hover:text-gray-900" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
           </svg>

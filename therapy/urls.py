@@ -76,32 +76,7 @@ urlpatterns = [
         views.SaveSessionNotesView.as_view(),
         name="session_save_notes",
     ),
-    # Patient-nested document URLs
-    path(
-        "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/documents/",
-        views.DocumentListView.as_view(),
-        name="document_list",
-    ),
-    path(
-        "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/documents/create/",
-        views.DocumentCreateView.as_view(),
-        name="document_create",
-    ),
-    path(
-        "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/documents/<int:pk>/",
-        views.DocumentDetailView.as_view(),
-        name="document_detail",
-    ),
-    path(
-        "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/documents/<int:pk>/edit/",
-        views.DocumentUpdateView.as_view(),
-        name="document_edit",
-    ),
-    path(
-        "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/documents/<int:pk>/delete/",
-        views.DocumentDeleteView.as_view(),
-        name="document_delete",
-    ),
+
     # Audio processing URLs
     path("recordings/<int:pk>/transcribe/", views.TranscribeView.as_view(), name="transcribe"),
     path("recordings/<int:pk>/download/", views.AudioDownloadView.as_view(), name="audio_download"),

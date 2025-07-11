@@ -1,5 +1,5 @@
 from django import forms
-from .models import Session, AudioRecording, Therapy, Document
+from .models import Session, AudioRecording, Therapy
 from core.models import Patient
 
 
@@ -37,24 +37,6 @@ class SessionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['therapy'].queryset = Therapy.objects.filter(status='active').order_by('-start_date')
-
-
-class DocumentForm(forms.ModelForm):
-    class Meta:
-        model = Document
-        fields = ['therapy', 'title', 'content', 'document_type', 'sessions']
-        widgets = {
-            'therapy': forms.Select(attrs={'class': 'form-control'}),
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 12}),
-            'document_type': forms.Select(attrs={'class': 'form-control'}),
-            'sessions': forms.SelectMultiple(attrs={'class': 'form-control'}),
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['therapy'].queryset = Therapy.objects.order_by('-start_date')
-        self.fields['sessions'].queryset = Session.objects.select_related('therapy__patient').order_by('-date')
 
 
 class AudioUploadForm(forms.ModelForm):

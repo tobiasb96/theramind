@@ -15,7 +15,13 @@ class DashboardView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['patient_count'] = Patient.objects.count()
         context['session_count'] = Session.objects.count()
-        context['recent_sessions'] = Session.objects.select_related('therapy__patient').order_by('-date')[:5]
+
+        # Get recent documents instead of sessions
+        from documents.models import Document
+
+        context["recent_documents"] = Document.objects.select_related("therapy__patient").order_by(
+            "-created_at"
+        )[:5]
         context['recent_patients'] = Patient.objects.order_by('-created_at')[:5]
         return context
 
@@ -45,7 +51,15 @@ class PatientDetailView(DetailView):
         context['therapies'] = self.object.therapy_set.order_by('-start_date')
         # Get all sessions across all therapies for this patient
         context['sessions'] = Session.objects.filter(therapy__patient=self.object).order_by('-date')
+        # Get all documents across all therapies for this patient
+        from documents.models import Document
+        from documents.prompts import get_available_document_types
+
+        context["documents"] = Document.objects.filter(therapy__patient=self.object).order_by(
+            "-created_at"
+        )
         context["form"] = PatientForm(instance=self.object)
+        context["document_types"] = get_available_document_types()
         return context
 
 

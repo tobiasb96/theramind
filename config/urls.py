@@ -20,10 +20,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('core.urls')),
-    path('therapy/', include('therapy.urls')),
-    path('ai/', include('ai.urls')),
+    path("admin/", admin.site.urls),
+    path("", include("core.urls")),
+    path("therapy/", include("therapy.urls")),
+    path("ai/", include("ai.urls")),
+    path("documents/", include("documents.urls")),
 ]
 
 # Serve media files in development

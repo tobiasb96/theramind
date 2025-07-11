@@ -62,36 +62,6 @@ class Session(models.Model):
         return self.therapy.patient
 
 
-class Document(models.Model):
-    DOCUMENT_TYPES = [
-        ('report', 'Bericht'),
-        ('assessment', 'Befund'),
-        ('summary', 'Zusammenfassung'),
-        ('letter', 'Brief'),
-        ('other', 'Sonstiges'),
-    ]
-    
-    therapy = models.ForeignKey(Therapy, on_delete=models.CASCADE, verbose_name="Therapie")
-    title = models.CharField(max_length=200, verbose_name="Titel")
-    content = models.TextField(verbose_name="Inhalt")
-    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES, default='report', verbose_name="Dokumenttyp")
-    sessions = models.ManyToManyField(Session, blank=True, verbose_name="Zugehörige Sitzungen")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Aktualisiert am")
-    
-    class Meta:
-        verbose_name = "Dokument"
-        verbose_name_plural = "Dokumente"
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.therapy.patient.full_name} - {self.title}"
-    
-    @property
-    def patient(self):
-        return self.therapy.patient
-
-
 class AudioRecording(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE, verbose_name="Sitzung")
     audio = models.FileField(upload_to="audio/%Y/%m/%d/", verbose_name="Audio-Datei")

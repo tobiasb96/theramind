@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if form.instance.pk %}Dokument bearbeiten{% else %}Neues Dokument{% endif %} - PsychDocs
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">
+                    {% if form.instance.pk %}
+                        Dokument bearbeiten
+                    {% else %}
+                        Neues Dokument erstellen
+                    {% endif %}
+                </h1>
+                <p class="text-gray-600 mt-1">
+                    {% if form.instance.pk %}
+                        Bearbeiten Sie die Dokumentdetails
+                    {% else %}
+                        Erstellen Sie ein neues Therapiedokument. Der Inhalt wird automatisch mit KI generiert.
+                    {% endif %}
+                </p>
+            </div>
+            <a href="{% url 'documents:document_list' %}" class="text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- Document Form -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="grid gap-6 mb-6">
+                <!-- Therapy -->
+                <div>
+                    <label for="{{ form.therapy.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">
+                        {{ form.therapy.label }}
+                    </label>
+                    {{ form.therapy }}
+                    {% if form.therapy.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.therapy.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Title -->
+                <div>
+                    <label for="{{ form.title.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">
+                        {{ form.title.label }}
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Document Type -->
+                <div>
+                    <label for="{{ form.document_type.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">
+                        {{ form.document_type.label }}
+                    </label>
+                    {{ form.document_type }}
+                    {% if form.document_type.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.document_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Sessions -->
+                <div>
+                    <label for="{{ form.sessions.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">
+                        {{ form.sessions.label }}
+                    </label>
+                    {{ form.sessions }}
+                    {% if form.sessions.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.sessions.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">Wählen Sie die zugehörigen Sitzungen aus (Strg+Klick für mehrere)</p>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-4">
+                <a href="{% url 'documents:document_list' %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    Abbrechen
+                </a>
+                <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
+                    {% if form.instance.pk %}
+                        Aktualisieren
+                    {% else %}
+                        Erstellen
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 
