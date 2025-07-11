@@ -105,4 +105,5 @@ urlpatterns = [
     # Audio processing URLs
     path("recordings/<int:pk>/transcribe/", views.TranscribeView.as_view(), name="transcribe"),
     path("recordings/<int:pk>/download/", views.AudioDownloadView.as_view(), name="audio_download"),
+    path("recordings/<int:pk>/delete/", views.AudioDeleteView.as_view(), name="audio_delete"),
 ]

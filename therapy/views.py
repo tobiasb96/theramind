@@ -489,6 +489,25 @@ class AudioDownloadView(View):
         return response
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class AudioDeleteView(View):
+    def post(self, request, pk):
+        recording = get_object_or_404(AudioRecording, pk=pk)
+
+        try:
+            # Delete the audio file from disk
+            if recording.audio and os.path.exists(recording.audio.path):
+                os.remove(recording.audio.path)
+
+            # Delete the recording (this will cascade to transcription)
+            recording.delete()
+
+            return JsonResponse({"success": True})
+
+        except Exception as e:
+            return JsonResponse({"error": f"Fehler beim Löschen: {str(e)}"}, status=400)
+
+
 class SaveTranscriptView(View):
     def post(self, request, patient_pk, therapy_pk, session_pk):
         # Validate the nested relationship

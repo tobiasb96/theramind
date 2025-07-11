@@ -184,6 +184,13 @@
                         <a href="{% url 'therapy:audio_download' recording.pk %}" class="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800">
                             Download
                         </a>
+                        <button onclick="deleteRecording({{ recording.pk }})" class="px-3 py-1 text-xs font-medium text-center inline-flex items-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
+                            <svg class="w-3 h-3 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 16">
+                                <path d="m10.036 8.278 9.258-7.79A1.979 1.979 0 0 0 18 0H2A1.987 1.987 0 0 0 .641.541l9.395 7.737Z"/>
+                                <path d="M11.241 9.817c-.36.275-.801.425-1.255.427-.428 0-.845-.138-1.187-.395L0 2.6V14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2.5l-8.759 7.317Z"/>
+                            </svg>
+                            Löschen
+                        </button>
                     </div>
                 </div>
                 
@@ -196,15 +203,15 @@
                 <!-- Transcription Status -->
                 {% if recording.transcription %}
                     <div class="bg-green-50 p-3 rounded">
-                        <h4 class="text-sm font-medium text-green-700">Transkription verfügbar</h4>
-                        <span class="text-xs text-green-600">
-                            {% if recording.transcription.processing_time_seconds %}
-                                Verarbeitet in {{ recording.transcription.processing_time_seconds|floatformat:1 }}s
-                            {% endif %}
-                            {% if recording.transcription.confidence %}
-                                | Genauigkeit: {{ recording.transcription.confidence|floatformat:2 }}
-                            {% endif %}
-                        </span>
+                        <button onclick="toggleTranscript({{ recording.pk }})" class="w-full text-left flex justify-between items-center">
+                            <h4 class="text-sm font-medium text-green-700">Transkription verfügbar</h4>
+                            <svg id="transcript-chevron-{{ recording.pk }}" class="w-4 h-4 text-green-600 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="transcript-content-{{ recording.pk }}" class="hidden mt-3 pt-3 border-t border-green-200">
+                            <p class="text-gray-800 whitespace-pre-wrap text-sm">{{ recording.transcription.text }}</p>
+                        </div>
                     </div>
                 {% else %}
                     {% if recording.is_processed %}
@@ -458,6 +465,40 @@ function uploadRecording() {
     .catch(error => {
         alert('Fehler beim Hochladen: ' + error.message);
     });
+}
+
+// Delete Recording
+function deleteRecording(recordingId) {
+    if (!confirm('Sind Sie sicher, dass Sie diese Aufnahme löschen möchten? Dies kann nicht rückgängig gemacht werden.')) {
+        return;
+    }
+    
+    fetch(`/therapy/recordings/${recordingId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Fehler beim Löschen: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Fehler: ' + error.message);
+    });
+}
+
+// Toggle Transcript Display
+function toggleTranscript(recordingId) {
+    const transcriptContent = document.getElementById(`transcript-content-${recordingId}`);
+    const transcriptChevron = document.getElementById(`transcript-chevron-${recordingId}`);
+    
+    transcriptContent.classList.toggle('hidden');
+    transcriptChevron.classList.toggle('rotate-180');
 }
 
 // Session Notes Generation
