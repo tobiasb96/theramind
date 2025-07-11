@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from core.utils.db import convert_db_connection_string
-import dj_database_url
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
@@ -47,8 +46,9 @@ INSTALLED_APPS = [
     "django_cotton",
     "django_tailwind_cli",
     "core",
+    "patients",
     "therapy",
-    "ai",
+    "transcriptions",
     "documents",
 ]
 

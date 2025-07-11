@@ -1,8 +1,8 @@
-from .connector import get_llm_connector
-from .prompts import get_session_notes_prompt, SYSTEM_PROMPT
+from core.connector import get_llm_connector
+from transcriptions.prompts import get_session_notes_prompt, SYSTEM_PROMPT
 
 
-class AIService:
+class TranscriptionService:
     def __init__(self):
         self.connector = get_llm_connector()
 
@@ -50,13 +50,10 @@ class AIService:
 
 
 # Singleton instance - lazy initialization
-_ai_service_instance = None
+_transcription_service_instance = None
 
-def get_ai_service():
-    global _ai_service_instance
-    if _ai_service_instance is None:
-        _ai_service_instance = AIService()
-    return _ai_service_instance
-
-# For backward compatibility
-ai_service = None  # Will be initialized when first accessed
+def get_transcription_service():
+    global _transcription_service_instance
+    if _transcription_service_instance is None:
+        _transcription_service_instance = TranscriptionService()
+    return _transcription_service_instance

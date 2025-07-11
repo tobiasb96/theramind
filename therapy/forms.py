@@ -1,6 +1,6 @@
 from django import forms
 from .models import Session, AudioRecording, Therapy
-from core.models import Patient
+from patients.models import Patient
 
 
 class TherapyForm(forms.ModelForm):

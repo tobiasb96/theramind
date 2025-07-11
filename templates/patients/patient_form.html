@@ -87,7 +87,7 @@
         
         <div class="flex justify-end space-x-3 mt-6">
             <c-button variant="outline">
-                <a href="{% url 'core:patient_list' %}">Abbrechen</a>
+                <a href="{% url 'patients:patient_list' %}">Abbrechen</a>
             </c-button>
             <c-button type="submit">
                 {% if object %}Aktualisieren{% else %}Anlegen{% endif %}

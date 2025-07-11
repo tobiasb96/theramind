@@ -9,7 +9,7 @@ def create_therapies_for_existing_sessions(apps, schema_editor):
     """Create Therapy records for existing sessions"""
     Session = apps.get_model('therapy', 'Session')
     Therapy = apps.get_model('therapy', 'Therapy')
-    Patient = apps.get_model('core', 'Patient')
+    Patient = apps.get_model("patients", "Patient")
     
     # Group sessions by patient
     patient_sessions = {}
@@ -51,80 +51,136 @@ def reverse_create_therapies(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('therapy', '0001_initial'),
-        ('core', '0001_initial'),
+        ("therapy", "0001_initial"),
+        ("patients", "0001_initial"),
     ]
 
     operations = [
         # Create Therapy model
         migrations.CreateModel(
-            name='Therapy',
+            name="Therapy",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200, verbose_name='Titel')),
-                ('description', models.TextField(blank=True, verbose_name='Beschreibung')),
-                ('start_date', models.DateField(default=timezone.now, verbose_name='Startdatum')),
-                ('end_date', models.DateField(blank=True, null=True, verbose_name='Enddatum')),
-                ('status', models.CharField(choices=[('active', 'Aktiv'), ('completed', 'Abgeschlossen'), ('paused', 'Pausiert'), ('cancelled', 'Abgebrochen')], default='active', max_length=20, verbose_name='Status')),
-                ('goals', models.TextField(blank=True, verbose_name='Therapieziele')),
-                ('notes', models.TextField(blank=True, verbose_name='Notizen')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Erstellt am')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Aktualisiert am')),
-                ('patient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.patient', verbose_name='Patient')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("title", models.CharField(max_length=200, verbose_name="Titel")),
+                ("description", models.TextField(blank=True, verbose_name="Beschreibung")),
+                ("start_date", models.DateField(default=timezone.now, verbose_name="Startdatum")),
+                ("end_date", models.DateField(blank=True, null=True, verbose_name="Enddatum")),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("active", "Aktiv"),
+                            ("completed", "Abgeschlossen"),
+                            ("paused", "Pausiert"),
+                            ("cancelled", "Abgebrochen"),
+                        ],
+                        default="active",
+                        max_length=20,
+                        verbose_name="Status",
+                    ),
+                ),
+                ("goals", models.TextField(blank=True, verbose_name="Therapieziele")),
+                ("notes", models.TextField(blank=True, verbose_name="Notizen")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")),
+                ("updated_at", models.DateTimeField(auto_now=True, verbose_name="Aktualisiert am")),
+                (
+                    "patient",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="patients.patient",
+                        verbose_name="Patient",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Therapie',
-                'verbose_name_plural': 'Therapien',
-                'ordering': ['-start_date'],
+                "verbose_name": "Therapie",
+                "verbose_name_plural": "Therapien",
+                "ordering": ["-start_date"],
             },
         ),
-        
         # Create Document model
         migrations.CreateModel(
-            name='Document',
+            name="Document",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200, verbose_name='Titel')),
-                ('content', models.TextField(verbose_name='Inhalt')),
-                ('document_type', models.CharField(choices=[('report', 'Bericht'), ('assessment', 'Befund'), ('summary', 'Zusammenfassung'), ('letter', 'Brief'), ('other', 'Sonstiges')], default='report', max_length=20, verbose_name='Dokumenttyp')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Erstellt am')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Aktualisiert am')),
-                ('therapy', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='therapy.therapy', verbose_name='Therapie')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("title", models.CharField(max_length=200, verbose_name="Titel")),
+                ("content", models.TextField(verbose_name="Inhalt")),
+                (
+                    "document_type",
+                    models.CharField(
+                        choices=[
+                            ("report", "Bericht"),
+                            ("assessment", "Befund"),
+                            ("summary", "Zusammenfassung"),
+                            ("letter", "Brief"),
+                            ("other", "Sonstiges"),
+                        ],
+                        default="report",
+                        max_length=20,
+                        verbose_name="Dokumenttyp",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")),
+                ("updated_at", models.DateTimeField(auto_now=True, verbose_name="Aktualisiert am")),
+                (
+                    "therapy",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="therapy.therapy",
+                        verbose_name="Therapie",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Dokument',
-                'verbose_name_plural': 'Dokumente',
-                'ordering': ['-created_at'],
+                "verbose_name": "Dokument",
+                "verbose_name_plural": "Dokumente",
+                "ordering": ["-created_at"],
             },
         ),
-        
         # Add therapy field to Session (nullable initially)
         migrations.AddField(
-            model_name='session',
-            name='therapy',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='therapy.therapy', verbose_name='Therapie'),
+            model_name="session",
+            name="therapy",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="therapy.therapy",
+                verbose_name="Therapie",
+            ),
         ),
-        
         # Create therapies for existing sessions
         migrations.RunPython(create_therapies_for_existing_sessions, reverse_create_therapies),
-        
         # Make therapy field non-nullable
         migrations.AlterField(
-            model_name='session',
-            name='therapy',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='therapy.therapy', verbose_name='Therapie'),
+            model_name="session",
+            name="therapy",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to="therapy.therapy",
+                verbose_name="Therapie",
+            ),
         ),
-        
         # Remove patient field from Session
         migrations.RemoveField(
-            model_name='session',
-            name='patient',
+            model_name="session",
+            name="patient",
         ),
-        
         # Add sessions field to Document
         migrations.AddField(
-            model_name='document',
-            name='sessions',
-            field=models.ManyToManyField(blank=True, to='therapy.session', verbose_name='Zugehörige Sitzungen'),
+            model_name="document",
+            name="sessions",
+            field=models.ManyToManyField(
+                blank=True, to="therapy.session", verbose_name="Zugehörige Sitzungen"
+            ),
         ),
     ]

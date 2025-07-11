@@ -9,7 +9,7 @@ from therapy.models import Session
 
 
 class DashboardView(TemplateView):
-    template_name = 'core/dashboard.html'
+    template_name = 'patients/dashboard.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -28,7 +28,7 @@ class DashboardView(TemplateView):
 
 class PatientListView(ListView):
     model = Patient
-    template_name = 'core/patient_list.html'
+    template_name = 'patients/patient_list.html'
     context_object_name = 'patients'
     paginate_by = 20
     
@@ -43,7 +43,7 @@ class PatientListView(ListView):
 
 class PatientDetailView(DetailView):
     model = Patient
-    template_name = 'core/patient_detail.html'
+    template_name = 'patients/patient_detail.html'
     context_object_name = 'patient'
     
     def get_context_data(self, **kwargs):
@@ -66,8 +66,8 @@ class PatientDetailView(DetailView):
 class PatientCreateView(CreateView):
     model = Patient
     form_class = PatientForm
-    template_name = 'core/patient_form.html'
-    success_url = reverse_lazy('core:patient_list')
+    template_name = 'patients/patient_form.html'
+    success_url = reverse_lazy('patients:patient_list')
     
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -85,10 +85,10 @@ class PatientCreateView(CreateView):
 class PatientUpdateView(UpdateView):
     model = Patient
     form_class = PatientForm
-    template_name = 'core/patient_form.html'
+    template_name = 'patients/patient_form.html'
     
     def get_success_url(self):
-        return reverse_lazy('core:patient_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('patients:patient_detail', kwargs={'pk': self.object.pk})
     
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -105,8 +105,8 @@ class PatientUpdateView(UpdateView):
 
 class PatientDeleteView(DeleteView):
     model = Patient
-    template_name = 'core/patient_confirm_delete.html'
-    success_url = reverse_lazy('core:patient_list')
+    template_name = 'patients/patient_confirm_delete.html'
+    success_url = reverse_lazy('patients:patient_list')
     
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -124,8 +124,8 @@ class PatientDeleteView(DeleteView):
 class SettingsView(UpdateView):
     model = Settings
     form_class = SettingsForm
-    template_name = 'core/settings.html'
-    success_url = reverse_lazy('core:settings')
+    template_name = 'patients/settings.html'
+    success_url = reverse_lazy('patients:settings')
     
     def get_object(self):
         return Settings.get_settings()
@@ -139,7 +139,7 @@ class SettingsView(UpdateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         # Reinitialize AI service after settings change
-        from ai.services import get_ai_service
+        from transcriptions.services import get_ai_service
         ai_service = get_ai_service()
         ai_service.reinitialize()
         messages.success(self.request, 'Einstellungen wurden erfolgreich gespeichert.')

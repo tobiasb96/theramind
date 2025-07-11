@@ -1,7 +1,7 @@
 from typing import Dict, Any
-from ai.connector import get_llm_connector
+from core.connector import get_llm_connector
 from .prompts import get_document_prompt, DOCUMENT_SYSTEM_PROMPT
-from core.models import Patient
+from patients.models import Patient
 from therapy.models import Therapy
 
 

@@ -65,7 +65,7 @@
                             <p class="font-medium">{{ patient.full_name }}</p>
                             <p class="text-sm text-gray-600">{{ patient.created_at|date:"d.m.Y" }}</p>
                         </div>
-                        <a href="{% url 'core:patient_detail' patient.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        <a href="{% url 'patients:patient_detail' patient.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                             Anzeigen
                         </a>
                     </div>

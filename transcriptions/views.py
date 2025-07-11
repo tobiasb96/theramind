@@ -1,35 +1,17 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import TemplateView, View
-from django.contrib import messages
+from django.shortcuts import get_object_or_404
+from django.views.generic import View
 from django.http import JsonResponse
-from .services import get_ai_service
+from transcriptions.services import get_transcription_service
 from therapy.models import Session, AudioRecording, Transcription
 
-
-class TestAIView(TemplateView):
-    template_name = 'ai/test.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        ai_service = get_ai_service()
-        context['ai_available'] = ai_service.is_available()
-        return context
-    
-    def post(self, request, *args, **kwargs):
-        """Test AI service availability via AJAX"""
-        ai_service = get_ai_service()
-        return JsonResponse({
-            'available': ai_service.is_available(),
-            'status': 'OpenAI service is available' if ai_service.is_available() else 'OpenAI service not available'
-        })
 
 
 class TranscribeAudioView(View):
     def post(self, request, recording_id):
         recording = get_object_or_404(AudioRecording, id=recording_id)
         
-        ai_service = get_ai_service()
-        if not ai_service.is_available():
+        transcription_service = get_transcription_service()
+        if not transcription_service.is_available():
             return JsonResponse({'error': 'OpenAI API Key ist nicht konfiguriert.'}, status=400)
         
         try:
@@ -39,7 +21,7 @@ class TranscribeAudioView(View):
             
             # Transcribe audio
             file_path = recording.audio.path
-            transcribed_text, processing_time = ai_service.transcribe(file_path)
+            transcribed_text, processing_time = transcription_service.transcribe(file_path)
             
             # Create transcription
             Transcription.objects.create(
@@ -63,8 +45,8 @@ class SummarizeSessionView(View):
     def post(self, request, session_id):
         session = get_object_or_404(Session, id=session_id)
         
-        ai_service = get_ai_service()
-        if not ai_service.is_available():
+        transcription_service = get_transcription_service()
+        if not transcription_service.is_available():
             return JsonResponse({'error': 'OpenAI API Key ist nicht konfiguriert.'}, status=400)
         
         try:
@@ -81,7 +63,7 @@ class SummarizeSessionView(View):
             combined_text = "\n\n".join(transcriptions)
             
             # Summarize
-            summary = ai_service.summarize(combined_text)
+            summary = transcription_service.summarize(combined_text)
             
             # Update session
             session.summary = summary

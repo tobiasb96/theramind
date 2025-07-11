@@ -16,7 +16,7 @@ class LLMConnector:
         """Initialize the OpenAI client with API key from database or environment"""
         try:
             # Try to get API key from database settings first
-            from core.models import Settings
+            from patients.models import Settings
             db_settings = Settings.get_settings()
             api_key = db_settings.openai_api_key
         except Exception:
@@ -111,7 +111,7 @@ class LLMConnector:
         """
         Create a summary of the given text
         """
-        from .prompts import SUMMARY_PROMPT, SYSTEM_PROMPT
+        from ..transcriptions.prompts import SUMMARY_PROMPT, SYSTEM_PROMPT
         
         prompt = SUMMARY_PROMPT.format(transcript=text)
         return self.generate_text(SYSTEM_PROMPT, prompt, max_tokens=max_tokens)

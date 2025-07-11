@@ -50,7 +50,7 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div class="flex space-x-2">
-                        <a href="{% url 'core:patient_detail' patient.pk %}" 
+                        <a href="{% url 'patients:patient_detail' patient.pk %}" 
                            class="text-blue-700 hover:text-blue-800 font-medium text-sm">
                             Anzeigen
                         </a>
@@ -86,7 +86,7 @@
                 </button>
             </div>
             <!-- Modal body -->
-            <form class="p-4 md:p-5" method="post" action="{% url 'core:patient_create' %}" hx-post="{% url 'core:patient_create' %}" hx-target="#create-patient-modal" hx-swap="outerHTML">
+            <form class="p-4 md:p-5" method="post" action="{% url 'patients:patient_create' %}" hx-post="{% url 'patients:patient_create' %}" hx-target="#create-patient-modal" hx-swap="outerHTML">
                 {% csrf_token %}
                 <div class="grid gap-4 mb-4">
                     <div class="col-span-2">

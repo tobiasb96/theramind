@@ -1,5 +1,3 @@
-# AI Prompts for Therapy Session Processing
-
 # Centralized System Prompt for Privacy and Accuracy
 SYSTEM_PROMPT = """Du bist ein erfahrener Psychotherapeut und Assistent für Psychotherapeuten. 
 

@@ -10,62 +10,120 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('core', '0001_initial'),
+        ("patients", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Session',
+            name="Session",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateTimeField(default=django.utils.timezone.now, verbose_name='Datum')),
-                ('duration', models.PositiveIntegerField(verbose_name='Dauer (Minuten)')),
-                ('title', models.CharField(blank=True, max_length=200, verbose_name='Titel')),
-                ('notes', models.TextField(blank=True, verbose_name='Notizen')),
-                ('summary', models.TextField(blank=True, verbose_name='Zusammenfassung')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Erstellt am')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Aktualisiert am')),
-                ('patient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.patient', verbose_name='Patient')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "date",
+                    models.DateTimeField(default=django.utils.timezone.now, verbose_name="Datum"),
+                ),
+                ("duration", models.PositiveIntegerField(verbose_name="Dauer (Minuten)")),
+                ("title", models.CharField(blank=True, max_length=200, verbose_name="Titel")),
+                ("notes", models.TextField(blank=True, verbose_name="Notizen")),
+                ("summary", models.TextField(blank=True, verbose_name="Zusammenfassung")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")),
+                ("updated_at", models.DateTimeField(auto_now=True, verbose_name="Aktualisiert am")),
+                (
+                    "patient",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="patients.patient",
+                        verbose_name="Patient",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Sitzung',
-                'verbose_name_plural': 'Sitzungen',
-                'ordering': ['-date'],
+                "verbose_name": "Sitzung",
+                "verbose_name_plural": "Sitzungen",
+                "ordering": ["-date"],
             },
         ),
         migrations.CreateModel(
-            name='AudioRecording',
+            name="AudioRecording",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('audio', models.FileField(upload_to='audio/%Y/%m/%d/', verbose_name='Audio-Datei')),
-                ('filename', models.CharField(max_length=255, verbose_name='Dateiname')),
-                ('file_size', models.PositiveIntegerField(blank=True, null=True, verbose_name='Dateigröße (Bytes)')),
-                ('duration_seconds', models.PositiveIntegerField(blank=True, null=True, verbose_name='Dauer (Sekunden)')),
-                ('is_processed', models.BooleanField(default=False, verbose_name='Verarbeitet')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Erstellt am')),
-                ('session', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='therapy.session', verbose_name='Sitzung')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                (
+                    "audio",
+                    models.FileField(upload_to="audio/%Y/%m/%d/", verbose_name="Audio-Datei"),
+                ),
+                ("filename", models.CharField(max_length=255, verbose_name="Dateiname")),
+                (
+                    "file_size",
+                    models.PositiveIntegerField(
+                        blank=True, null=True, verbose_name="Dateigröße (Bytes)"
+                    ),
+                ),
+                (
+                    "duration_seconds",
+                    models.PositiveIntegerField(
+                        blank=True, null=True, verbose_name="Dauer (Sekunden)"
+                    ),
+                ),
+                ("is_processed", models.BooleanField(default=False, verbose_name="Verarbeitet")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")),
+                (
+                    "session",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="therapy.session",
+                        verbose_name="Sitzung",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Audio-Aufnahme',
-                'verbose_name_plural': 'Audio-Aufnahmen',
-                'ordering': ['-created_at'],
+                "verbose_name": "Audio-Aufnahme",
+                "verbose_name_plural": "Audio-Aufnahmen",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='Transcription',
+            name="Transcription",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('text', models.TextField(verbose_name='Transkript')),
-                ('confidence', models.FloatField(blank=True, null=True, verbose_name='Genauigkeit')),
-                ('language', models.CharField(default='de', max_length=10, verbose_name='Sprache')),
-                ('processing_time_seconds', models.FloatField(blank=True, null=True, verbose_name='Verarbeitungszeit')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Erstellt am')),
-                ('recording', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='therapy.audiorecording', verbose_name='Aufnahme')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("text", models.TextField(verbose_name="Transkript")),
+                (
+                    "confidence",
+                    models.FloatField(blank=True, null=True, verbose_name="Genauigkeit"),
+                ),
+                ("language", models.CharField(default="de", max_length=10, verbose_name="Sprache")),
+                (
+                    "processing_time_seconds",
+                    models.FloatField(blank=True, null=True, verbose_name="Verarbeitungszeit"),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")),
+                (
+                    "recording",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="therapy.audiorecording",
+                        verbose_name="Aufnahme",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Transkription',
-                'verbose_name_plural': 'Transkriptionen',
-                'ordering': ['-created_at'],
+                "verbose_name": "Transkription",
+                "verbose_name_plural": "Transkriptionen",
+                "ordering": ["-created_at"],
             },
         ),
     ]

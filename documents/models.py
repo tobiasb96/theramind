@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-from core.models import Patient
+from patients.models import Patient
 from therapy.models import Therapy, Session
 
 

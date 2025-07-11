@@ -7,8 +7,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .models import Session, AudioRecording, Transcription, Therapy
 from .forms import SessionForm, AudioUploadForm, TherapyForm
-from ai.services import get_ai_service
-from ai.prompts import get_available_templates
+from transcriptions.services import get_transcription_service
+from transcriptions.prompts import get_available_templates
 import json
 import os
 
@@ -46,7 +46,7 @@ class TherapyCreateView(CreateView):
         patient_id = self.request.GET.get('patient')
         if patient_id:
             try:
-                from core.models import Patient
+                from patients.models import Patient
                 patient = Patient.objects.get(pk=patient_id)
                 initial['patient'] = patient
             except Patient.DoesNotExist:
@@ -160,7 +160,7 @@ class SessionCreateView(CreateView):
             therapy = get_object_or_404(Therapy, pk=therapy_pk, patient__pk=patient_pk)
         else:
             # Simple URL - find or create active therapy
-            from core.models import Patient
+            from patients.models import Patient
 
             patient = get_object_or_404(Patient, pk=patient_pk)
 
@@ -184,7 +184,7 @@ class SessionCreateView(CreateView):
             patient_id = request.POST.get("patient")
             if patient_id:
                 try:
-                    from core.models import Patient
+                    from patients.models import Patient
 
                     patient = Patient.objects.get(pk=patient_id)
 
@@ -287,7 +287,7 @@ class SessionDeleteView(DeleteView):
         return session
 
     def get_success_url(self):
-        return reverse_lazy("core:patient_detail", kwargs={"pk": self.kwargs.get("patient_pk")})
+        return reverse_lazy("patients:patient_detail", kwargs={"pk": self.kwargs.get("patient_pk")})
 
     def post(self, request, *args, **kwargs):
         # Handle HTMX requests
@@ -331,39 +331,39 @@ class AudioUploadView(View):
         )
         
         # Auto-transcribe if enabled
-        from core.models import Settings
+        from patients.models import Settings
         settings = Settings.get_settings()
-        
-        ai_service = get_ai_service()
-        if settings.auto_transcribe and ai_service.is_available():
+
+        transcription_service = get_transcription_service()
+        if settings.auto_transcribe and transcription_service.is_available():
             try:
                 # Transcribe audio
                 file_path = recording.audio.path
-                transcribed_text, processing_time = ai_service.transcribe(file_path)
-                
+                transcribed_text, processing_time = transcription_service.transcribe(file_path)
+
                 # Create transcription
                 Transcription.objects.create(
                     recording=recording,
                     text=transcribed_text,
-                    processing_time_seconds=processing_time
+                    processing_time_seconds=processing_time,
                 )
-                
+
                 recording.is_processed = True
                 recording.save()
-                
+
                 # Auto-summarize if enabled
                 if settings.auto_summarize and transcribed_text:
-                    summary = ai_service.summarize(transcribed_text)
+                    summary = transcription_service.summarize(transcribed_text)
                     if summary:
                         session.summary = summary
                         session.save()
-                
-                messages.success(request, 'Audio wurde hochgeladen und transkribiert.')
-                
+
+                messages.success(request, "Audio wurde hochgeladen und transkribiert.")
+
             except Exception as e:
-                messages.error(request, f'Fehler bei der Transkription: {str(e)}')
+                messages.error(request, f"Fehler bei der Transkription: {str(e)}")
         else:
-            messages.success(request, 'Audio wurde hochgeladen.')
+            messages.success(request, "Audio wurde hochgeladen.")
 
         return redirect(
             "therapy:session_detail",
@@ -376,9 +376,9 @@ class AudioUploadView(View):
 class TranscribeView(View):
     def post(self, request, pk):
         recording = get_object_or_404(AudioRecording, pk=pk)
-        
-        ai_service = get_ai_service()
-        if not ai_service.is_available():
+
+        transcription_service = get_transcription_service()
+        if not transcription_service.is_available():
             messages.error(request, 'OpenAI API Key ist nicht konfiguriert.')
             return redirect('therapy:session_detail', pk=recording.session.pk)
         
@@ -390,7 +390,7 @@ class TranscribeView(View):
             
             # Transcribe audio
             file_path = recording.audio.path
-            transcribed_text, processing_time = ai_service.transcribe(file_path)
+            transcribed_text, processing_time = transcription_service.transcribe(file_path)
             
             # Create transcription
             Transcription.objects.create(
@@ -475,34 +475,62 @@ class GenerateSessionNotesView(View):
         )
 
         try:
-            data = json.loads(request.body)
-            template_key = data.get("template")
+            template_key = request.POST.get("template")
 
             if not template_key:
-                return JsonResponse({"error": "Template ist erforderlich"}, status=400)
+                messages.error(request, "Template ist erforderlich")
+                return redirect(
+                    "therapy:session_detail",
+                    patient_pk=patient_pk,
+                    therapy_pk=therapy_pk,
+                    session_pk=session_pk,
+                )
 
             # Get all transcriptions for this session
             transcriptions = Transcription.objects.filter(recording__session=session)
 
             if not transcriptions.exists():
-                return JsonResponse(
-                    {"error": "Keine Transkriptionen für diese Sitzung verfügbar"}, status=400
+                messages.error(request, "Keine Transkriptionen für diese Sitzung verfügbar")
+                return redirect(
+                    "therapy:session_detail",
+                    patient_pk=patient_pk,
+                    therapy_pk=therapy_pk,
+                    session_pk=session_pk,
                 )
 
             # Combine all transcriptions
             combined_transcript = "\n\n".join([t.text for t in transcriptions])
 
             # Generate session notes
-            ai_service = get_ai_service()
-            if not ai_service.is_available():
-                return JsonResponse({"error": "OpenAI API Key ist nicht konfiguriert"}, status=400)
+            transcription_service = get_transcription_service()
+            if not transcription_service.is_available():
+                messages.error(request, "OpenAI API Key ist nicht konfiguriert")
+                return redirect(
+                    "therapy:session_detail",
+                    patient_pk=patient_pk,
+                    therapy_pk=therapy_pk,
+                    session_pk=session_pk,
+                )
 
-            session_notes = ai_service.create_session_notes(combined_transcript, template_key)
+            session_notes = transcription_service.create_session_notes(
+                combined_transcript, template_key
+            )
 
-            return JsonResponse({"success": True, "session_notes": session_notes})
+            # Save the generated notes to the session
+            session.notes = session_notes
+            session.save()
+
+            messages.success(request, "KI-Notizen wurden erfolgreich generiert!")
 
         except Exception as e:
-            return JsonResponse({"error": f"Fehler bei der Generierung: {str(e)}"}, status=400)
+            messages.error(request, f"Fehler bei der Generierung: {str(e)}")
+
+        return redirect(
+            "therapy:session_detail",
+            patient_pk=patient_pk,
+            therapy_pk=therapy_pk,
+            session_pk=session_pk,
+        )
 
 
 @method_decorator(csrf_exempt, name="dispatch")

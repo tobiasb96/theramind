@@ -9,7 +9,7 @@ from .models import Document
 from .forms import DocumentForm
 from .services import DocumentService
 from .prompts import get_available_document_types
-from core.models import Patient
+from patients.models import Patient
 from therapy.models import Therapy
 import json
 
