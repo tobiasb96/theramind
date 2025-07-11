@@ -3,7 +3,7 @@ import time
 from typing import Optional
 from openai import OpenAI
 from django.conf import settings
-from .prompts import SUMMARY_PROMPT, get_session_notes_prompt
+from .prompts import SUMMARY_PROMPT, get_session_notes_prompt, SYSTEM_PROMPT
 
 
 class AIService:
@@ -76,10 +76,7 @@ class AIService:
             prompt = SUMMARY_PROMPT.format(transcript=text)
 
             messages = [
-                {
-                    "role": "system",
-                    "content": "Du bist ein Assistent für Psychotherapeuten. Erstelle präzise, kurze Zusammenfassungen von Therapiesitzungen.",
-                },
+                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ]
             
@@ -108,10 +105,7 @@ class AIService:
             formatted_prompt = prompt.format(transcript=transcript_text)
 
             messages = [
-                {
-                    "role": "system",
-                    "content": "Du bist ein erfahrener Psychotherapeut. Erstelle strukturierte, professionelle Sitzungsnotizen basierend auf den bereitgestellten Transkripten.",
-                },
+                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": formatted_prompt},
             ]
             

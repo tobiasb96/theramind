@@ -1,7 +1,28 @@
 # AI Prompts for Therapy Session Processing
 
+# Centralized System Prompt for Privacy and Accuracy
+SYSTEM_PROMPT = """Du bist ein erfahrener Psychotherapeut und Assistent für Psychotherapeuten. 
+
+WICHTIGE RICHTLINIEN:
+1. **KEINE ERFINDUNGEN**: Erfinde niemals Informationen, die nicht im bereitgestellten Text enthalten sind. 
+Wenn zu einem Thema keine Informationen vorhanden sind, schreibe "Keine Informationen verfügbar" 
+oder lasse es weg.
+
+2. **DATENSCHUTZ**: 
+   - Verwende niemals echte Namen, Adressen, Geburtsdaten oder andere persönliche Daten
+   - Ersetze Namen durch neutrale Bezeichnungen wie "der Patient", "die Patientin" oder Abkürzungen wie "K."
+   - Verwende neutrale, professionelle Sprache
+
+3. **NEUTRALE SPRACHE**: Beschreibe Patienten immer neutral und respektvoll als "der Patient" 
+  oder "die Patientin", nicht mit Namen oder persönlichen Details.
+
+4. **PROFESSIONALITÄT**: Erstelle strukturierte, professionelle Notizen, die für therapeutische 
+  Zwecke geeignet sind.
+
+5. **GENAUIGKEIT**: Beruhe ausschließlich auf den bereitgestellten Informationen und mache keine Annahmen."""
+
 # Summary prompt - ultra-short summary for display at top
-SUMMARY_PROMPT = """Du bist ein Assistent für Psychotherapeuten. Erstelle eine ultra-kurze Zusammenfassung (max. 50 Wörter) einer Therapiesitzung.
+SUMMARY_PROMPT = """Erstelle eine ultra-kurze Zusammenfassung (max. 50 Wörter) einer Therapiesitzung.
 
 Die Zusammenfassung sollte enthalten:
 - Art der Sitzung (z.B. Erstgespräch, Verlaufsgespräch, Abschlussgespräch)
@@ -18,7 +39,7 @@ Zusammenfassung:"""
 SESSION_NOTES_TEMPLATES = {
     "erstgespraech": {
         "name": "Erstgespräch",
-        "prompt": """Du bist ein erfahrener Psychotherapeut. Erstelle strukturierte Sitzungsnotizen für ein Erstgespräch basierend auf dem Transkript.
+        "prompt": """Erstelle strukturierte Sitzungsnotizen für ein Erstgespräch basierend auf dem Transkript.
 
 Strukturiere die Notizen wie folgt:
 
@@ -44,12 +65,11 @@ Strukturiere die Notizen wie folgt:
 Transkript der Sitzung:
 {transcript}
 
-Strukturierte Notizen:"""
+Strukturierte Notizen:""",
     },
-    
     "verlaufsgespraech": {
-        "name": "Verlaufsgespräch", 
-        "prompt": """Du bist ein erfahrener Psychotherapeut. Erstelle strukturierte Sitzungsnotizen für ein Verlaufsgespräch basierend auf dem Transkript.
+        "name": "Verlaufsgespräch",
+        "prompt": """Erstelle strukturierte Sitzungsnotizen für ein Verlaufsgespräch basierend auf dem Transkript.
 
 Strukturiere die Notizen wie folgt:
 
@@ -76,12 +96,11 @@ Strukturiere die Notizen wie folgt:
 Transkript der Sitzung:
 {transcript}
 
-Strukturierte Notizen:"""
+Strukturierte Notizen:""",
     },
-    
     "abschlussgespraech": {
         "name": "Abschlussgespräch",
-        "prompt": """Du bist ein erfahrener Psychotherapeut. Erstelle strukturierte Sitzungsnotizen für ein Abschlussgespräch basierend auf dem Transkript.
+        "prompt": """Erstelle strukturierte Sitzungsnotizen für ein Abschlussgespräch basierend auf dem Transkript.
 
 Strukturiere die Notizen wie folgt:
 
@@ -108,8 +127,8 @@ Strukturiere die Notizen wie folgt:
 Transkript der Sitzung:
 {transcript}
 
-Strukturierte Notizen:"""
-    }
+Strukturierte Notizen:""",
+    },
 }
 
 def get_session_notes_prompt(template_key: str) -> str:
