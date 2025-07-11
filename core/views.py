@@ -2,6 +2,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db.models import Count
+from django.http import HttpResponse
 from .models import Patient, Settings
 from .forms import PatientForm, SettingsForm
 from therapy.models import Session
@@ -28,6 +29,11 @@ class PatientListView(ListView):
     def get_queryset(self):
         return Patient.objects.annotate(session_count=Count('therapy__session')).order_by('-created_at')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = PatientForm()
+        return context
+
 
 class PatientDetailView(DetailView):
     model = Patient
@@ -39,6 +45,7 @@ class PatientDetailView(DetailView):
         context['therapies'] = self.object.therapy_set.order_by('-start_date')
         # Get all sessions across all therapies for this patient
         context['sessions'] = Session.objects.filter(therapy__patient=self.object).order_by('-date')
+        context["form"] = PatientForm(instance=self.object)
         return context
 
 
@@ -49,8 +56,16 @@ class PatientCreateView(CreateView):
     success_url = reverse_lazy('core:patient_list')
     
     def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(self.request, 'Patient wurde erfolgreich angelegt.')
-        return super().form_valid(form)
+
+        # Handle HTMX requests
+        if self.request.headers.get("HX-Request"):
+            response = HttpResponse()
+            response["HX-Redirect"] = self.get_success_url()
+            return response
+
+        return response
 
 
 class PatientUpdateView(UpdateView):
@@ -62,8 +77,16 @@ class PatientUpdateView(UpdateView):
         return reverse_lazy('core:patient_detail', kwargs={'pk': self.object.pk})
     
     def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(self.request, 'Patient wurde erfolgreich aktualisiert.')
-        return super().form_valid(form)
+
+        # Handle HTMX requests
+        if self.request.headers.get("HX-Request"):
+            response = HttpResponse()
+            response["HX-Redirect"] = self.get_success_url()
+            return response
+
+        return response
 
 
 class PatientDeleteView(DeleteView):
@@ -72,8 +95,16 @@ class PatientDeleteView(DeleteView):
     success_url = reverse_lazy('core:patient_list')
     
     def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(self.request, 'Patient wurde erfolgreich gelöscht.')
-        return super().form_valid(form)
+
+        # Handle HTMX requests
+        if self.request.headers.get("HX-Request"):
+            response = HttpResponse()
+            response["HX-Redirect"] = self.get_success_url()
+            return response
+
+        return response
 
 
 class SettingsView(UpdateView):
