@@ -4,176 +4,299 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
-    <!-- Session Header -->
-    <c-card class="mb-6">
+    <!-- Breadcrumb -->
+    <nav class="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 mb-6" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-2 md:space-x-2 rtl:space-x-reverse">
+            <li class="inline-flex items-center">
+                <a href="{% url 'core:patient_list' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                    Patienten
+                </a>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <svg class="rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                    </svg>
+                    <a href="{% url 'core:patient_detail' patient.pk %}" class="ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2">{{ patient.full_name }}</a>
+                </div>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <svg class="rtl:rotate-180 w-3 h-3 mx-1 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                    </svg>
+                    <span class="ms-1 text-sm font-medium text-gray-500 md:ms-2">
+                        {% if session.title %}
+                            {{ session.title }}
+                        {% else %}
+                            Sitzung vom {{ session.date|date:"d.m.Y" }}
+                        {% endif %}
+                    </span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Session Information Card -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="flex justify-between items-start">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">{{ session.patient.full_name }}</h1>
-                <p class="text-lg text-gray-600">{{ session.date|date:"d.m.Y H:i" }} Uhr</p>
-                {% if session.title %}
-                    <p class="text-lg text-gray-800 mt-2">{{ session.title }}</p>
-                {% endif %}
+                <h1 class="text-2xl font-bold text-gray-900">
+                    {% if session.title %}
+                        {{ session.title }}
+                    {% else %}
+                        Sitzung vom {{ session.date|date:"d.m.Y" }}
+                    {% endif %}
+                </h1>
+                <p class="text-gray-600 mt-1">{{ session.date|date:"d.m.Y H:i" }} Uhr</p>
+                <p class="text-gray-600">{{ session.duration }} Minuten</p>
+                <p class="text-gray-600">Patient: {{ session.patient.full_name }}</p>
             </div>
             <div class="text-right">
-                <p class="text-sm text-gray-500">Dauer: {{ session.duration }} Minuten</p>
-                <div class="flex space-x-2 mt-3">
-                    <c-button size="sm">
-                        <a href="{% url 'therapy:session_edit' session.pk %}">Bearbeiten</a>
-                    </c-button>
-                    <c-button variant="destructive" size="sm">
-                        <a href="{% url 'therapy:session_delete' session.pk %}">Löschen</a>
-                    </c-button>
+                <div class="flex space-x-2">
+                    <button data-modal-target="edit-modal" data-modal-toggle="edit-modal" class="bg-blue-700 text-white px-3 py-2 rounded hover:bg-blue-700">
+                        Bearbeiten
+                    </button>
+                    <button data-modal-target="delete-modal" data-modal-toggle="delete-modal" class="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700">
+                        Löschen
+                    </button>
                 </div>
             </div>
         </div>
         
-        {% if session.notes %}
-        <div class="mt-4 pt-4 border-t">
-            <h3 class="text-sm font-medium text-gray-700 mb-2">Notizen:</h3>
-            <p class="text-gray-800 whitespace-pre-wrap">{{ session.notes }}</p>
-        </div>
-        {% endif %}
-        
+        <!-- Collapsible Summary Card -->
         {% if session.summary %}
-        <div class="mt-4 pt-4 border-t">
-            <h3 class="text-sm font-medium text-gray-700 mb-2">KI-Zusammenfassung:</h3>
-            <c-alert class="bg-blue-50">
+        <div class="mt-6 pt-4 border-t">
+            <button id="summary-toggle" class="w-full text-left bg-blue-50 hover:bg-blue-100 rounded-lg p-4 flex justify-between items-center">
+                <h3 class="text-sm font-medium text-blue-900">KI-Zusammenfassung</h3>
+                <svg id="summary-chevron" class="w-5 h-5 text-blue-600 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div id="summary-content" class="hidden bg-blue-50 rounded-b-lg p-4 border-t">
                 <p class="text-gray-800 whitespace-pre-wrap">{{ session.summary }}</p>
-            </c-alert>
+            </div>
         </div>
         {% endif %}
-    </c-card>
+    </div>
 
-    <!-- Audio Upload -->
-    <c-card class="mb-6">
-        <c-card.header>
-            <c-card.title>Audio-Aufnahme hochladen</c-card.title>
-        </c-card.header>
-        <c-card.content>
-        
-        <form method="post" action="{% url 'therapy:audio_upload' session.pk %}" enctype="multipart/form-data" class="mb-4">
-            {% csrf_token %}
-            <div class="flex items-end space-x-4">
-                <div class="flex-1">
-                    <label for="{{ upload_form.audio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                        Audio-Datei auswählen
-                    </label>
-                    {{ upload_form.audio }}
+    <!-- Session Notes Card -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Sitzungsnotizen</h2>
+            {% if recordings %}
+                <div class="flex space-x-2">
+                    <select id="template-select" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+                        <option value="">Template auswählen...</option>
+                        {% for key, name in session_notes_templates.items %}
+                            <option value="{{ key }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button onclick="generateSessionNotes()" class="text-white bg-blue-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        Notizen generieren
+                    </button>
                 </div>
-                <c-button type="submit" variant="default">
-                    Hochladen
-                </c-button>
-            </div>
-            <p class="text-sm text-gray-500 mt-2">
-                Unterstützte Formate: MP3, WAV, M4A, FLAC (max. 25MB)
-            </p>
-        </form>
-
-        <!-- Web Recording Interface -->
-        <div class="border-t pt-4">
-            <h3 class="text-md font-medium text-gray-700 mb-3">Oder direkt aufnehmen:</h3>
-            <div id="audio-recorder" class="flex items-center space-x-4">
-                <c-button id="start-recording" variant="destructive">
-                    🎤 Aufnahme starten
-                </c-button>
-                <c-button id="stop-recording" variant="secondary" disabled>
-                    ⏹️ Aufnahme stoppen
-                </c-button>
-                <span id="recording-time" class="text-sm text-gray-500">00:00</span>
-            </div>
-            <div id="audio-preview" class="mt-4 hidden">
-                <audio id="recorded-audio" controls class="w-full"></audio>
-                <c-button id="upload-recording" class="mt-2">
-                    Aufnahme hochladen
-                </c-button>
-            </div>
-        </c-card.content>
-    </c-card>
-
-    <!-- Audio Recordings -->
-    <c-card>
-        <c-card.header>
-            <div class="flex justify-between items-center">
-                <c-card.title>Audio-Aufnahmen ({{ recordings.count }})</c-card.title>
-                {% if recordings %}
-                    <c-button onclick="summarizeSession()" variant="secondary">
-                        🤖 Sitzung zusammenfassen
-                    </c-button>
-                {% endif %}
-            </div>
-        </c-card.header>
-        <c-card.content>
+            {% endif %}
+        </div>
         
-        {% if recordings %}
-            <div class="space-y-4">
-                {% for recording in recordings %}
-                <div class="border rounded p-4">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h3 class="font-medium text-gray-900">{{ recording.filename }}</h3>
-                            <p class="text-sm text-gray-500">
-                                Hochgeladen: {{ recording.created_at|date:"d.m.Y H:i" }}
-                                {% if recording.file_size %}
-                                    | Größe: {{ recording.file_size|filesizeformat }}
-                                {% endif %}
-                                {% if recording.duration_seconds %}
-                                    | Dauer: {{ recording.duration_seconds }}s
-                                {% endif %}
-                            </p>
-                        </div>
-                        <div class="flex space-x-2">
-                            {% if not recording.is_processed %}
-                                <c-button onclick="transcribeAudio({{ recording.pk }})" size="sm">
-                                    Transkribieren
-                                </c-button>
-                            {% endif %}
-                            <c-button variant="outline" size="sm">
-                                <a href="{% url 'therapy:audio_download' recording.pk %}">Download</a>
-                            </c-button>
+        <!-- Session Notes Editor -->
+        <div class="mb-4">
+            <textarea id="session-notes-editor" rows="20" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Sitzungsnotizen werden hier angezeigt und können bearbeitet werden...">{{ session.notes }}</textarea>
+        </div>
+        
+        <div class="flex justify-end">
+            <button onclick="saveSessionNotes()" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                Notizen speichern
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Recording Section -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Audio-Aufnahmen</h2>
+        
+        <!-- Recording Controls -->
+        <div class="mb-6">
+            <div class="flex flex-col sm:flex-row gap-4 items-start">
+                <!-- Recording Button -->
+                <div class="flex-1">
+                    <button id="record-button" class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center justify-center">
+                        <svg id="record-icon" class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span id="record-text">Aufnahme starten</span>
+                    </button>
+                    <div id="recording-indicator" class="hidden mt-2 flex items-center justify-center">
+                        <div class="flex items-center">
+                            <div class="animate-pulse w-3 h-3 bg-red-600 rounded-full mr-2"></div>
+                            <span id="recording-time" class="text-sm text-red-600 font-medium">00:00</span>
                         </div>
                     </div>
-                    
-                    <!-- Audio Player -->
-                    <audio controls class="w-full mb-3">
-                        <source src="{{ recording.audio.url }}" type="audio/mpeg">
-                        Ihr Browser unterstützt keine Audio-Wiedergabe.
-                    </audio>
-                    
-                    <!-- Transcription -->
-                    {% if recording.transcription %}
-                        <div class="bg-gray-50 p-3 rounded">
-                            <div class="flex justify-between items-center mb-2">
-                                <h4 class="text-sm font-medium text-gray-700">Transkription</h4>
-                                <span class="text-xs text-gray-500">
-                                    {% if recording.transcription.processing_time_seconds %}
-                                        Verarbeitet in {{ recording.transcription.processing_time_seconds|floatformat:1 }}s
-                                    {% endif %}
-                                    {% if recording.transcription.confidence %}
-                                        | Genauigkeit: {{ recording.transcription.confidence|floatformat:2 }}
-                                    {% endif %}
-                                </span>
-                            </div>
-                            <p class="text-gray-800 text-sm whitespace-pre-wrap">{{ recording.transcription.text }}</p>
+                </div>
+                
+                <!-- File Upload -->
+                <div class="flex-1">
+                    <label class="block mb-2 text-sm font-medium text-gray-900" for="audio-upload">Audio-Datei hochladen</label>
+                    <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" id="audio-upload" type="file" accept="audio/*">
+                    <p class="mt-1 text-sm text-gray-500">MP3, WAV, M4A oder FLAC (max. 25MB)</p>
+                </div>
+            </div>
+            
+            <!-- Audio Preview -->
+            <div id="audio-preview" class="hidden mt-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-gray-900 mb-3">Aufnahme-Vorschau</h3>
+                    <audio id="recorded-audio" controls class="w-full mb-3"></audio>
+                    <button id="upload-recording" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                        Aufnahme hochladen
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Audio Recordings List -->
+        {% if recordings %}
+        <div class="space-y-4">
+            {% for recording in recordings %}
+            <div class="border rounded-lg p-4">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h3 class="font-medium text-gray-900">{{ recording.filename }}</h3>
+                        <p class="text-sm text-gray-500">
+                            Hochgeladen: {{ recording.created_at|date:"d.m.Y H:i" }}
+                            {% if recording.file_size %}
+                                | Größe: {{ recording.file_size|filesizeformat }}
+                            {% endif %}
+                            {% if recording.duration_seconds %}
+                                | Dauer: {{ recording.duration_seconds }}s
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="flex space-x-2">
+                        {% if not recording.is_processed %}
+                            <button onclick="transcribeAudio({{ recording.pk }})" class="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800">
+                                Transkribieren
+                            </button>
+                        {% endif %}
+                        <a href="{% url 'therapy:audio_download' recording.pk %}" class="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800">
+                            Download
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Audio Player -->
+                <audio controls class="w-full mb-3">
+                    <source src="{{ recording.audio.url }}" type="audio/mpeg">
+                    Ihr Browser unterstützt keine Audio-Wiedergabe.
+                </audio>
+                
+                <!-- Transcription Status -->
+                {% if recording.transcription %}
+                    <div class="bg-green-50 p-3 rounded">
+                        <h4 class="text-sm font-medium text-green-700">Transkription verfügbar</h4>
+                        <span class="text-xs text-green-600">
+                            {% if recording.transcription.processing_time_seconds %}
+                                Verarbeitet in {{ recording.transcription.processing_time_seconds|floatformat:1 }}s
+                            {% endif %}
+                            {% if recording.transcription.confidence %}
+                                | Genauigkeit: {{ recording.transcription.confidence|floatformat:2 }}
+                            {% endif %}
+                        </span>
+                    </div>
+                {% else %}
+                    {% if recording.is_processed %}
+                        <div class="bg-yellow-50 p-3 rounded">
+                            <p class="text-sm text-yellow-800">Transkription wird verarbeitet...</p>
                         </div>
                     {% else %}
-                        {% if recording.is_processed %}
-                            <div class="bg-yellow-50 p-3 rounded">
-                                <p class="text-sm text-yellow-800">Transkription wird verarbeitet...</p>
-                            </div>
-                        {% else %}
-                            <div class="bg-gray-50 p-3 rounded">
-                                <p class="text-sm text-gray-600">Noch nicht transkribiert</p>
-                            </div>
-                        {% endif %}
+                        <div class="bg-gray-50 p-3 rounded">
+                            <p class="text-sm text-gray-600">Noch nicht transkribiert</p>
+                        </div>
                     {% endif %}
-                </div>
-                {% endfor %}
+                {% endif %}
             </div>
+            {% endfor %}
+        </div>
         {% else %}
-            <p class="text-gray-500 text-center py-8">Noch keine Audio-Aufnahmen vorhanden.</p>
+        <div class="text-center py-8 text-gray-500">
+            <p>Noch keine Audio-Aufnahmen vorhanden.</p>
+            <p class="text-sm mt-2">Laden Sie eine Audio-Datei hoch oder nehmen Sie eine neue Aufnahme auf.</p>
+        </div>
         {% endif %}
-        </c-card.content>
-    </c-card>
+    </div>
+</div>
+
+<!-- Edit Session Modal -->
+<div id="edit-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-lg shadow">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Sitzung bearbeiten
+                </h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="edit-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            <!-- Modal body -->
+            <form class="p-4 md:p-5" method="post" action="{% url 'therapy:session_edit' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}" hx-post="{% url 'therapy:session_edit' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="therapy" value="{{ session.therapy.pk }}">
+                <div class="grid gap-4 mb-4">
+                    <div class="col-span-2">
+                        <label for="edit-title" class="block mb-2 text-sm font-medium text-gray-900">Titel (optional)</label>
+                        <input type="text" name="title" id="edit-title" value="{{ session.title }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="z.B. Erstgespräch">
+                    </div>
+                    <div class="col-span-2">
+                        <label for="edit-date" class="block mb-2 text-sm font-medium text-gray-900">Datum</label>
+                        <input type="datetime-local" name="date" id="edit-date" value="{{ session.date|date:'Y-m-d\TH:i' }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" required>
+                    </div>
+                    <div class="col-span-2">
+                        <label for="edit-duration" class="block mb-2 text-sm font-medium text-gray-900">Dauer (Minuten)</label>
+                        <input type="number" name="duration" id="edit-duration" value="{{ session.duration }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="50">
+                    </div>
+                </div>
+                <button type="submit" class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                    Sitzung aktualisieren
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Session Modal -->
+<div id="delete-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+        <!-- Modal content -->
+        <div class="relative p-4 text-center bg-white rounded-lg shadow sm:p-5">
+            <button type="button" class="text-gray-400 absolute top-2.5 right-2.5 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-toggle="delete-modal">
+                <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                <span class="sr-only">Close modal</span>
+            </button>
+            <svg class="text-gray-400 w-6 h-6 mb-3.5 mx-auto" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+            <p class="mb-4 text-gray-500">Sind Sie sicher, dass Sie diese Sitzung löschen möchten?</p>
+            <div class="flex justify-center items-center space-x-4">
+                <button data-modal-toggle="delete-modal" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
+                    Nein, abbrechen
+                </button>
+                <form method="post" action="{% url 'therapy:session_delete' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}" hx-post="{% url 'therapy:session_delete' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}" hx-target="#delete-modal" hx-swap="outerHTML" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="py-2 px-3 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
+                        Ja, löschen
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -183,15 +306,41 @@ let recordedChunks = [];
 let recordingTimer;
 let recordingSeconds = 0;
 
-document.getElementById('start-recording').addEventListener('click', startRecording);
-document.getElementById('stop-recording').addEventListener('click', stopRecording);
-document.getElementById('upload-recording').addEventListener('click', uploadRecording);
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('record-button').addEventListener('click', toggleRecording);
+    document.getElementById('upload-recording')?.addEventListener('click', uploadRecording);
+    document.getElementById('audio-upload').addEventListener('change', handleFileUpload);
+    
+    // Summary toggle functionality
+    const summaryToggle = document.getElementById('summary-toggle');
+    const summaryContent = document.getElementById('summary-content');
+    const summaryChevron = document.getElementById('summary-chevron');
+    
+    if (summaryToggle) {
+        summaryToggle.addEventListener('click', function() {
+            summaryContent.classList.toggle('hidden');
+            summaryChevron.classList.toggle('rotate-180');
+        });
+    }
+    
+});
+
+function toggleRecording() {
+    if (isRecording) {
+        stopRecording();
+    } else {
+        startRecording();
+    }
+}
+
+let isRecording = false;
 
 async function startRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         recordedChunks = [];
+        isRecording = true;
         
         mediaRecorder.ondataavailable = event => {
             if (event.data.size > 0) {
@@ -207,8 +356,17 @@ async function startRecording() {
         };
         
         mediaRecorder.start();
-        document.getElementById('start-recording').disabled = true;
-        document.getElementById('stop-recording').disabled = false;
+        
+        // Update button state
+        const recordButton = document.getElementById('record-button');
+        const recordText = document.getElementById('record-text');
+        const recordIcon = document.getElementById('record-icon');
+        const recordingIndicator = document.getElementById('recording-indicator');
+        
+        recordButton.className = 'w-full text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center justify-center';
+        recordText.textContent = 'Aufnahme stoppen';
+        recordIcon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v6a1 1 0 11-2 0V7z" clip-rule="evenodd"></path>';
+        recordingIndicator.classList.remove('hidden');
         
         // Start timer
         recordingSeconds = 0;
@@ -222,6 +380,7 @@ async function startRecording() {
         
     } catch (error) {
         alert('Fehler beim Zugriff auf das Mikrofon: ' + error.message);
+        isRecording = false;
     }
 }
 
@@ -231,11 +390,47 @@ function stopRecording() {
         mediaRecorder.stream.getTracks().forEach(track => track.stop());
     }
     
-    document.getElementById('start-recording').disabled = false;
-    document.getElementById('stop-recording').disabled = true;
+    isRecording = false;
+    
+    // Update button state
+    const recordButton = document.getElementById('record-button');
+    const recordText = document.getElementById('record-text');
+    const recordIcon = document.getElementById('record-icon');
+    const recordingIndicator = document.getElementById('recording-indicator');
+    
+    recordButton.className = 'w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center justify-center';
+    recordText.textContent = 'Aufnahme starten';
+    recordIcon.innerHTML = '<path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path>';
+    recordingIndicator.classList.add('hidden');
     
     if (recordingTimer) {
         clearInterval(recordingTimer);
+    }
+}
+
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const formData = new FormData();
+        formData.append('audio', file);
+        
+        fetch("{% url 'therapy:session_audio_upload' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Fehler beim Hochladen der Datei');
+            }
+        })
+        .catch(error => {
+            alert('Fehler beim Hochladen: ' + error.message);
+        });
     }
 }
 
@@ -246,11 +441,11 @@ function uploadRecording() {
     const formData = new FormData();
     formData.append('audio', blob, 'recording.webm');
     
-    fetch("{% url 'therapy:audio_upload' session.pk %}", {
+    fetch("{% url 'therapy:session_audio_upload' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}", {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            'X-CSRFToken': getCsrfToken()
         }
     })
     .then(response => {
@@ -265,50 +460,109 @@ function uploadRecording() {
     });
 }
 
+// Session Notes Generation
+function generateSessionNotes() {
+    const templateSelect = document.getElementById('template-select');
+    const template = templateSelect.value;
+    
+    if (!template) {
+        alert('Bitte wählen Sie ein Template aus.');
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Generiere...';
+    button.disabled = true;
+    
+    fetch("{% url 'therapy:session_generate_notes' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            template: template
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('session-notes-editor').value = data.session_notes;
+            alert('Sitzungsnotizen wurden erfolgreich generiert!');
+        } else {
+            alert('Fehler bei der Generierung: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Fehler: ' + error.message);
+    })
+    .finally(() => {
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Session Notes Saving
+function saveSessionNotes() {
+    const sessionNotes = document.getElementById('session-notes-editor').value;
+    
+    fetch("{% url 'therapy:session_save_notes' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            session_notes: sessionNotes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Sitzungsnotizen gespeichert!');
+        } else {
+            alert('Fehler beim Speichern: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Fehler: ' + error.message);
+    });
+}
+
 // Transcription
 function transcribeAudio(recordingId) {
-    console.log('Starting transcription for recording:', recordingId);
-    
     fetch(`/therapy/recordings/${recordingId}/transcribe/`, {
         method: 'POST',
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            'X-CSRFToken': getCsrfToken()
         }
     })
     .then(response => {
-        console.log('Transcription response status:', response.status);
         if (response.ok) {
             alert('Transkription gestartet. Die Seite wird neu geladen...');
             location.reload();
         } else {
-            response.text().then(text => {
-                console.error('Transcription error response:', text);
-                alert('Fehler bei der Transkription: ' + response.status);
-            });
+            alert('Fehler bei der Transkription');
         }
     })
     .catch(error => {
-        console.error('Transcription error:', error);
         alert('Fehler: ' + error.message);
     });
 }
 
 // Session Summary
 function summarizeSession() {
-    console.log('Starting session summary for session:', {{ session.pk }});
-    
     fetch(`/ai/summarize/{{ session.pk }}/`, {
         method: 'POST',
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            'X-CSRFToken': getCsrfToken()
         }
     })
-    .then(response => {
-        console.log('Summary response status:', response.status);
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('Summary response data:', data);
         if (data.success) {
             alert('Zusammenfassung erstellt. Die Seite wird neu geladen...');
             location.reload();
@@ -317,9 +571,18 @@ function summarizeSession() {
         }
     })
     .catch(error => {
-        console.error('Summary error:', error);
         alert('Fehler: ' + error.message);
     });
+}
+
+// Utility function to get CSRF token
+function getCsrfToken() {
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfInput) {
+        return csrfInput.value;
+    }
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    return csrfMeta ? csrfMeta.getAttribute('content') : '';
 }
 </script>
 {% endblock %}

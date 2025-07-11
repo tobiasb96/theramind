@@ -3,6 +3,7 @@ import time
 from typing import Optional
 from openai import OpenAI
 from django.conf import settings
+from .prompts import SUMMARY_PROMPT, get_session_notes_prompt
 
 
 class AIService:
@@ -62,7 +63,7 @@ class AIService:
     
     def summarize(self, text: str) -> str:
         """
-        Summarize text using OpenAI GPT
+        Create ultra-short summary using OpenAI GPT
         """
         if not self.is_available():
             raise ValueError("OpenAI API key nicht konfiguriert")
@@ -71,68 +72,57 @@ class AIService:
             return ""
         
         try:
+            # Use the prompt from prompts.py
+            prompt = SUMMARY_PROMPT.format(transcript=text)
+
             messages = [
                 {
                     "role": "system",
-                    "content": "Du bist ein Assistent für Psychotherapeuten. Fasse Therapiesitzungen professionell und strukturiert zusammen. Konzentriere dich auf wichtige Themen, Fortschritte und Erkenntnisse."
+                    "content": "Du bist ein Assistent für Psychotherapeuten. Erstelle präzise, kurze Zusammenfassungen von Therapiesitzungen.",
                 },
-                {
-                    "role": "user",
-                    "content": f"Fasse folgende Therapiesitzung in 150-200 Wörtern zusammen. Strukturiere die Zusammenfassung mit Hauptthemen, wichtigen Erkenntnissen und nächsten Schritten:\n\n{text}"
-                }
+                {"role": "user", "content": prompt},
             ]
             
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=messages,
-                max_tokens=300,
-                temperature=0.3
+                model="gpt-4o-mini", messages=messages, max_tokens=150, temperature=0.3
             )
             
             return response.choices[0].message.content.strip()
             
         except Exception as e:
             raise Exception(f"Fehler bei der Zusammenfassung: {str(e)}")
-    
-    def analyze_sentiment(self, text: str) -> dict:
+
+    def create_session_notes(self, transcript_text: str, template_key: str) -> str:
         """
-        Analyze sentiment and emotional tone of therapy session
+        Create structured session notes using a specific template
         """
         if not self.is_available():
             raise ValueError("OpenAI API key nicht konfiguriert")
-        
-        if not text.strip():
-            return {"sentiment": "neutral", "confidence": 0.0, "key_emotions": []}
+
+        if not transcript_text.strip():
+            return ""
         
         try:
+            # Get the appropriate prompt template
+            prompt = get_session_notes_prompt(template_key)
+            formatted_prompt = prompt.format(transcript=transcript_text)
+
             messages = [
                 {
                     "role": "system",
-                    "content": "Du bist ein Experte für emotionale Analyse von Therapiesitzungen. Analysiere den emotionalen Ton und die Stimmung des Patienten."
+                    "content": "Du bist ein erfahrener Psychotherapeut. Erstelle strukturierte, professionelle Sitzungsnotizen basierend auf den bereitgestellten Transkripten.",
                 },
-                {
-                    "role": "user",
-                    "content": f"Analysiere die emotionale Stimmung in folgendem Therapietext. Gib die Antwort als JSON zurück mit: sentiment (positiv/neutral/negativ), confidence (0-1), key_emotions (Liste der Hauptemotionen):\n\n{text[:2000]}"
-                }
+                {"role": "user", "content": formatted_prompt},
             ]
             
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=messages,
-                max_tokens=150,
-                temperature=0.1
+                model="gpt-4o-mini", messages=messages, max_tokens=1000, temperature=0.3
             )
-            
-            # Simple fallback parsing if JSON parsing fails
-            content = response.choices[0].message.content.strip()
-            try:
-                import json
-                return json.loads(content)
-            except:
-                return {"sentiment": "neutral", "confidence": 0.5, "key_emotions": ["unbekannt"]}
-                
+
+            return response.choices[0].message.content.strip()
+
         except Exception as e:
-            return {"sentiment": "neutral", "confidence": 0.0, "key_emotions": ["fehler"], "error": str(e)}
+            raise Exception(f"Fehler bei der Erstellung der Sitzungsnotizen: {str(e)}")
 
 
 # Singleton instance - lazy initialization

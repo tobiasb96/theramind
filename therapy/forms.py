@@ -26,13 +26,12 @@ class TherapyForm(forms.ModelForm):
 class SessionForm(forms.ModelForm):
     class Meta:
         model = Session
-        fields = ['therapy', 'date', 'duration', 'title', 'notes']
+        fields = ["therapy", "date", "duration", "title"]
         widgets = {
-            'therapy': forms.Select(attrs={'class': 'form-control'}),
-            'date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'duration': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 6}),
+            "therapy": forms.Select(attrs={"class": "form-control"}),
+            "date": forms.DateTimeInput(attrs={"class": "form-control", "type": "datetime-local"}),
+            "duration": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
+            "title": forms.TextInput(attrs={"class": "form-control"}),
         }
     
     def __init__(self, *args, **kwargs):

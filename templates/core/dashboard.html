@@ -4,33 +4,33 @@
 
 {% block content %}
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <c-card class="p-6">
+    <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-2">Patienten</h3>
         <p class="text-3xl font-bold text-blue-600">{{ patient_count }}</p>
-    </c-card>
+    </div>
     
-    <c-card class="p-6">
+    <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-2">Sitzungen</h3>
         <p class="text-3xl font-bold text-green-600">{{ session_count }}</p>
-    </c-card>
+    </div>
     
-    <c-card class="p-6">
+    <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-2">Aufnahmen</h3>
         <p class="text-3xl font-bold text-purple-600">-</p>
-    </c-card>
+    </div>
     
-    <c-card class="p-6">
+    <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-2">Transkripte</h3>
         <p class="text-3xl font-bold text-orange-600">-</p>
-    </c-card>
+    </div>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <c-card>
-        <c-card.header>
-            <c-card.title>Aktuelle Sitzungen</c-card.title>
-        </c-card.header>
-        <c-card.content>
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b">
+            <h2 class="text-lg font-semibold text-gray-900">Aktuelle Sitzungen</h2>
+        </div>
+        <div class="p-6">
             {% if recent_sessions %}
                 <div class="space-y-4">
                     {% for session in recent_sessions %}
@@ -39,23 +39,23 @@
                             <p class="font-medium">{{ session.therapy.patient.full_name }}</p>
                             <p class="text-sm text-gray-600">{{ session.date|date:"d.m.Y H:i" }}</p>
                         </div>
-                        <c-button variant="ghost" size="sm">
-                            <a href="{% url 'therapy:session_detail' session.pk %}">Anzeigen</a>
-                        </c-button>
+                        <a href="{% url 'therapy:session_detail' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            Anzeigen
+                        </a>
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
                 <p class="text-gray-500">Keine Sitzungen vorhanden.</p>
             {% endif %}
-        </c-card.content>
-    </c-card>
+        </div>
+    </div>
     
-    <c-card>
-        <c-card.header>
-            <c-card.title>Neue Patienten</c-card.title>
-        </c-card.header>
-        <c-card.content>
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b">
+            <h2 class="text-lg font-semibold text-gray-900">Neue Patienten</h2>
+        </div>
+        <div class="p-6">
             {% if recent_patients %}
                 <div class="space-y-4">
                     {% for patient in recent_patients %}
@@ -64,16 +64,16 @@
                             <p class="font-medium">{{ patient.full_name }}</p>
                             <p class="text-sm text-gray-600">{{ patient.created_at|date:"d.m.Y" }}</p>
                         </div>
-                        <c-button variant="ghost" size="sm">
-                            <a href="{% url 'core:patient_detail' patient.pk %}">Anzeigen</a>
-                        </c-button>
+                        <a href="{% url 'core:patient_detail' patient.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            Anzeigen
+                        </a>
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
                 <p class="text-gray-500">Keine Patienten vorhanden.</p>
             {% endif %}
-        </c-card.content>
-    </c-card>
+        </div>
+    </div>
 </div>
 {% endblock %}

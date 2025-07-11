@@ -1,31 +1,39 @@
 {% load static %}
 {% load cotton %}
 <!doctype html>
-<html lang="de" class="h-full">
+<html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="{% static 'css/output.css' %}">
   <title>{% block title %}PsychDocs{% endblock %}</title>
 </head>
-<body class="h-full bg-muted/40">
-  <div class="container mx-auto px-6 py-4">
-    {% include 'partials/navbar.html' %}
-    
-    {% if messages %}
-      <div class="mb-4">
-        {% for message in messages %}
-          <c-alert class="mb-2" variant="{% if message.tags == 'error' %}destructive{% else %}default{% endif %}">
-            {{ message }}
-          </c-alert>
-        {% endfor %}
-      </div>
-    {% endif %}
-    
-    <main>
-      {% block content %}{% endblock %}
-    </main>
+<body class="bg-gray-50">
+  {% include 'partials/navbar.html' %}
+  {% include 'partials/sidebar.html' %}
+  
+  <div class="p-4 sm:ml-64">
+    <div class="p-4 mt-16 rounded-lg">
+      {% if messages %}
+        <div class="mb-4">
+          {% for message in messages %}
+            <div class="flex items-center p-4 mb-4 text-sm {% if message.tags == 'error' %}text-red-800 border border-red-300 rounded-lg bg-red-50{% else %}text-blue-800 border border-blue-300 rounded-lg bg-blue-50{% endif %}" role="alert">
+              <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+              </svg>
+              <span class="sr-only">Info</span>
+              <div>{{ message }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      
+      <main>
+        {% block content %}{% endblock %}
+      </main>
+    </div>
   </div>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
 </body>
 </html>

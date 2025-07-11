@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from .models import Session, AudioRecording, Transcription, Therapy, Document
 from .forms import SessionForm, AudioUploadForm, TherapyForm, DocumentForm
 from ai.services import get_ai_service
+from ai.prompts import get_available_templates
 import json
 import os
 
@@ -86,7 +87,7 @@ class TherapyDeleteView(DeleteView):
 # Session Views
 class SessionListView(ListView):
     model = Session
-    template_name = 'therapy/session_list.html'
+    template_name = "therapy/session_detail.html"
     context_object_name = 'sessions'
     paginate_by = 20
     
@@ -98,11 +99,28 @@ class SessionDetailView(DetailView):
     model = Session
     template_name = 'therapy/session_detail.html'
     context_object_name = 'session'
+    pk_url_kwarg = "session_pk"
+
+    def get_object(self, queryset=None):
+        patient_pk = self.kwargs.get("patient_pk")
+        therapy_pk = self.kwargs.get("therapy_pk")
+        session_pk = self.kwargs.get("session_pk")
+
+        # Validate the nested relationship
+        session = get_object_or_404(
+            Session, pk=session_pk, therapy__pk=therapy_pk, therapy__patient__pk=patient_pk
+        )
+        return session
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['recordings'] = self.object.audiorecording_set.order_by('-created_at')
         context['upload_form'] = AudioUploadForm()
+        context["session_notes_templates"] = get_available_templates()
+
+        # Add patient and therapy for breadcrumbs
+        context["patient"] = self.object.therapy.patient
+        context["therapy"] = self.object.therapy
         return context
 
 
@@ -113,32 +131,141 @@ class SessionCreateView(CreateView):
     
     def get_initial(self):
         initial = super().get_initial()
-        therapy_id = self.request.GET.get('therapy')
-        if therapy_id:
+        therapy_pk = self.kwargs.get("therapy_pk")
+        if therapy_pk:
             try:
-                therapy = Therapy.objects.get(pk=therapy_id)
+                therapy = Therapy.objects.get(pk=therapy_pk)
                 initial['therapy'] = therapy
             except Therapy.DoesNotExist:
                 pass
         return initial
     
     def get_success_url(self):
-        return reverse_lazy('therapy:session_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy(
+            "therapy:session_detail",
+            kwargs={
+                "patient_pk": self.kwargs.get("patient_pk"),
+                "therapy_pk": self.object.therapy.pk,
+                "session_pk": self.object.pk,
+            },
+        )
     
     def form_valid(self, form):
+        # Set the therapy from URL parameters or find/create one
+        therapy_pk = self.kwargs.get("therapy_pk")
+        patient_pk = self.kwargs.get("patient_pk")
+
+        if therapy_pk:
+            # Full nested URL - use specific therapy
+            therapy = get_object_or_404(Therapy, pk=therapy_pk, patient__pk=patient_pk)
+        else:
+            # Simple URL - find or create active therapy
+            from core.models import Patient
+
+            patient = get_object_or_404(Patient, pk=patient_pk)
+
+            therapy = Therapy.objects.filter(patient=patient, status="active").first()
+            if not therapy:
+                therapy = Therapy.objects.create(
+                    patient=patient,
+                    title=f"Therapie für {patient.full_name}",
+                    description="Automatisch erstellt",
+                    status="active",
+                )
+
+        form.instance.therapy = therapy
+
         messages.success(self.request, 'Sitzung wurde erfolgreich angelegt.')
         return super().form_valid(form)
+
+    def post(self, request, *args, **kwargs):
+        # Handle HTMX requests for session creation from patient detail page
+        if request.headers.get("HX-Request"):
+            patient_id = request.POST.get("patient")
+            if patient_id:
+                try:
+                    from core.models import Patient
+
+                    patient = Patient.objects.get(pk=patient_id)
+
+                    # Find or create an active therapy for this patient
+                    therapy = Therapy.objects.filter(patient=patient, status="active").first()
+
+                    if not therapy:
+                        # Create a new therapy if none exists
+                        therapy = Therapy.objects.create(
+                            patient=patient,
+                            title=f"Therapie für {patient.full_name}",
+                            description="Automatisch erstellt",
+                            status="active",
+                        )
+
+                    # Create the session
+                    session = Session.objects.create(
+                        therapy=therapy,
+                        date=request.POST.get("date"),
+                        duration=int(request.POST.get("duration", 50)),
+                        title=request.POST.get("title", ""),
+                    )
+
+                    # Return success response for HTMX
+                    from django.http import HttpResponse
+
+                    response = HttpResponse()
+                    response["HX-Redirect"] = f"/patients/{patient_id}/"
+                    return response
+
+                except (Patient.DoesNotExist, ValueError) as e:
+                    from django.http import JsonResponse
+
+                    return JsonResponse({"error": "Fehler beim Erstellen der Sitzung"}, status=400)
+
+        # Fall back to regular form handling
+        return super().post(request, *args, **kwargs)
 
 
 class SessionUpdateView(UpdateView):
     model = Session
     form_class = SessionForm
     template_name = 'therapy/session_form.html'
+    pk_url_kwarg = "session_pk"
+
+    def get_object(self, queryset=None):
+        patient_pk = self.kwargs.get("patient_pk")
+        therapy_pk = self.kwargs.get("therapy_pk")
+        session_pk = self.kwargs.get("session_pk")
+
+        # Validate the nested relationship
+        session = get_object_or_404(
+            Session, pk=session_pk, therapy__pk=therapy_pk, therapy__patient__pk=patient_pk
+        )
+        return session
     
     def get_success_url(self):
-        return reverse_lazy('therapy:session_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy(
+            "therapy:session_detail",
+            kwargs={
+                "patient_pk": self.kwargs.get("patient_pk"),
+                "therapy_pk": self.kwargs.get("therapy_pk"),
+                "session_pk": self.object.pk,
+            },
+        )
     
     def form_valid(self, form):
+        # Handle HTMX requests
+        if self.request.headers.get("HX-Request"):
+            # Set the therapy (since it's not in the form)
+            form.instance.therapy = self.object.therapy
+            # Save the form
+            self.object = form.save()
+            messages.success(self.request, "Sitzung wurde erfolgreich aktualisiert.")
+            from django.http import HttpResponse
+
+            # Return empty response with redirect - HTMX will handle the redirect
+            response = HttpResponse("")
+            response["HX-Redirect"] = self.get_success_url()
+            return response
+
         messages.success(self.request, 'Sitzung wurde erfolgreich aktualisiert.')
         return super().form_valid(form)
 
@@ -146,11 +273,41 @@ class SessionUpdateView(UpdateView):
 class SessionDeleteView(DeleteView):
     model = Session
     template_name = 'therapy/session_confirm_delete.html'
-    success_url = reverse_lazy('therapy:session_list')
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'Sitzung wurde erfolgreich gelöscht.')
-        return super().form_valid(form)
+    pk_url_kwarg = "session_pk"
+
+    def get_object(self, queryset=None):
+        patient_pk = self.kwargs.get("patient_pk")
+        therapy_pk = self.kwargs.get("therapy_pk")
+        session_pk = self.kwargs.get("session_pk")
+
+        # Validate the nested relationship
+        session = get_object_or_404(
+            Session, pk=session_pk, therapy__pk=therapy_pk, therapy__patient__pk=patient_pk
+        )
+        return session
+
+    def get_success_url(self):
+        return reverse_lazy("core:patient_detail", kwargs={"pk": self.kwargs.get("patient_pk")})
+
+    def post(self, request, *args, **kwargs):
+        # Handle HTMX requests
+        if request.headers.get("HX-Request"):
+            self.object = self.get_object()
+            success_url = self.get_success_url()
+            self.object.delete()
+            messages.success(request, "Sitzung wurde erfolgreich gelöscht.")
+            from django.http import HttpResponse
+
+            response = HttpResponse()
+            response["HX-Redirect"] = success_url
+            return response
+
+        # Fall back to regular delete handling
+        return self.delete(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Sitzung wurde erfolgreich gelöscht.")
+        return super().delete(request, *args, **kwargs)
 
 
 # Document Views
@@ -219,8 +376,11 @@ class DocumentDeleteView(DeleteView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AudioUploadView(View):
-    def post(self, request, pk):
-        session = get_object_or_404(Session, pk=pk)
+    def post(self, request, patient_pk, therapy_pk, session_pk):
+        # Validate the nested relationship
+        session = get_object_or_404(
+            Session, pk=session_pk, therapy__pk=therapy_pk, therapy__patient__pk=patient_pk
+        )
         
         if 'audio' not in request.FILES:
             return JsonResponse({'error': 'Keine Audio-Datei hochgeladen'}, status=400)
@@ -268,8 +428,13 @@ class AudioUploadView(View):
                 messages.error(request, f'Fehler bei der Transkription: {str(e)}')
         else:
             messages.success(request, 'Audio wurde hochgeladen.')
-        
-        return redirect('therapy:session_detail', pk=session.pk)
+
+        return redirect(
+            "therapy:session_detail",
+            patient_pk=patient_pk,
+            therapy_pk=therapy_pk,
+            session_pk=session_pk,
+        )
 
 
 class TranscribeView(View):
@@ -322,3 +487,86 @@ class AudioDownloadView(View):
         )
         response['Content-Disposition'] = f'attachment; filename="{recording.filename}"'
         return response
+
+
+class SaveTranscriptView(View):
+    def post(self, request, patient_pk, therapy_pk, session_pk):
+        # Validate the nested relationship
+        session = get_object_or_404(
+            Session, pk=session_pk, therapy__pk=therapy_pk, therapy__patient__pk=patient_pk
+        )
+
+        try:
+            data = json.loads(request.body)
+            transcript_text = data.get("transcript", "")
+
+            # Save transcript as session notes for now
+            # In the future, we could create a separate Transcript model
+            session.notes = transcript_text
+            session.save()
+
+            return JsonResponse({"success": True})
+
+        except (json.JSONDecodeError, KeyError) as e:
+            return JsonResponse({"error": "Invalid data"}, status=400)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class GenerateSessionNotesView(View):
+    def post(self, request, patient_pk, therapy_pk, session_pk):
+        # Validate the nested relationship
+        session = get_object_or_404(
+            Session, pk=session_pk, therapy__pk=therapy_pk, therapy__patient__pk=patient_pk
+        )
+
+        try:
+            data = json.loads(request.body)
+            template_key = data.get("template")
+
+            if not template_key:
+                return JsonResponse({"error": "Template ist erforderlich"}, status=400)
+
+            # Get all transcriptions for this session
+            transcriptions = Transcription.objects.filter(recording__session=session)
+
+            if not transcriptions.exists():
+                return JsonResponse(
+                    {"error": "Keine Transkriptionen für diese Sitzung verfügbar"}, status=400
+                )
+
+            # Combine all transcriptions
+            combined_transcript = "\n\n".join([t.text for t in transcriptions])
+
+            # Generate session notes
+            ai_service = get_ai_service()
+            if not ai_service.is_available():
+                return JsonResponse({"error": "OpenAI API Key ist nicht konfiguriert"}, status=400)
+
+            session_notes = ai_service.create_session_notes(combined_transcript, template_key)
+
+            return JsonResponse({"success": True, "session_notes": session_notes})
+
+        except Exception as e:
+            return JsonResponse({"error": f"Fehler bei der Generierung: {str(e)}"}, status=400)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class SaveSessionNotesView(View):
+    def post(self, request, patient_pk, therapy_pk, session_pk):
+        # Validate the nested relationship
+        session = get_object_or_404(
+            Session, pk=session_pk, therapy__pk=therapy_pk, therapy__patient__pk=patient_pk
+        )
+
+        try:
+            data = json.loads(request.body)
+            session_notes = data.get("session_notes", "")
+
+            # Save session notes
+            session.notes = session_notes
+            session.save()
+
+            return JsonResponse({"success": True})
+
+        except Exception as e:
+            return JsonResponse({"error": f"Fehler beim Speichern: {str(e)}"}, status=400)
