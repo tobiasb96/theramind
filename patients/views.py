@@ -1,15 +1,17 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from django_tables2 import RequestConfig
 
 from .models import Patient, Settings
 from .forms import PatientForm, SettingsForm
+from .tables import PatientTable
 from therapy.models import Session
 
 
@@ -20,24 +22,32 @@ class PatientViewSet(viewsets.ViewSet):
 
     def get_queryset(self):
         return Patient.objects.annotate(session_count=Count("therapy__session")).order_by(
-            "-created_at"
+            "last_name", "first_name"
         )
 
     def list(self, request):
         """List all patients"""
         patients = self.get_queryset()
 
-        # Handle pagination
-        paginator = Paginator(patients, 20)
-        page_number = request.GET.get("page")
-        page_obj = paginator.get_page(page_number)
+        # Handle search
+        search_query = request.GET.get("search", "")
+        if search_query:
+            patients = patients.filter(
+                Q(first_name__icontains=search_query)
+                | Q(last_name__icontains=search_query)
+                | Q(email__icontains=search_query)
+            )
+
+        # Create table with proper ordering
+        table = PatientTable(patients)
+        RequestConfig(request, paginate={"per_page": 20}).configure(table)
 
         return render(
             request,
             "patients/patient_list.html",
             {
-                "patients": page_obj,
-                "page_obj": page_obj,
+                "table": table,
+                "search_query": search_query,
                 "form": PatientForm(),
             },
         )

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_cotton",
     "django_tailwind_cli",
+    "django_tables2",
     "core",
     "patients",
     "therapy",
