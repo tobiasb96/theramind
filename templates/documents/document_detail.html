@@ -103,7 +103,7 @@
         </div>
         
         <!-- Document Content Editor -->
-        <form method="post" action="{% url 'documents:document_save_content' document.pk %}">
+        <form method="post" action="{% url 'documents:document_edit' document.pk %}">
             {% csrf_token %}
             <div class="mb-4">
                 {% include 'partials/wysiwyg_editor.html' with editor_id='document-content-editor' input_name='content' content=document.content label='Dokumentinhalt' placeholder='Dokumentinhalt wird hier angezeigt und kann bearbeitet werden...' min_height='500px' %}
@@ -231,10 +231,4 @@
     </div>
 </div>
 
-<script>
-// Utility function to get CSRF token (kept for potential future use)
-function getCsrfToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]').value;
-}
-</script>
 {% endblock %} 
