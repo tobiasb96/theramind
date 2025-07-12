@@ -547,6 +547,13 @@ class GenerateSessionNotesView(View):
             )
 
             # Save the generated notes to the session
+            # Convert plain text to basic HTML formatting for better display
+            if session_notes:
+                # Convert line breaks to <br> tags and paragraphs
+                session_notes = session_notes.replace("\n\n", "</p><p>")
+                session_notes = session_notes.replace("\n", "<br>")
+                session_notes = f"<p>{session_notes}</p>"
+
             session.notes = session_notes
             session.save()
 
@@ -573,6 +580,32 @@ class SaveSessionNotesView(View):
 
         try:
             session_notes = request.POST.get("session_notes", "")
+
+            # Basic HTML sanitization - allow only safe tags
+            import re
+
+            allowed_tags = [
+                "p",
+                "br",
+                "strong",
+                "b",
+                "em",
+                "i",
+                "u",
+                "ul",
+                "ol",
+                "li",
+            ]
+
+            # Remove all tags except allowed ones
+            pattern = re.compile(
+                r"<(?!\/?(?:" + "|".join(allowed_tags) + r")\b)[^>]+>", re.IGNORECASE
+            )
+            session_notes = pattern.sub("", session_notes)
+
+            # Remove all attributes for all tags
+            for tag in allowed_tags:
+                session_notes = re.sub(r"<" + tag + r"[^>]*>", f"<{tag}>", session_notes)
 
             # Save session notes
             session.notes = session_notes

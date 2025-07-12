@@ -17,7 +17,16 @@ oder lasse es weg.
 4. **PROFESSIONALITÄT**: Erstelle strukturierte, professionelle Notizen, die für therapeutische 
   Zwecke geeignet sind.
 
-5. **GENAUIGKEIT**: Beruhe ausschließlich auf den bereitgestellten Informationen und mache keine Annahmen."""
+5. **GENAUIGKEIT**: Beruhe ausschließlich auf den bereitgestellten Informationen und mache keine Annahmen.
+
+6. **HTML-FORMATIERUNG**: Antworte IMMER in HTML-Format mit folgenden erlaubten Tags:
+   - <p> für Absätze
+   - <strong> für fettgedruckten Text
+   - <ul> für ungeordnete Listen
+   - <ol> für geordnete Listen  
+   - <li> für Listenelemente
+   
+   Verwende KEINE anderen HTML-Tags. Strukturiere den Inhalt klar mit Absätzen und Listen."""
 
 # Summary prompt - ultra-short summary for display at top
 SUMMARY_PROMPT = """Erstelle eine ultra-kurze Zusammenfassung (max. 50 Wörter) einer Therapiesitzung.
@@ -39,26 +48,36 @@ SESSION_NOTES_TEMPLATES = {
         "name": "Erstgespräch",
         "prompt": """Erstelle strukturierte Sitzungsnotizen für ein Erstgespräch basierend auf dem Transkript.
 
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
+
 Strukturiere die Notizen wie folgt:
 
-**ANAMNESE**
-- Aktuelle Beschwerden und Symptome
-- Psychosoziale Situation
-- Biografische Informationen
-- Vorbehandlungen
+<p><strong>ANAMNESE</strong></p>
+<ul>
+<li>Aktuelle Beschwerden und Symptome</li>
+<li>Psychosoziale Situation</li>
+<li>Biografische Informationen</li>
+<li>Vorbehandlungen</li>
+</ul>
 
-**DIAGNOSTISCHE EINSCHÄTZUNG**
-- Erste Eindrücke
-- Mögliche Diagnosen
-- Risikofaktoren
+<p><strong>DIAGNOSTISCHE EINSCHÄTZUNG</strong></p>
+<ul>
+<li>Erste Eindrücke</li>
+<li>Mögliche Diagnosen</li>
+<li>Risikofaktoren</li>
+</ul>
 
-**THERAPIEZIELE**
-- Hauptziele des Patienten
-- Behandlungsansatz
+<p><strong>THERAPIEZIELE</strong></p>
+<ul>
+<li>Hauptziele des Patienten</li>
+<li>Behandlungsansatz</li>
+</ul>
 
-**NÄCHSTE SCHRITTE**
-- Empfohlene Maßnahmen
-- Terminvereinbarung
+<p><strong>NÄCHSTE SCHRITTE</strong></p>
+<ul>
+<li>Empfohlene Maßnahmen</li>
+<li>Terminvereinbarung</li>
+</ul>
 
 Transkript der Sitzung:
 {transcript}
@@ -69,27 +88,37 @@ Strukturierte Notizen:""",
         "name": "Verlaufsgespräch",
         "prompt": """Erstelle strukturierte Sitzungsnotizen für ein Verlaufsgespräch basierend auf dem Transkript.
 
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
+
 Strukturiere die Notizen wie folgt:
 
-**VERLAUF SEIT LETZTER SITZUNG**
-- Veränderungen und Fortschritte
-- Schwierigkeiten und Rückschläge
-- Compliance mit Übungen/Aufgaben
+<p><strong>VERLAUF SEIT LETZTER SITZUNG</strong></p>
+<ul>
+<li>Veränderungen und Fortschritte</li>
+<li>Schwierigkeiten und Rückschläge</li>
+<li>Compliance mit Übungen/Aufgaben</li>
+</ul>
 
-**AKTUELLE SITZUNG**
-- Hauptthemen und Inhalte
-- Neue Erkenntnisse
-- Bearbeitete Problembereiche
+<p><strong>AKTUELLE SITZUNG</strong></p>
+<ul>
+<li>Hauptthemen und Inhalte</li>
+<li>Neue Erkenntnisse</li>
+<li>Bearbeitete Problembereiche</li>
+</ul>
 
-**FORTSCHRITT UND VERÄNDERUNGEN**
-- Positive Entwicklungen
-- Verbleibende Herausforderungen
-- Erreichte Ziele
+<p><strong>FORTSCHRITT UND VERÄNDERUNGEN</strong></p>
+<ul>
+<li>Positive Entwicklungen</li>
+<li>Verbleibende Herausforderungen</li>
+<li>Erreichte Ziele</li>
+</ul>
 
-**NÄCHSTE SCHRITTE**
-- Neue Aufgaben/Übungen
-- Fokus für nächste Sitzung
-- Terminvereinbarung
+<p><strong>NÄCHSTE SCHRITTE</strong></p>
+<ul>
+<li>Neue Aufgaben/Übungen</li>
+<li>Fokus für nächste Sitzung</li>
+<li>Terminvereinbarung</li>
+</ul>
 
 Transkript der Sitzung:
 {transcript}
@@ -100,27 +129,37 @@ Strukturierte Notizen:""",
         "name": "Abschlussgespräch",
         "prompt": """Erstelle strukturierte Sitzungsnotizen für ein Abschlussgespräch basierend auf dem Transkript.
 
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
+
 Strukturiere die Notizen wie folgt:
 
-**THERAPIEFORTSCHRITT**
-- Erreichte Ziele
-- Positive Veränderungen
-- Gelernte Strategien
+<p><strong>THERAPIEFORTSCHRITT</strong></p>
+<ul>
+<li>Erreichte Ziele</li>
+<li>Positive Veränderungen</li>
+<li>Gelernte Strategien</li>
+</ul>
 
-**AKTUELLER STATUS**
-- Aktuelle Symptomatik
-- Bewältigungsfähigkeiten
-- Psychosoziale Situation
+<p><strong>AKTUELLER STATUS</strong></p>
+<ul>
+<li>Aktuelle Symptomatik</li>
+<li>Bewältigungsfähigkeiten</li>
+<li>Psychosoziale Situation</li>
+</ul>
 
-**RÜCKFALLPROPHYLAXE**
-- Risikofaktoren
-- Frühwarnzeichen
-- Bewältigungsstrategien
+<p><strong>RÜCKFALLPROPHYLAXE</strong></p>
+<ul>
+<li>Risikofaktoren</li>
+<li>Frühwarnzeichen</li>
+<li>Bewältigungsstrategien</li>
+</ul>
 
-**ABSCHLUSS**
-- Zusammenfassung der Therapie
-- Empfehlungen für die Zukunft
-- Nachsorgeplan
+<p><strong>ABSCHLUSS</strong></p>
+<ul>
+<li>Zusammenfassung der Therapie</li>
+<li>Empfehlungen für die Zukunft</li>
+<li>Nachsorgeplan</li>
+</ul>
 
 Transkript der Sitzung:
 {transcript}

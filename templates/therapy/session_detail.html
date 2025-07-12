@@ -130,7 +130,7 @@
         <form method="post" action="{% url 'therapy:session_save_notes' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}">
             {% csrf_token %}
             <div class="mb-4">
-                <textarea name="session_notes" rows="20" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Sitzungsnotizen werden hier angezeigt und können bearbeitet werden...">{{ session.notes }}</textarea>
+                {% include 'partials/wysiwyg_editor.html' with editor_id='session-notes-editor' input_name='session_notes' content=session.notes label='Sitzungsnotizen' placeholder='Sitzungsnotizen werden hier angezeigt und können bearbeitet werden...' min_height='400px' %}
             </div>
             
             <div class="flex justify-end">
@@ -395,6 +395,8 @@
     </div>
 </div>
 
+
+
 <script>
 // Improved recording and tab logic for modal
 let modalMediaRecorder;
@@ -577,5 +579,7 @@ function transcribeAudio(pk) {
     })
     .catch(() => alert('Fehler bei der Transkription.'));
 }
+
+
 </script>
 {% endblock %}
