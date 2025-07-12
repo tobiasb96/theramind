@@ -3,144 +3,172 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db.models import Count
 from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404
+from django.core.paginator import Paginator
+from rest_framework import viewsets
+from rest_framework.decorators import action
+
 from .models import Patient, Settings
 from .forms import PatientForm, SettingsForm
 from therapy.models import Session
 
 
-class DashboardView(TemplateView):
-    template_name = 'patients/dashboard.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['patient_count'] = Patient.objects.count()
-        context['session_count'] = Session.objects.count()
+class PatientViewSet(viewsets.ViewSet):
+    """
+    A ViewSet for managing patient CRUD operations.
+    """
 
-        # Get recent documents instead of sessions
-        from documents.models import Document
-
-        context["recent_documents"] = Document.objects.select_related("therapy__patient").order_by(
-            "-created_at"
-        )[:5]
-        context['recent_patients'] = Patient.objects.order_by('-created_at')[:5]
-        return context
-
-
-class PatientListView(ListView):
-    model = Patient
-    template_name = 'patients/patient_list.html'
-    context_object_name = 'patients'
-    paginate_by = 20
-    
     def get_queryset(self):
-        return Patient.objects.annotate(session_count=Count('therapy__session')).order_by('-created_at')
+        return Patient.objects.annotate(session_count=Count("therapy__session")).order_by(
+            "-created_at"
+        )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["form"] = PatientForm()
-        return context
+    def list(self, request):
+        """List all patients"""
+        patients = self.get_queryset()
 
+        # Handle pagination
+        paginator = Paginator(patients, 20)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
 
-class PatientDetailView(DetailView):
-    model = Patient
-    template_name = 'patients/patient_detail.html'
-    context_object_name = 'patient'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['therapies'] = self.object.therapy_set.order_by('-start_date')
-        # Get all sessions across all therapies for this patient
-        context['sessions'] = Session.objects.filter(therapy__patient=self.object).order_by('-date')
+        return render(
+            request,
+            "patients/patient_list.html",
+            {
+                "patients": page_obj,
+                "page_obj": page_obj,
+                "form": PatientForm(),
+            },
+        )
+
+    def retrieve(self, request, pk=None):
+        """Retrieve a specific patient"""
+        patient = get_object_or_404(Patient, pk=pk)
+
+        # Get related data
+        therapies = patient.therapy_set.order_by("-start_date")
+        sessions = Session.objects.filter(therapy__patient=patient).order_by("-date")
+
         # Get all documents across all therapies for this patient
         from documents.models import Document
         from documents.prompts import get_available_document_types
 
-        context["documents"] = Document.objects.filter(therapy__patient=self.object).order_by(
-            "-created_at"
+        documents = Document.objects.filter(therapy__patient=patient).order_by("-created_at")
+
+        return render(
+            request,
+            "patients/patient_detail.html",
+            {
+                "patient": patient,
+                "therapies": therapies,
+                "sessions": sessions,
+                "documents": documents,
+                "form": PatientForm(instance=patient),
+                "document_types": get_available_document_types(),
+            },
         )
-        context["form"] = PatientForm(instance=self.object)
-        context["document_types"] = get_available_document_types()
-        return context
 
+    def create(self, request):
+        """Create a new patient"""
+        if request.method == "GET":
+            form = PatientForm()
+            return render(request, "patients/patient_form.html", {"form": form})
 
-class PatientCreateView(CreateView):
-    model = Patient
-    form_class = PatientForm
-    template_name = 'patients/patient_form.html'
-    success_url = reverse_lazy('patients:patient_list')
-    
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        messages.success(self.request, 'Patient wurde erfolgreich angelegt.')
+        elif request.method == "POST":
+            form = PatientForm(request.POST)
+            if form.is_valid():
+                patient = form.save()
+                messages.success(request, "Patient wurde erfolgreich angelegt.")
 
-        # Handle HTMX requests
-        if self.request.headers.get("HX-Request"):
-            response = HttpResponse()
-            response["HX-Redirect"] = self.get_success_url()
-            return response
+                # Handle HTMX requests
+                if request.headers.get("HX-Request"):
+                    response = HttpResponse()
+                    response["HX-Redirect"] = reverse_lazy("patients:patient_list")
+                    return response
 
-        return response
+                return HttpResponse(
+                    status=302, headers={"Location": reverse_lazy("patients:patient_list")}
+                )
 
+            return render(request, "patients/patient_form.html", {"form": form})
 
-class PatientUpdateView(UpdateView):
-    model = Patient
-    form_class = PatientForm
-    template_name = 'patients/patient_form.html'
-    
-    def get_success_url(self):
-        return reverse_lazy('patients:patient_detail', kwargs={'pk': self.object.pk})
-    
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        messages.success(self.request, 'Patient wurde erfolgreich aktualisiert.')
+    def update(self, request, pk=None):
+        """Update an existing patient"""
+        patient = get_object_or_404(Patient, pk=pk)
 
-        # Handle HTMX requests
-        if self.request.headers.get("HX-Request"):
-            response = HttpResponse()
-            response["HX-Redirect"] = self.get_success_url()
-            return response
+        if request.method == "GET":
+            form = PatientForm(instance=patient)
+            return render(request, "patients/patient_form.html", {"form": form, "patient": patient})
 
-        return response
+        elif request.method == "POST":
+            form = PatientForm(request.POST, instance=patient)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Patient wurde erfolgreich aktualisiert.")
 
+                # Handle HTMX requests
+                if request.headers.get("HX-Request"):
+                    response = HttpResponse()
+                    response["HX-Redirect"] = reverse_lazy(
+                        "patients:patient_detail", kwargs={"pk": patient.pk}
+                    )
+                    return response
 
-class PatientDeleteView(DeleteView):
-    model = Patient
-    template_name = 'patients/patient_confirm_delete.html'
-    success_url = reverse_lazy('patients:patient_list')
-    
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        messages.success(self.request, 'Patient wurde erfolgreich gelöscht.')
+                return HttpResponse(
+                    status=302,
+                    headers={
+                        "Location": reverse_lazy(
+                            "patients:patient_detail", kwargs={"pk": patient.pk}
+                        )
+                    },
+                )
 
-        # Handle HTMX requests
-        if self.request.headers.get("HX-Request"):
-            response = HttpResponse()
-            response["HX-Redirect"] = self.get_success_url()
-            return response
+            return render(request, "patients/patient_form.html", {"form": form, "patient": patient})
 
-        return response
+    def destroy(self, request, pk=None):
+        """Delete a patient"""
+        patient = get_object_or_404(Patient, pk=pk)
+
+        if request.method == "GET":
+            return render(request, "patients/patient_confirm_delete.html", {"patient": patient})
+
+        elif request.method == "POST":
+            patient.delete()
+            messages.success(request, "Patient wurde erfolgreich gelöscht.")
+
+            # Handle HTMX requests
+            if request.headers.get("HX-Request"):
+                response = HttpResponse()
+                response["HX-Redirect"] = reverse_lazy("patients:patient_list")
+                return response
+
+            return HttpResponse(
+                status=302, headers={"Location": reverse_lazy("patients:patient_list")}
+            )
 
 
 class SettingsView(UpdateView):
     model = Settings
     form_class = SettingsForm
-    template_name = 'patients/settings.html'
-    success_url = reverse_lazy('patients:settings')
-    
+    template_name = "patients/settings.html"
+    success_url = reverse_lazy("patients:settings")
+
     def get_object(self):
         return Settings.get_settings()
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['patient_count'] = Patient.objects.count()
-        context['session_count'] = Session.objects.count()
+        context["patient_count"] = Patient.objects.count()
+        context["session_count"] = Session.objects.count()
         return context
-    
+
     def form_valid(self, form):
         response = super().form_valid(form)
         # Reinitialize AI service after settings change
         from transcriptions.services import get_ai_service
+
         ai_service = get_ai_service()
         ai_service.reinitialize()
-        messages.success(self.request, 'Einstellungen wurden erfolgreich gespeichert.')
+        messages.success(self.request, "Einstellungen wurden erfolgreich gespeichert.")
         return response

@@ -1,84 +1,89 @@
 from django.urls import path
-from . import views
+from .views import TherapyViewSet, SessionViewSet, AudioViewSet
 
 app_name = 'therapy'
+
+# Initialize ViewSets
+therapy_viewset = TherapyViewSet()
+session_viewset = SessionViewSet()
+audio_viewset = AudioViewSet()
 
 urlpatterns = [
     # Patient-nested therapy URLs
     path(
         "patients/<uuid:patient_pk>/therapies/",
-        views.TherapyListView.as_view(),
+        therapy_viewset.list,
         name="therapy_list",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/create/",
-        views.TherapyCreateView.as_view(),
+        therapy_viewset.create,
         name="therapy_create",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/<int:pk>/",
-        views.TherapyDetailView.as_view(),
+        therapy_viewset.retrieve,
         name="therapy_detail",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/<int:pk>/edit/",
-        views.TherapyUpdateView.as_view(),
+        therapy_viewset.update,
         name="therapy_edit",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/<int:pk>/delete/",
-        views.TherapyDeleteView.as_view(),
+        therapy_viewset.destroy,
         name="therapy_delete",
     ),
     # Patient-nested session URLs
     path(
         "patients/<uuid:patient_pk>/sessions/create/",
-        views.SessionCreateView.as_view(),
+        session_viewset.create,
         name="session_create_simple",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/sessions/create/",
-        views.SessionCreateView.as_view(),
+        session_viewset.create,
         name="session_create",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/sessions/<int:session_pk>/",
-        views.SessionDetailView.as_view(),
+        session_viewset.retrieve,
         name="session_detail",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/sessions/<int:session_pk>/edit/",
-        views.SessionUpdateView.as_view(),
+        session_viewset.update,
         name="session_edit",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/sessions/<int:session_pk>/delete/",
-        views.SessionDeleteView.as_view(),
+        session_viewset.destroy,
         name="session_delete",
     ),
+    # Session custom actions
     path(
         "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/sessions/<int:session_pk>/upload-audio/",
-        views.AudioUploadView.as_view(),
+        audio_viewset.upload,
         name="session_audio_upload",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/sessions/<int:session_pk>/save-transcript/",
-        views.SaveTranscriptView.as_view(),
+        session_viewset.save_transcript,
         name="session_save_transcript",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/sessions/<int:session_pk>/generate-notes/",
-        views.GenerateSessionNotesView.as_view(),
+        session_viewset.generate_notes,
         name="session_generate_notes",
     ),
     path(
         "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/sessions/<int:session_pk>/save-notes/",
-        views.SaveSessionNotesView.as_view(),
+        session_viewset.save_notes,
         name="session_save_notes",
     ),
-
     # Audio processing URLs
-    path("recordings/<int:pk>/transcribe/", views.TranscribeView.as_view(), name="transcribe"),
-    path("recordings/<int:pk>/download/", views.AudioDownloadView.as_view(), name="audio_download"),
-    path("recordings/<int:pk>/delete/", views.AudioDeleteView.as_view(), name="audio_delete"),
+    path("recordings/<int:pk>/transcribe/", audio_viewset.transcribe, name="transcribe"),
+    path("recordings/<int:pk>/download/", audio_viewset.download, name="audio_download"),
+    path("recordings/<int:pk>/delete/", audio_viewset.delete, name="audio_delete"),
 ]

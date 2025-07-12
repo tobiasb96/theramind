@@ -14,4 +14,5 @@ dependencies = [
     "pillow>=10.0.0",
     "python-dotenv>=1.0.0",
     "django-tailwind-cli>=4.2.4",
+    "djangorestframework>=3.16.0",
 ]

@@ -1,14 +1,16 @@
 from django.urls import path
-from . import views
+from .views import PatientViewSet, SettingsView
 
 app_name = 'patients'
 
+# Initialize ViewSet
+patient_viewset = PatientViewSet()
+
 urlpatterns = [
-    path('', views.DashboardView.as_view(), name='dashboard'),
-    path('patients/', views.PatientListView.as_view(), name='patient_list'),
-    path('patients/create/', views.PatientCreateView.as_view(), name='patient_create'),
-    path('patients/<uuid:pk>/', views.PatientDetailView.as_view(), name='patient_detail'),
-    path('patients/<uuid:pk>/edit/', views.PatientUpdateView.as_view(), name='patient_edit'),
-    path('patients/<uuid:pk>/delete/', views.PatientDeleteView.as_view(), name='patient_delete'),
-    path('settings/', views.SettingsView.as_view(), name='settings'),
+    path("patients/", patient_viewset.list, name="patient_list"),
+    path("patients/create/", patient_viewset.create, name="patient_create"),
+    path("patients/<uuid:pk>/", patient_viewset.retrieve, name="patient_detail"),
+    path("patients/<uuid:pk>/edit/", patient_viewset.update, name="patient_edit"),
+    path("patients/<uuid:pk>/delete/", patient_viewset.destroy, name="patient_delete"),
+    path("settings/", SettingsView.as_view(), name="settings"),
 ]
