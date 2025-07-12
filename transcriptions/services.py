@@ -1,5 +1,10 @@
 from core.connector import get_llm_connector
-from transcriptions.prompts import get_session_notes_prompt, SYSTEM_PROMPT
+from transcriptions.prompts import (
+    SUMMARY_PROMPT,
+    SYSTEM_PROMPT_SUMMARY,
+    get_session_notes_prompt,
+    SYSTEM_PROMPT,
+)
 
 
 class TranscriptionService:
@@ -20,11 +25,12 @@ class TranscriptionService:
         """
         return self.connector.transcribe(file_path)
 
-    def summarize(self, text: str) -> str:
+    def summarize_session_notes(self, session_notes: str) -> str:
         """
         Create ultra-short summary using OpenAI GPT
         """
-        return self.connector.summarize(text)
+        prompt = SUMMARY_PROMPT.format(session_notes=session_notes)
+        return self.connector.generate_text(SYSTEM_PROMPT_SUMMARY, prompt, max_tokens=100)
 
     def create_session_notes(self, transcript_text: str, template_key: str) -> str:
         """

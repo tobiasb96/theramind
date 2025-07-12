@@ -1,4 +1,7 @@
 # Centralized System Prompt for Privacy and Accuracy
+SYSTEM_PROMPT_SUMMARY = """Du bist ein erfahrener Psychotherapeut und Assistent für Psychotherapeuten.
+"""
+
 SYSTEM_PROMPT = """Du bist ein erfahrener Psychotherapeut und Assistent für Psychotherapeuten. 
 
 WICHTIGE RICHTLINIEN:
@@ -38,7 +41,7 @@ Die Zusammenfassung sollte enthalten:
 
 Fasse folgende Therapiesitzung zusammen:
 
-{transcript}
+{session_notes}
 
 Zusammenfassung:"""
 

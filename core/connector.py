@@ -63,13 +63,15 @@ class LLMConnector:
             
         except Exception as e:
             raise Exception(f"Fehler bei der Transkription: {str(e)}")
-    
-    def generate_text(self, 
-                     system_prompt: str, 
-                     user_prompt: str, 
-                     max_tokens: int = 1000, 
-                     temperature: float = 0.3,
-                     model: str = "gpt-4o-mini") -> str:
+
+    def generate_text(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int = 1000,
+        temperature: float = 0.3,
+        model: str = "gpt-4.1-nano",
+    ) -> str:
         """
         Generate text using OpenAI GPT models
         
@@ -106,15 +108,6 @@ class LLMConnector:
             
         except Exception as e:
             raise Exception(f"Fehler bei der Textgenerierung: {str(e)}")
-    
-    def summarize(self, text: str, max_tokens: int = 150) -> str:
-        """
-        Create a summary of the given text
-        """
-        from ..transcriptions.prompts import SUMMARY_PROMPT, SYSTEM_PROMPT
-        
-        prompt = SUMMARY_PROMPT.format(transcript=text)
-        return self.generate_text(SYSTEM_PROMPT, prompt, max_tokens=max_tokens)
 
 
 # Singleton instance - lazy initialization

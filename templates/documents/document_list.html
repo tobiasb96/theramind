@@ -16,7 +16,7 @@
 
     <!-- Documents List -->
     {% if documents %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {% for document in documents %}
         <a href="{% url 'documents:document_detail' document.pk %}" class="block bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
             <div class="p-6">

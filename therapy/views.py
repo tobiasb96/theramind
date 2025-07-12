@@ -11,6 +11,9 @@ from transcriptions.services import get_transcription_service
 from transcriptions.prompts import get_available_templates
 import json
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Therapy Views
@@ -546,13 +549,13 @@ class GenerateSessionNotesView(View):
                 combined_transcript, template_key
             )
 
-            # Save the generated notes to the session
-            # Convert plain text to basic HTML formatting for better display
             if session_notes:
-                # Convert line breaks to <br> tags and paragraphs
-                session_notes = session_notes.replace("\n\n", "</p><p>")
-                session_notes = session_notes.replace("\n", "<br>")
-                session_notes = f"<p>{session_notes}</p>"
+                try:
+                    summary = transcription_service.summarize_session_notes(session_notes)
+                    session.summary = summary
+                except Exception as e:
+                    logger.error(f"Fehler bei der Zusammenfassung: {str(e)}")
+                    pass
 
             session.notes = session_notes
             session.save()
