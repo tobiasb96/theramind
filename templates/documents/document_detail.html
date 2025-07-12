@@ -71,13 +71,13 @@
                             </button>
                         </li>
                         <li>
-                            <button onclick="downloadDocument()"
+                            <a href="{% url 'documents:document_export' document.pk %}"
                                class="flex items-center text-green-700 px-4 py-2 hover:bg-gray-100 w-full text-left cursor-pointer">
                                 <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                                 </svg>
                                 Herunterladen
-                            </button>
+                            </a>
                         </li>
                         <li>
                             <button data-modal-target="delete-document-modal" data-modal-toggle="delete-document-modal"
@@ -100,17 +100,21 @@
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-semibold text-gray-900">Dokumentinhalt</h2>
-            <div class="flex space-x-2">
-                <button onclick="saveDocumentContent()" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                    Inhalt speichern
-                </button>
-            </div>
         </div>
         
         <!-- Document Content Editor -->
-        <div class="mb-4">
-            <textarea id="document-content-editor" rows="25" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Dokumentinhalt wird hier angezeigt und kann bearbeitet werden...">{{ document.content }}</textarea>
-        </div>
+        <form method="post" action="{% url 'documents:document_save_content' document.pk %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                {% include 'partials/wysiwyg_editor.html' with editor_id='document-content-editor' input_name='content' content=document.content label='Dokumentinhalt' placeholder='Dokumentinhalt wird hier angezeigt und kann bearbeitet werden...' min_height='500px' %}
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                    Speichern
+                </button>
+            </div>
+        </form>
     </div>
 
     <!-- Associated Sessions -->
@@ -228,57 +232,7 @@
 </div>
 
 <script>
-// Document Content Saving
-function saveDocumentContent() {
-    const documentContent = document.getElementById('document-content-editor').value;
-    
-    fetch("{% url 'documents:document_save_content' document.pk %}", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
-        },
-        body: JSON.stringify({
-            content: documentContent
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Dokumentinhalt gespeichert!');
-        } else {
-            alert('Fehler beim Speichern: ' + data.error);
-        }
-    })
-    .catch(error => {
-        alert('Fehler: ' + error.message);
-    });
-}
-
-// Document Download
-function downloadDocument() {
-    const content = document.getElementById('document-content-editor').value;
-    const title = "{{ document.title }}";
-    const patient = "{{ document.patient.full_name }}";
-    const documentType = "{{ document.get_document_type_display }}";
-    const date = "{{ document.created_at|date:'d.m.Y' }}";
-    
-    // Create document content
-    const documentText = `${title}\n\nPatient: ${patient}\nTyp: ${documentType}\nDatum: ${date}\n\n${content}`;
-    
-    // Create and download file
-    const blob = new Blob([documentText], { type: 'text/plain;charset=utf-8' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-}
-
-// Utility function to get CSRF token
+// Utility function to get CSRF token (kept for potential future use)
 function getCsrfToken() {
     return document.querySelector('[name=csrfmiddlewaretoken]').value;
 }

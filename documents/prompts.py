@@ -22,13 +22,24 @@ oder lasse es weg.
 5. **GENAUIGKEIT**: Beruhe ausschließlich auf den bereitgestellten Sitzungsdaten und mache keine Annahmen.
 
 6. **STRUKTURIERTE DOKUMENTE**: Erstelle klar strukturierte, medizinisch fundierte Dokumente 
-  mit entsprechenden Überschriften und Abschnitten."""
+  mit entsprechenden Überschriften und Abschnitten.
+
+7. **HTML-FORMATIERUNG**: Antworte IMMER in HTML-Format mit folgenden erlaubten Tags:
+   - <p> für Absätze
+   - <strong> für fettgedruckten Text
+   - <ul> für ungeordnete Listen
+   - <ol> für geordnete Listen  
+   - <li> für Listenelemente
+   
+   Verwende KEINE anderen HTML-Tags. Strukturiere den Inhalt klar mit Absätzen und Listen."""
 
 # Document type prompts
 DOCUMENT_PROMPTS = {
     "abschlussbericht": {
         "name": "Abschlussbericht",
         "prompt": """Erstelle einen professionellen Abschlussbericht für eine Psychotherapie.
+
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
 **PATIENTENINFORMATIONEN**
 - Alter: {patient_info[age]}
@@ -47,45 +58,60 @@ DOCUMENT_PROMPTS = {
 
 **ABSCHLUSSBERICHT**
 
-1. **EINLEITUNG**
-   - Kurze Darstellung der Ausgangssituation
-   - Anlass der Therapie
+<p><strong>1. EINLEITUNG</strong></p>
+<ul>
+<li>Kurze Darstellung der Ausgangssituation</li>
+<li>Anlass der Therapie</li>
+</ul>
 
-2. **DIAGNOSTISCHE EINSCHÄTZUNG**
-   - Hauptdiagnose
-   - Differentialdiagnosen
-   - Psychosoziale Faktoren
+<p><strong>2. DIAGNOSTISCHE EINSCHÄTZUNG</strong></p>
+<ul>
+<li>Hauptdiagnose</li>
+<li>Differentialdiagnosen</li>
+<li>Psychosoziale Faktoren</li>
+</ul>
 
-3. **THERAPIEVERLAUF**
-   - Wichtige Stationen der Therapie
-   - Bearbeitete Themen
-   - Krisen und deren Bewältigung
+<p><strong>3. THERAPIEVERLAUF</strong></p>
+<ul>
+<li>Wichtige Stationen der Therapie</li>
+<li>Bearbeitete Themen</li>
+<li>Krisen und deren Bewältigung</li>
+</ul>
 
-4. **ERREICHTE ZIELE**
-   - Positive Veränderungen
-   - Erreichte Therapieziele
-   - Neue Bewältigungsstrategien
+<p><strong>4. ERREICHTE ZIELE</strong></p>
+<ul>
+<li>Positive Veränderungen</li>
+<li>Erreichte Therapieziele</li>
+<li>Neue Bewältigungsstrategien</li>
+</ul>
 
-5. **AKTUELLER STATUS**
-   - Aktuelle Symptomatik
-   - Psychosoziale Situation
-   - Bewältigungsfähigkeiten
+<p><strong>5. AKTUELLER STATUS</strong></p>
+<ul>
+<li>Aktuelle Symptomatik</li>
+<li>Psychosoziale Situation</li>
+<li>Bewältigungsfähigkeiten</li>
+</ul>
 
-6. **PROGNOSE UND EMPFEHLUNGEN**
-   - Einschätzung der weiteren Entwicklung
-   - Empfehlungen für die Zukunft
-   - Nachsorgeplan
+<p><strong>6. PROGNOSE UND EMPFEHLUNGEN</strong></p>
+<ul>
+<li>Einschätzung der weiteren Entwicklung</li>
+<li>Empfehlungen für die Zukunft</li>
+<li>Nachsorgeplan</li>
+</ul>
 
-7. **ABSCHLUSS**
-   - Zusammenfassung der Therapie
-   - Dank an den Patienten für die Zusammenarbeit
+<p><strong>7. ABSCHLUSS</strong></p>
+<ul>
+<li>Zusammenfassung der Therapie</li>
+<li>Dank an den Patienten für die Zusammenarbeit</li>
+</ul>
 
 Der Bericht sollte professionell, strukturiert und für medizinische Zwecke geeignet sein.""",
     },
-    
     "verlaufsbericht": {
         "name": "Verlaufsbericht",
         "prompt": """Erstelle einen Verlaufsbericht für eine laufende Psychotherapie.
+
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
 **PATIENTENINFORMATIONEN**
 - Alter: {patient_info[age]}
@@ -104,41 +130,54 @@ Der Bericht sollte professionell, strukturiert und für medizinische Zwecke geei
 
 **VERLAUFSBERICHT**
 
-1. **AKTUELLE SITUATION**
-   - Aktuelle Beschwerden und Symptome
-   - Psychosoziale Situation
-   - Belastungsfaktoren
+<p><strong>1. AKTUELLE SITUATION</strong></p>
+<ul>
+<li>Aktuelle Beschwerden und Symptome</li>
+<li>Psychosoziale Situation</li>
+<li>Belastungsfaktoren</li>
+</ul>
 
-2. **THERAPIEVERLAUF BISLANG**
-   - Wichtige Stationen der Therapie
-   - Bearbeitete Themen
-   - Erreichte Fortschritte
+<p><strong>2. THERAPIEVERLAUF BISLANG</strong></p>
+<ul>
+<li>Wichtige Stationen der Therapie</li>
+<li>Bearbeitete Themen</li>
+<li>Erreichte Fortschritte</li>
+</ul>
 
-3. **AKTUELLE SITZUNGEN**
-   - Fokus der letzten Sitzungen
-   - Neue Erkenntnisse
-   - Schwierigkeiten und Rückschläge
+<p><strong>3. AKTUELLE SITZUNGEN</strong></p>
+<ul>
+<li>Fokus der letzten Sitzungen</li>
+<li>Neue Erkenntnisse</li>
+<li>Schwierigkeiten und Rückschläge</li>
+</ul>
 
-4. **FORTSCHRITT UND VERÄNDERUNGEN**
-   - Positive Entwicklungen
-   - Verbleibende Herausforderungen
-   - Neue Bewältigungsstrategien
+<p><strong>4. FORTSCHRITT UND VERÄNDERUNGEN</strong></p>
+<ul>
+<li>Positive Entwicklungen</li>
+<li>Verbleibende Herausforderungen</li>
+<li>Neue Bewältigungsstrategien</li>
+</ul>
 
-5. **NÄCHSTE SCHRITTE**
-   - Geplante Interventionen
-   - Fokus für kommende Sitzungen
-   - Ziele für die nächste Phase
+<p><strong>5. NÄCHSTE SCHRITTE</strong></p>
+<ul>
+<li>Geplante Interventionen</li>
+<li>Fokus für kommende Sitzungen</li>
+<li>Ziele für die nächste Phase</li>
+</ul>
 
-6. **PROGNOSE**
-   - Einschätzung der weiteren Entwicklung
-   - Erwartete Dauer der Therapie
+<p><strong>6. PROGNOSE</strong></p>
+<ul>
+<li>Einschätzung der weiteren Entwicklung</li>
+<li>Erwartete Dauer der Therapie</li>
+</ul>
 
 Der Bericht sollte den aktuellen Stand der Therapie widerspiegeln und für die weitere Behandlung relevant sein.""",
     },
-    
     "befundbericht": {
         "name": "Befundbericht",
         "prompt": """Erstelle einen Befundbericht für eine psychotherapeutische Untersuchung.
+
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
 **PATIENTENINFORMATIONEN**
 - Alter: {patient_info[age]}
@@ -155,43 +194,54 @@ Der Bericht sollte den aktuellen Stand der Therapie widerspiegeln und für die w
 
 **BEFUNDBERICHT**
 
-1. **ANAMNESE**
-   - Aktuelle Beschwerden
-   - Psychiatrische Vorgeschichte
-   - Somatische Vorgeschichte
-   - Familienanamnese
-   - Sozialanamnese
+<p><strong>1. ANAMNESE</strong></p>
+<ul>
+<li>Aktuelle Beschwerden</li>
+<li>Psychiatrische Vorgeschichte</li>
+<li>Somatische Vorgeschichte</li>
+<li>Familienanamnese</li>
+<li>Sozialanamnese</li>
+</ul>
 
-2. **PSYCHISCHER BEFUND**
-   - Bewusstsein und Orientierung
-   - Stimmung und Affekt
-   - Denken und Wahrnehmung
-   - Antrieb und Psychomotorik
-   - Kognitive Funktionen
+<p><strong>2. PSYCHISCHER BEFUND</strong></p>
+<ul>
+<li>Bewusstsein und Orientierung</li>
+<li>Stimmung und Affekt</li>
+<li>Denken und Wahrnehmung</li>
+<li>Antrieb und Psychomotorik</li>
+<li>Kognitive Funktionen</li>
+</ul>
 
-3. **DIAGNOSTISCHE EINSCHÄTZUNG**
-   - Hauptdiagnose nach ICD-10
-   - Differentialdiagnosen
-   - Schweregrad
-   - Psychosoziale Faktoren
+<p><strong>3. DIAGNOSTISCHE EINSCHÄTZUNG</strong></p>
+<ul>
+<li>Hauptdiagnose nach ICD-10</li>
+<li>Differentialdiagnosen</li>
+<li>Schweregrad</li>
+<li>Psychosoziale Faktoren</li>
+</ul>
 
-4. **THERAPIEEMPFEHLUNG**
-   - Indikation für Psychotherapie
-   - Empfohlene Therapieform
-   - Therapieziele
-   - Erwartete Dauer
+<p><strong>4. THERAPIEEMPFEHLUNG</strong></p>
+<ul>
+<li>Indikation für Psychotherapie</li>
+<li>Empfohlene Therapieform</li>
+<li>Therapieziele</li>
+<li>Erwartete Dauer</li>
+</ul>
 
-5. **PROGNOSE**
-   - Einschätzung der Behandelbarkeit
-   - Erwartete Entwicklung
-   - Risikofaktoren
+<p><strong>5. PROGNOSE</strong></p>
+<ul>
+<li>Einschätzung der Behandelbarkeit</li>
+<li>Erwartete Entwicklung</li>
+<li>Risikofaktoren</li>
+</ul>
 
 Der Befundbericht sollte medizinisch fundiert und für weitere Behandler verständlich sein.""",
     },
-    
     "indikationsstellung": {
         "name": "Indikationsstellung",
         "prompt": """Erstelle eine Indikationsstellung für eine Psychotherapie.
+
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
 **PATIENTENINFORMATIONEN**
 - Alter: {patient_info[age]}
@@ -208,48 +258,61 @@ Der Befundbericht sollte medizinisch fundiert und für weitere Behandler verstä
 
 **INDIKATIONSSTELLUNG**
 
-1. **AKTUELLE PROBLEMATIK**
-   - Hauptbeschwerden
-   - Symptomatik
-   - Leidensdruck
-   - Funktionsbeeinträchtigung
+<p><strong>1. AKTUELLE PROBLEMATIK</strong></p>
+<ul>
+<li>Hauptbeschwerden</li>
+<li>Symptomatik</li>
+<li>Leidensdruck</li>
+<li>Funktionsbeeinträchtigung</li>
+</ul>
 
-2. **DIAGNOSTISCHE EINSCHÄTZUNG**
-   - Verdachtsdiagnose
-   - Differentialdiagnosen
-   - Komorbiditäten
-   - Psychosoziale Faktoren
+<p><strong>2. DIAGNOSTISCHE EINSCHÄTZUNG</strong></p>
+<ul>
+<li>Verdachtsdiagnose</li>
+<li>Differentialdiagnosen</li>
+<li>Komorbiditäten</li>
+<li>Psychosoziale Faktoren</li>
+</ul>
 
-3. **INDIKATION FÜR PSYCHOTHERAPIE**
-   - Begründung der Indikation
-   - Ausschlusskriterien
-   - Kontraindikationen
-   - Risiko-Nutzen-Abwägung
+<p><strong>3. INDIKATION FÜR PSYCHOTHERAPIE</strong></p>
+<ul>
+<li>Begründung der Indikation</li>
+<li>Ausschlusskriterien</li>
+<li>Kontraindikationen</li>
+<li>Risiko-Nutzen-Abwägung</li>
+</ul>
 
-4. **THERAPIEEMPFEHLUNG**
-   - Empfohlene Therapieform
-   - Begründung der Wahl
-   - Alternative Behandlungsoptionen
-   - Setting-Empfehlung
+<p><strong>4. THERAPIEEMPFEHLUNG</strong></p>
+<ul>
+<li>Empfohlene Therapieform</li>
+<li>Begründung der Wahl</li>
+<li>Alternative Behandlungsoptionen</li>
+<li>Setting-Empfehlung</li>
+</ul>
 
-5. **THERAPIEZIELE**
-   - Primäre Ziele
-   - Sekundäre Ziele
-   - Realistische Erwartungen
-   - Erfolgskriterien
+<p><strong>5. THERAPIEZIELE</strong></p>
+<ul>
+<li>Primäre Ziele</li>
+<li>Sekundäre Ziele</li>
+<li>Realistische Erwartungen</li>
+<li>Erfolgskriterien</li>
+</ul>
 
-6. **PROGNOSE**
-   - Behandelbarkeit
-   - Erwartete Dauer
-   - Erfolgsaussichten
-   - Risikofaktoren
+<p><strong>6. PROGNOSE</strong></p>
+<ul>
+<li>Behandelbarkeit</li>
+<li>Erwartete Dauer</li>
+<li>Erfolgsaussichten</li>
+<li>Risikofaktoren</li>
+</ul>
 
 Die Indikationsstellung sollte medizinisch begründet und für Kostenträger nachvollziehbar sein.""",
     },
-    
     "anamnese": {
         "name": "Anamnese",
         "prompt": """Erstelle eine strukturierte Anamnese für eine psychotherapeutische Behandlung.
+
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
 **PATIENTENINFORMATIONEN**
 - Alter: {patient_info[age]}
@@ -262,56 +325,71 @@ Die Indikationsstellung sollte medizinisch begründet und für Kostenträger nac
 
 **ANAMNESE**
 
-1. **AKTUELLE BESCHWERDEN**
-   - Hauptbeschwerden
-   - Beginn und Verlauf
-   - Auslöser und aufrechterhaltende Faktoren
-   - Schweregrad und Beeinträchtigung
+<p><strong>1. AKTUELLE BESCHWERDEN</strong></p>
+<ul>
+<li>Hauptbeschwerden</li>
+<li>Beginn und Verlauf</li>
+<li>Auslöser und aufrechterhaltende Faktoren</li>
+<li>Schweregrad und Beeinträchtigung</li>
+</ul>
 
-2. **PSYCHIATRISCHE VORGESCHICHTE**
-   - Frühere psychische Erkrankungen
-   - Vorbehandlungen
-   - Medikamentöse Behandlungen
-   - Stationäre Aufenthalte
+<p><strong>2. PSYCHIATRISCHE VORGESCHICHTE</strong></p>
+<ul>
+<li>Frühere psychische Erkrankungen</li>
+<li>Vorbehandlungen</li>
+<li>Medikamentöse Behandlungen</li>
+<li>Stationäre Aufenthalte</li>
+</ul>
 
-3. **SOMATISCHE VORGESCHICHTE**
-   - Relevante körperliche Erkrankungen
-   - Operationen
-   - Medikamente
-   - Allergien
+<p><strong>3. SOMATISCHE VORGESCHICHTE</strong></p>
+<ul>
+<li>Relevante körperliche Erkrankungen</li>
+<li>Operationen</li>
+<li>Medikamente</li>
+<li>Allergien</li>
+</ul>
 
-4. **FAMILIENANAMNESE**
-   - Psychische Erkrankungen in der Familie
-   - Genetische Belastungen
-   - Familiäre Konflikte
-   - Unterstützende Faktoren
+<p><strong>4. FAMILIENANAMNESE</strong></p>
+<ul>
+<li>Psychische Erkrankungen in der Familie</li>
+<li>Genetische Belastungen</li>
+<li>Familiäre Konflikte</li>
+<li>Unterstützende Faktoren</li>
+</ul>
 
-5. **SOZIALANAMNESE**
-   - Familienverhältnisse
-   - Partnerschaft
-   - Berufliche Situation
-   - Soziale Kontakte
-   - Finanzielle Situation
+<p><strong>5. SOZIALANAMNESE</strong></p>
+<ul>
+<li>Familienverhältnisse</li>
+<li>Partnerschaft</li>
+<li>Berufliche Situation</li>
+<li>Soziale Kontakte</li>
+<li>Finanzielle Situation</li>
+</ul>
 
-6. **ENTWICKLUNGSANAMNESE**
-   - Schwangerschaft und Geburt
-   - Frühe Entwicklung
-   - Schulische Entwicklung
-   - Berufliche Entwicklung
-   - Lebenskrisen
+<p><strong>6. ENTWICKLUNGSANAMNESE</strong></p>
+<ul>
+<li>Schwangerschaft und Geburt</li>
+<li>Frühe Entwicklung</li>
+<li>Schulische Entwicklung</li>
+<li>Berufliche Entwicklung</li>
+<li>Lebenskrisen</li>
+</ul>
 
-7. **PERSÖNLICHKEITSANAMNESE**
-   - Charaktereigenschaften
-   - Bewältigungsstrategien
-   - Stärken und Ressourcen
-   - Schwächen und Vulnerabilitäten
+<p><strong>7. PERSÖNLICHKEITSANAMNESE</strong></p>
+<ul>
+<li>Charaktereigenschaften</li>
+<li>Bewältigungsstrategien</li>
+<li>Stärken und Ressourcen</li>
+<li>Schwächen und Vulnerabilitäten</li>
+</ul>
 
 Die Anamnese sollte umfassend und für die Therapieplanung relevant sein.""",
     },
-    
     "diagnose": {
         "name": "Diagnose",
         "prompt": """Erstelle eine differenzierte Diagnose für eine psychotherapeutische Behandlung.
+
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
 **PATIENTENINFORMATIONEN**
 - Alter: {patient_info[age]}
@@ -324,48 +402,61 @@ Die Anamnese sollte umfassend und für die Therapieplanung relevant sein.""",
 
 **DIAGNOSE**
 
-1. **HAUPTDIAGNOSE**
-   - ICD-10 Diagnose
-   - Schweregrad
-   - Verlaufstyp
-   - Begründung der Diagnose
+<p><strong>1. HAUPTDIAGNOSE</strong></p>
+<ul>
+<li>ICD-10 Diagnose</li>
+<li>Schweregrad</li>
+<li>Verlaufstyp</li>
+<li>Begründung der Diagnose</li>
+</ul>
 
-2. **DIFFERENTIALDIAGNOSEN**
-   - Abzugrenzende Störungen
-   - Ausschlusskriterien
-   - Komorbiditäten
-   - Differentialdiagnostische Überlegungen
+<p><strong>2. DIFFERENTIALDIAGNOSEN</strong></p>
+<ul>
+<li>Abzugrenzende Störungen</li>
+<li>Ausschlusskriterien</li>
+<li>Komorbiditäten</li>
+<li>Differentialdiagnostische Überlegungen</li>
+</ul>
 
-3. **PSYCHOSOZIALE FAKTOREN**
-   - Belastende Lebensereignisse
-   - Aktuelle Belastungen
-   - Soziale Unterstützung
-   - Bewältigungsressourcen
+<p><strong>3. PSYCHOSOZIALE FAKTOREN</strong></p>
+<ul>
+<li>Belastende Lebensereignisse</li>
+<li>Aktuelle Belastungen</li>
+<li>Soziale Unterstützung</li>
+<li>Bewältigungsressourcen</li>
+</ul>
 
-4. **FUNKTIONSBEEINTRÄCHTIGUNG**
-   - Berufliche Beeinträchtigung
-   - Soziale Beeinträchtigung
-   - Familiäre Beeinträchtigung
-   - Grad der Beeinträchtigung
+<p><strong>4. FUNKTIONSBEEINTRÄCHTIGUNG</strong></p>
+<ul>
+<li>Berufliche Beeinträchtigung</li>
+<li>Soziale Beeinträchtigung</li>
+<li>Familiäre Beeinträchtigung</li>
+<li>Grad der Beeinträchtigung</li>
+</ul>
 
-5. **RISIKOFAKTOREN**
-   - Suizidalität
-   - Selbstgefährdung
-   - Fremdgefährdung
-   - Suchtgefährdung
+<p><strong>5. RISIKOFAKTOREN</strong></p>
+<ul>
+<li>Suizidalität</li>
+<li>Selbstgefährdung</li>
+<li>Fremdgefährdung</li>
+<li>Suchtgefährdung</li>
+</ul>
 
-6. **PROTECTIVE FAKTOREN**
-   - Soziale Unterstützung
-   - Bewältigungsstrategien
-   - Motivation zur Behandlung
-   - Ressourcen
+<p><strong>6. PROTECTIVE FAKTOREN</strong></p>
+<ul>
+<li>Soziale Unterstützung</li>
+<li>Bewältigungsstrategien</li>
+<li>Motivation zur Behandlung</li>
+<li>Ressourcen</li>
+</ul>
 
 Die Diagnose sollte fundiert und für die Therapieplanung relevant sein.""",
     },
-    
     "therapieplan": {
         "name": "Therapieplan",
         "prompt": """Erstelle einen strukturierten Therapieplan für eine psychotherapeutische Behandlung.
+
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
 **PATIENTENINFORMATIONEN**
 - Alter: {patient_info[age]}
@@ -383,55 +474,70 @@ Die Diagnose sollte fundiert und für die Therapieplanung relevant sein.""",
 
 **THERAPIEPLAN**
 
-1. **DIAGNOSE UND INDIKATION**
-   - Hauptdiagnose
-   - Indikation für Psychotherapie
-   - Ausschlusskriterien
-   - Kontraindikationen
+<p><strong>1. DIAGNOSE UND INDIKATION</strong></p>
+<ul>
+<li>Hauptdiagnose</li>
+<li>Indikation für Psychotherapie</li>
+<li>Ausschlusskriterien</li>
+<li>Kontraindikationen</li>
+</ul>
 
-2. **THERAPIEZIELE**
-   - Primäre Ziele
-   - Sekundäre Ziele
-   - Kurzzeitziele
-   - Langzeitziele
-   - Erfolgskriterien
+<p><strong>2. THERAPIEZIELE</strong></p>
+<ul>
+<li>Primäre Ziele</li>
+<li>Sekundäre Ziele</li>
+<li>Kurzzeitziele</li>
+<li>Langzeitziele</li>
+<li>Erfolgskriterien</li>
+</ul>
 
-3. **THERAPIEMETHODE**
-   - Gewählte Therapieform
-   - Begründung der Wahl
-   - Spezifische Techniken
-   - Anpassungen an den Patienten
+<p><strong>3. THERAPIEMETHODE</strong></p>
+<ul>
+<li>Gewählte Therapieform</li>
+<li>Begründung der Wahl</li>
+<li>Spezifische Techniken</li>
+<li>Anpassungen an den Patienten</li>
+</ul>
 
-4. **THERAPIEVERLAUF**
-   - Phase 1: Aufbau und Stabilisierung
-   - Phase 2: Bearbeitung der Probleme
-   - Phase 3: Konsolidierung und Abschluss
-   - Übergänge zwischen Phasen
+<p><strong>4. THERAPIEVERLAUF</strong></p>
+<ul>
+<li>Phase 1: Aufbau und Stabilisierung</li>
+<li>Phase 2: Bearbeitung der Probleme</li>
+<li>Phase 3: Konsolidierung und Abschluss</li>
+<li>Übergänge zwischen Phasen</li>
+</ul>
 
-5. **INTERVENTIONEN**
-   - Spezifische Interventionen
-   - Hausaufgaben und Übungen
-   - Kriseninterventionen
-   - Rückfallprophylaxe
+<p><strong>5. INTERVENTIONEN</strong></p>
+<ul>
+<li>Spezifische Interventionen</li>
+<li>Hausaufgaben und Übungen</li>
+<li>Kriseninterventionen</li>
+<li>Rückfallprophylaxe</li>
+</ul>
 
-6. **EVALUATION**
-   - Erfolgskontrolle
-   - Messinstrumente
-   - Zeitpunkte der Evaluation
-   - Anpassung des Plans
+<p><strong>6. EVALUATION</strong></p>
+<ul>
+<li>Erfolgskontrolle</li>
+<li>Messinstrumente</li>
+<li>Zeitpunkte der Evaluation</li>
+<li>Anpassung des Plans</li>
+</ul>
 
-7. **ABSCHLUSSKRITERIEN**
-   - Kriterien für Therapieende
-   - Nachsorgeplan
-   - Rückfallprophylaxe
-   - Wiedereinstiegskriterien
+<p><strong>7. ABSCHLUSSKRITERIEN</strong></p>
+<ul>
+<li>Kriterien für Therapieende</li>
+<li>Nachsorgeplan</li>
+<li>Rückfallprophylaxe</li>
+<li>Wiedereinstiegskriterien</li>
+</ul>
 
 Der Therapieplan sollte strukturiert und für die Behandlung leitend sein.""",
     },
-    
     "brief": {
         "name": "Brief",
         "prompt": """Erstelle einen professionellen Brief für einen Patienten oder andere Behandler.
+
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
 **PATIENTENINFORMATIONEN**
 - Alter: {patient_info[age]}
@@ -448,37 +554,48 @@ Der Therapieplan sollte strukturiert und für die Behandlung leitend sein.""",
 
 **BRIEF**
 
-1. **ANREDE UND EINLEITUNG**
-   - Professionelle Anrede
-   - Bezug auf vorherige Kontakte
-   - Anlass des Briefes
+<p><strong>1. ANREDE UND EINLEITUNG</strong></p>
+<ul>
+<li>Professionelle Anrede</li>
+<li>Bezug auf vorherige Kontakte</li>
+<li>Anlass des Briefes</li>
+</ul>
 
-2. **AKTUELLE SITUATION**
-   - Zusammenfassung der aktuellen Situation
-   - Wichtige Entwicklungen
-   - Aktuelle Beschwerden
+<p><strong>2. AKTUELLE SITUATION</strong></p>
+<ul>
+<li>Zusammenfassung der aktuellen Situation</li>
+<li>Wichtige Entwicklungen</li>
+<li>Aktuelle Beschwerden</li>
+</ul>
 
-3. **THERAPIEVERLAUF**
-   - Wichtige Stationen der Behandlung
-   - Erreichte Fortschritte
-   - Verbleibende Herausforderungen
+<p><strong>3. THERAPIEVERLAUF</strong></p>
+<ul>
+<li>Wichtige Stationen der Behandlung</li>
+<li>Erreichte Fortschritte</li>
+<li>Verbleibende Herausforderungen</li>
+</ul>
 
-4. **EMPFEHLUNGEN**
-   - Konkrete Empfehlungen
-   - Weitere Schritte
-   - Kooperation mit anderen Behandlern
+<p><strong>4. EMPFEHLUNGEN</strong></p>
+<ul>
+<li>Konkrete Empfehlungen</li>
+<li>Weitere Schritte</li>
+<li>Kooperation mit anderen Behandlern</li>
+</ul>
 
-5. **ABSCHLUSS**
-   - Zusammenfassung
-   - Dank und Wertschätzung
-   - Professionelle Grußformel
+<p><strong>5. ABSCHLUSS</strong></p>
+<ul>
+<li>Zusammenfassung</li>
+<li>Dank und Wertschätzung</li>
+<li>Professionelle Grußformel</li>
+</ul>
 
 Der Brief sollte professionell, respektvoll und für den Empfänger verständlich sein.""",
     },
-    
     "other": {
         "name": "Sonstiges",
         "prompt": """Erstelle ein allgemeines Dokument für eine psychotherapeutische Behandlung.
+
+Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
 **PATIENTENINFORMATIONEN**
 - Alter: {patient_info[age]}
@@ -497,18 +614,24 @@ Der Brief sollte professionell, respektvoll und für den Empfänger verständlic
 
 Erstelle ein strukturiertes, professionelles Dokument, das die wichtigsten Informationen zur Behandlung zusammenfasst. Das Dokument sollte enthalten:
 
-1. **PATIENTENINFORMATIONEN**
-   - Relevante biografische Daten
-   - Aktuelle Situation
+<p><strong>1. PATIENTENINFORMATIONEN</strong></p>
+<ul>
+<li>Relevante biografische Daten</li>
+<li>Aktuelle Situation</li>
+</ul>
 
-2. **THERAPIEINFORMATIONEN**
-   - Therapieverlauf
-   - Wichtige Entwicklungen
-   - Erreichte Fortschritte
+<p><strong>2. THERAPIEINFORMATIONEN</strong></p>
+<ul>
+<li>Therapieverlauf</li>
+<li>Wichtige Entwicklungen</li>
+<li>Erreichte Fortschritte</li>
+</ul>
 
-3. **FAZIT UND EMPFEHLUNGEN**
-   - Zusammenfassung
-   - Empfehlungen für die Zukunft
+<p><strong>3. FAZIT UND EMPFEHLUNGEN</strong></p>
+<ul>
+<li>Zusammenfassung</li>
+<li>Empfehlungen für die Zukunft</li>
+</ul>
 
 Das Dokument sollte professionell und für medizinische Zwecke geeignet sein.""",
     },

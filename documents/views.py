@@ -120,24 +120,49 @@ class DocumentDeleteView(DeleteView):
         return response
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class SaveDocumentContentView(View):
-    """View for saving document content via AJAX"""
-    
+    """View for saving document content via form POST"""
+
     def post(self, request, pk):
         document = get_object_or_404(Document, pk=pk)
-        
+
         try:
-            data = json.loads(request.body)
-            content = data.get("content", "")
-            
+            content = request.POST.get("content", "")
+
             document.content = content
             document.save()
-            
-            return JsonResponse({"success": True})
-            
+
+            messages.success(request, "Dokumentinhalt wurde erfolgreich gespeichert.")
+            return redirect("documents:document_detail", pk=pk)
+
         except Exception as e:
-            return JsonResponse({"error": f"Fehler beim Speichern: {str(e)}"}, status=400)
+            messages.error(request, f"Fehler beim Speichern: {str(e)}")
+            return redirect("documents:document_detail", pk=pk)
+
+
+class DocumentExportView(View):
+    """View for exporting documents as text files"""
+
+    def get(self, request, pk):
+        document = get_object_or_404(Document, pk=pk)
+
+        # Create document content
+        document_text = f"{document.title}\n\n"
+        document_text += f"Patient: {document.patient.full_name}\n"
+        document_text += f"Typ: {document.get_document_type_display()}\n"
+        document_text += f"Datum: {document.created_at.strftime('%d.%m.%Y')}\n"
+        if document.updated_at != document.created_at:
+            document_text += f"Aktualisiert: {document.updated_at.strftime('%d.%m.%Y %H:%M')}\n"
+        document_text += f"\n{document.content}\n"
+
+        # Create filename
+        filename = f"{document.title.replace(' ', '_').replace('/', '_').lower()}.txt"
+
+        # Create response
+        response = HttpResponse(document_text, content_type="text/plain; charset=utf-8")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        return response
 
 
 @method_decorator(csrf_exempt, name="dispatch")
