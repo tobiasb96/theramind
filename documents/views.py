@@ -1,18 +1,20 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.core.paginator import Paginator
+from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from django_tables2 import RequestConfig
 import json
 
 from .models import Document
 from .forms import DocumentForm
 from .services import DocumentService
 from .prompts import get_available_document_types
+from .tables import DocumentTable
 from patients.models import Patient
 from therapy.models import Therapy
 
@@ -29,17 +31,32 @@ class DocumentViewSet(viewsets.ViewSet):
         """List all documents"""
         documents = self.get_queryset()
 
-        # Handle pagination
-        paginator = Paginator(documents, 20)
-        page_number = request.GET.get("page")
-        page_obj = paginator.get_page(page_number)
+        # Handle search
+        search_query = request.GET.get("search", "")
+        if search_query:
+            documents = documents.filter(
+                Q(title__icontains=search_query)
+                | Q(therapy__patient__first_name__icontains=search_query)
+                | Q(therapy__patient__last_name__icontains=search_query)
+            )
+
+        # Handle type filter
+        type_filter = request.GET.get("type", "")
+        if type_filter:
+            documents = documents.filter(document_type=type_filter)
+
+        # Create table with proper ordering
+        table = DocumentTable(documents)
+        RequestConfig(request, paginate={"per_page": 20}).configure(table)
 
         return render(
             request,
             "documents/document_list.html",
             {
-                "documents": page_obj,
-                "page_obj": page_obj,
+                "table": table,
+                "search_query": search_query,
+                "type_filter": type_filter,
+                "document_types": get_available_document_types(),
             },
         )
 
