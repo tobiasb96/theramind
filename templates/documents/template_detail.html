@@ -23,80 +23,105 @@
         </ol>
     </nav>
 
-    <!-- Header -->
+        <!-- Header -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-start">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">{{ template.name }}</h1>
-                <p class="text-gray-600 mt-1">{{ template.get_template_type_display }}</p>
-            </div>
-            <div class="flex space-x-3">
-                {% if not template.is_predefined %}
-                    <a href="{% url 'documents:template_edit' template.pk %}" 
-                       class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                        Bearbeiten
-                    </a>
-                    <a href="{% url 'documents:template_delete' template.pk %}" 
-                    class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
-                     Vorlage löschen
-                 </a>
+                <div class="flex flex-wrap gap-2 py-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                        {% if template.template_type == 'document' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+                        {{ template.get_template_type_display }}
+                    </span>
+                    {% if template.is_predefined %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-purple-800">
+                            Vordefiniert
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-800">
+                            Benutzerdefiniert
+                        </span>
+                    {% endif %}
+                </div>                <p class="text-gray-600">Erstellt: {{ template.created_at|date:"d.m.Y H:i" }}</p>
+                {% if template.updated_at != template.created_at %}
+                    <p class="text-gray-600">Aktualisiert: {{ template.updated_at|date:"d.m.Y H:i" }}</p>
                 {% endif %}
-                <form method="post" action="{% url 'documents:template_clone' template.pk %}" class="inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="name" value="{{ template.name }} (Kopie)">
-                    <button type="submit" class="bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-700">
-                        Klonen
-                    </button>
-                </form>
+            </div>
+            <div class="text-right">
+                <button id="template-actions-dropdown" data-dropdown-toggle="template-actions-menu"
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center"
+                        type="button">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                         stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/>
+                    </svg>
+                </button>
+
+                <!-- Dropdown menu -->
+                <div id="template-actions-menu"
+                     class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44">
+                    <ul class="py-2 text-sm text-gray-700" aria-labelledby="template-actions-dropdown">
+                        {% if not template.is_predefined %}
+                        <li>
+                            <a href="{% url 'documents:template_edit' template.pk %}"
+                               class="flex items-center text-blue-700 px-4 py-2 hover:bg-gray-100 w-full text-left cursor-pointer">
+                                <svg class="mr-2 w-4 h-4" aria-hidden="true"
+                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                     viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linejoin="round" stroke-width="2"
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Bearbeiten
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li>
+                            <form method="post" action="{% url 'documents:template_clone' template.pk %}" class="inline w-full">
+                                {% csrf_token %}
+                                <input type="hidden" name="name" value="{{ template.name }} (Kopie)">
+                                <button type="submit" class="flex items-center text-green-700 px-4 py-2 hover:bg-gray-100 w-full text-left cursor-pointer">
+                                    <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z"></path>
+                                        <path d="M3 5a2 2 0 012-2 3 3 0 003 3h6a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2V5h-2v6z"></path>
+                                    </svg>
+                                    Duplizieren
+                                </button>
+                            </form>
+                        </li>
+                        {% if not template.is_predefined %}
+                        <li>
+                            <a href="{% url 'documents:template_delete' template.pk %}"
+                               class="flex items-center text-red-700 px-4 py-2 hover:bg-gray-100 w-full text-left cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     stroke-width="2" stroke="currentColor" class="mr-2 w-4 h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                                </svg>
+                                Löschen
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Template Info -->
+    {% if template.description %}
     <div class="bg-white rounded-lg shadow p-6 mb-6">        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-4">  
-                {% if template.description %}
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Beschreibung</label>
                     <p class="mt-1 text-sm text-gray-900">{{ template.description }}</p>
                 </div>
-                {% endif %}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Typ & Status</label>
-                    <div class="flex flex-wrap gap-2">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                            {% if template.template_type == 'document' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
-                            {{ template.get_template_type_display }}
-                        </span>
-                        {% if template.is_predefined %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-purple-800">
-                                Vordefiniert
-                            </span>
-                        {% else %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-800">
-                                Benutzerdefiniert
-                            </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="space-y-4">
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Erstellt</label>
-                    <p class="mt-1 text-sm text-gray-900">{{ template.created_at|date:"d.m.Y H:i" }}</p>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Aktualisiert</label>
-                    <p class="mt-1 text-sm text-gray-900">{{ template.updated_at|date:"d.m.Y H:i" }}</p>
-                </div>
             </div>
         </div>
     </div>
-
+    {% endif %}
+    
     <!-- Template Content -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Vorlage Inhalt</h2>

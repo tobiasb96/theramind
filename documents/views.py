@@ -14,7 +14,7 @@ from .models import Document, DocumentTemplate
 from .forms import DocumentForm
 from .services import DocumentService, TemplateService
 
-from .tables import DocumentTable
+from .tables import DocumentTable, TemplateTable
 from patients.models import Patient
 from therapy.models import Therapy
 
@@ -40,11 +40,15 @@ class TemplateViewSet(viewsets.ViewSet):
                 Q(name__icontains=search_query) | Q(description__icontains=search_query)
             )
 
+        # Create table with proper ordering
+        table = TemplateTable(templates)
+        RequestConfig(request, paginate={"per_page": 20}).configure(table)
+
         return render(
             request,
             "documents/template_list.html",
             {
-                "templates": templates,
+                "table": table,
                 "template_type": template_type,
                 "search_query": search_query,
             },
@@ -179,13 +183,17 @@ class TemplateViewSet(viewsets.ViewSet):
                 status=302, headers={"Location": reverse_lazy("documents:template_list")}
             )
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["get", "post"])
     def clone(self, request, pk=None):
         """Clone a template"""
         template = get_object_or_404(DocumentTemplate, pk=pk)
 
         try:
-            new_name = request.POST.get("name", f"{template.name} (Kopie)")
+            # Handle both GET and POST requests
+            if request.method == "GET":
+                new_name = request.GET.get("name", f"{template.name} (Kopie)")
+            else:
+                new_name = request.POST.get("name", f"{template.name} (Kopie)")
 
             template_service = TemplateService()
             # TODO: Pass user_id when user model is implemented
