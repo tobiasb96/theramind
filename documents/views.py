@@ -100,6 +100,15 @@ class TemplateViewSet(viewsets.ViewSet):
                 template = template_service.create_custom_template(template_data)
 
                 messages.success(request, "Template wurde erfolgreich erstellt.")
+
+                # Handle HTMX requests
+                if request.headers.get("HX-Request"):
+                    response = HttpResponse()
+                    response["HX-Redirect"] = reverse_lazy(
+                        "documents:template_detail", kwargs={"pk": template.pk}
+                    )
+                    return response
+
                 return HttpResponse(
                     status=302,
                     headers={
@@ -138,13 +147,21 @@ class TemplateViewSet(viewsets.ViewSet):
                 template.name = request.POST.get("name")
                 template.description = request.POST.get("description", "")
                 template.template_type = request.POST.get("template_type")
-                template.document_type = request.POST.get("document_type") or None
                 template.user_prompt = request.POST.get("user_prompt")
                 template.max_tokens = int(request.POST.get("max_tokens", 2000))
                 template.temperature = float(request.POST.get("temperature", 0.3))
                 template.save()
 
                 messages.success(request, "Template wurde erfolgreich aktualisiert.")
+
+                # Handle HTMX requests
+                if request.headers.get("HX-Request"):
+                    response = HttpResponse()
+                    response["HX-Redirect"] = reverse_lazy(
+                        "documents:template_detail", kwargs={"pk": template.pk}
+                    )
+                    return response
+
                 return HttpResponse(
                     status=302,
                     headers={
@@ -162,7 +179,6 @@ class TemplateViewSet(viewsets.ViewSet):
                     {
                         "template": template,
                         "template_types": DocumentTemplate.TEMPLATE_TYPES,
-                        "document_types": Document.DOCUMENT_TYPES,
                     },
                 )
 
@@ -204,6 +220,15 @@ class TemplateViewSet(viewsets.ViewSet):
             cloned_template = template_service.clone_template(template.id, new_name)
 
             messages.success(request, f"Template '{new_name}' wurde erfolgreich erstellt.")
+
+            # Handle HTMX requests
+            if request.headers.get("HX-Request"):
+                response = HttpResponse()
+                response["HX-Redirect"] = reverse_lazy(
+                    "documents:template_detail", kwargs={"pk": cloned_template.pk}
+                )
+                return response
+
             return HttpResponse(
                 status=302,
                 headers={

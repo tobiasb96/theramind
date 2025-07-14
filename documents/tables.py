@@ -144,15 +144,6 @@ class TemplateTable(tables.Table):
 
     def render_actions(self, record):
         detail_url = reverse("documents:template_detail", kwargs={"pk": record.pk})
-        edit_url = reverse("documents:template_edit", kwargs={"pk": record.pk})
-        clone_url = reverse("documents:template_clone", kwargs={"pk": record.pk})
-
-        actions_html = f'<a href="{detail_url}" class="text-blue-600 hover:text-blue-800 font-medium mr-2">Ansehen</a>'
-
-        if not record.is_predefined:
-            actions_html += f'<a href="{edit_url}" class="text-indigo-600 hover:text-indigo-800 font-medium mr-2">Bearbeiten</a>'
-
-        # For the clone action, we'll create a simpler approach without inline form
-        actions_html += f'<a href="{clone_url}?name={record.name}%20(Kopie)" class="text-green-600 hover:text-green-800 font-medium" onclick="return confirm(\'Vorlage klonen?\')">Klonen</a>'
+        actions_html = f'<a href="{detail_url}" class="text-blue-600 hover:text-blue-800 font-medium">Ansehen</a>'
 
         return format_html(actions_html)
