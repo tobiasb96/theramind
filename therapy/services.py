@@ -31,12 +31,15 @@ class TranscriptionService:
         prompt = SUMMARY_PROMPT.format(session_notes=session_notes)
         return self.connector.generate_text(SYSTEM_PROMPT_SUMMARY, prompt, max_tokens=100)
 
-    def _build_session_context_prefix(self, transcript_text: str) -> str:
+    def _build_session_context_prefix(
+        self, transcript_text: str, existing_notes: str = None
+    ) -> str:
         """
         Build the context prefix for session notes generation
 
         Args:
             transcript_text: The transcript text
+            existing_notes: Existing session notes (if any)
 
         Returns:
             Formatted context prefix
@@ -48,18 +51,31 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
 **TRANSKRIPT DER SITZUNG**
 {transcript_text}
 
-**SITZUNGSNOTIZEN**
+"""
+
+        # Include existing notes if they exist
+        if existing_notes and existing_notes.strip():
+            context_prefix += f"""**VORHANDENE NOTIZEN**
+Die folgenden Notizen existieren bereits für diese Sitzung. Bitte berücksichtige diese und erweitere sie sinnvoll mit den Informationen aus dem Transkript, wo es angemessen ist:
+
+{existing_notes}
 
 """
+
+        context_prefix += "**SITZUNGSNOTIZEN**\n\n"
+
         return context_prefix
 
-    def create_session_notes_with_template(self, transcript_text: str, template) -> str:
+    def create_session_notes_with_template(
+        self, transcript_text: str, template, existing_notes: str = None
+    ) -> str:
         """
         Create structured session notes using a specific template
 
         Args:
             transcript_text: The transcript text
             template: DocumentTemplate instance
+            existing_notes: Existing session notes (if any)
 
         Returns:
             Generated session notes
@@ -68,8 +84,8 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
             return ""
 
         try:
-            # Build context prefix with transcript
-            context_prefix = self._build_session_context_prefix(transcript_text)
+            # Build context prefix with transcript and existing notes
+            context_prefix = self._build_session_context_prefix(transcript_text, existing_notes)
 
             # Combine context prefix with template structure
             full_prompt = context_prefix + template.user_prompt
@@ -85,13 +101,16 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
         except Exception as e:
             raise Exception(f"Fehler bei der Erstellung der Sitzungsnotizen: {str(e)}")
 
-    def create_session_notes(self, transcript_text: str, template_key: str) -> str:
+    def create_session_notes(
+        self, transcript_text: str, template_key: str, existing_notes: str = None
+    ) -> str:
         """
         Create structured session notes using a template key (legacy method)
 
         Args:
             transcript_text: The transcript text
             template_key: Template key for backwards compatibility
+            existing_notes: Existing session notes (if any)
 
         Returns:
             Generated session notes
@@ -125,7 +144,7 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
         if not template:
             raise ValueError(f"Kein Template gefunden für: {template_key}")
 
-        return self.create_session_notes_with_template(transcript_text, template)
+        return self.create_session_notes_with_template(transcript_text, template, existing_notes)
 
 
 # Singleton instance - lazy initialization

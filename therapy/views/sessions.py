@@ -281,9 +281,12 @@ class SessionViewSet(viewsets.ViewSet):
             if not transcription_service.is_available():
                 messages.error(request, "OpenAI API Key ist nicht konfiguriert")
                 return self._redirect_to_session_detail(patient_pk, therapy_pk, session_pk)
-            
+
+            # Pass existing notes to the AI service
+            existing_notes = session.notes if session.notes else None
+
             session_notes = transcription_service.create_session_notes(
-                combined_transcript, template_key
+                combined_transcript, template_key, existing_notes
             )
             
             if session_notes:
@@ -321,7 +324,70 @@ class SessionViewSet(viewsets.ViewSet):
             messages.error(request, f"Fehler beim Speichern: {str(e)}")
         
         return self._redirect_to_session_detail(patient_pk, therapy_pk, session_pk)
-    
+
+    @action(detail=True, methods=["post"])
+    @method_decorator(csrf_exempt)
+    def create_from_template(self, request, patient_pk=None, therapy_pk=None, session_pk=None):
+        """Create session notes from a template without audio transcriptions"""
+        session = self.get_object(patient_pk, therapy_pk, session_pk)
+
+        try:
+            template_key = request.POST.get("template")
+
+            if not template_key:
+                messages.error(request, "Template ist erforderlich")
+                return self._redirect_to_session_detail(patient_pk, therapy_pk, session_pk)
+
+            # Get the template structure from prompts
+            from therapy.prompts import get_session_notes_prompt, SESSION_NOTES_TEMPLATES
+
+            if template_key not in SESSION_NOTES_TEMPLATES:
+                messages.error(request, "Unbekanntes Template")
+                return self._redirect_to_session_detail(patient_pk, therapy_pk, session_pk)
+
+            template_data = SESSION_NOTES_TEMPLATES[template_key]
+
+            # Extract the structure from the template prompt
+            # Look for the structured part after "Strukturiere die Notizen wie folgt:"
+            prompt = template_data["prompt"]
+            structure_start = prompt.find("Strukturiere die Notizen wie folgt:")
+
+            if structure_start != -1:
+                # Find the end of the structure (before "Transkript der Sitzung:")
+                structure_end = prompt.find("Transkript der Sitzung:")
+                if structure_end != -1:
+                    structure_html = prompt[
+                        structure_start + len("Strukturiere die Notizen wie folgt:") : structure_end
+                    ].strip()
+
+                    # Clean up the structure to remove extra instructions
+                    lines = structure_html.split("\n")
+                    cleaned_lines = []
+                    for line in lines:
+                        line = line.strip()
+                        if line and not line.startswith("Antworte in HTML-Format"):
+                            cleaned_lines.append(line)
+
+                    structure_html = "\n".join(cleaned_lines)
+
+                    # Save the template structure as session notes
+                    session.notes = structure_html
+                    session.save()
+
+                    messages.success(
+                        request, f"Vorlage '{template_data['name']}' wurde erfolgreich angewendet."
+                    )
+                else:
+                    messages.error(request, "Fehler beim Extrahieren der Template-Struktur")
+            else:
+                messages.error(request, "Fehler beim Verarbeiten des Templates")
+
+        except Exception as e:
+            logger.error(f"Fehler beim Erstellen der Notizen aus Template: {str(e)}")
+            messages.error(request, f"Fehler beim Erstellen der Notizen: {str(e)}")
+
+        return self._redirect_to_session_detail(patient_pk, therapy_pk, session_pk)
+
     def _sanitize_html(self, html_content):
         """Sanitize HTML content to allow only safe tags"""
         allowed_tags = ["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]
