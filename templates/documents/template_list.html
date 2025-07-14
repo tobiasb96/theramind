@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Vorlagen {% endblock %}
+
+{% block content %}
+<div class="mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Vorlagen</h1>
+                <p class="text-gray-600 mt-1">Verwalten Sie Ihre Dokument- und Sitzungsnotizen-Vorlagen</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'documents:template_create' %}" 
+                   data-tooltip-target="tooltip-new-template"
+                   class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                    Neue Vorlage
+                </a>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <form method="get" class="flex flex-wrap gap-4">
+            <!-- Template Type Filter -->
+            <div class="flex-1 min-w-48">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Template Typ</label>
+                <select name="type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="document" {% if template_type == 'document' %}selected{% endif %}>Dokumente</option>
+                    <option value="session_notes" {% if template_type == 'session_notes' %}selected{% endif %}>Sitzungsnotizen</option>
+                </select>
+            </div>
+
+            <!-- Search -->
+            <div class="flex-1 min-w-64">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Suche</label>
+                <input type="text" name="search" value="{{ search_query }}" 
+                       placeholder="Template Name oder Beschreibung..." 
+                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+
+            <!-- Filter Button -->
+            <div class="flex items-end">
+                <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                    Filtern
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Vorlagen -->
+    <div class="bg-white rounded-lg shadow">
+        {% if templates %}
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto text-sm text-left text-gray-900">
+                    <thead class="text-xs text-gray-600 font-normal border-b border-gray-200 bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3">Name</th>
+                            <th class="px-6 py-3">Typ</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Erstellt</th>
+                            <th class="px-6 py-3">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for template in templates %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">{{ template.name }}</div>
+                                        {% if template.description %}
+                                            <div class="text-sm text-gray-500">{{ template.description|truncatechars:60 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                    {% if template.template_type == 'document' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                    {{ template.get_template_type_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if template.is_predefined %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                        Vordefiniert
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Benutzerdefiniert
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                {{ template.created_at|date:"d.m.Y" }}
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium space-x-2">
+                                <a href="{% url 'documents:template_detail' template.pk %}" 
+                                   class="text-blue-600 hover:text-blue-800">Ansehen</a>
+                                {% if not template.is_predefined %}
+                                    <a href="{% url 'documents:template_edit' template.pk %}" 
+                                       class="text-indigo-600 hover:text-indigo-800">Bearbeiten</a>
+                                {% endif %}
+                                <form method="post" action="{% url 'documents:template_clone' template.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="name" value="{{ template.name }} (Kopie)">
+                                    <button type="submit" class="text-green-600 hover:text-green-800">Klonen</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">Keine Vorlage gefunden</h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    {% if search_query %}
+                        Keine Vorlagen entsprechen Ihrer Suche.
+                    {% else %}
+                        Erstellen Sie Ihre erste Vorlage.
+                    {% endif %}
+                </p>
+                <div class="mt-6">
+                    <a href="{% url 'documents:template_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        Neues Vorlage
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Template löschen - Theramind{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Template löschen</h1>
+                <p class="text-gray-600 mt-1">Bestätigen Sie die Löschung des Templates</p>
+            </div>
+            <a href="{% url 'documents:template_detail' template.pk %}" class="text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- Confirmation -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+                <svg class="h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+            </div>
+            <div class="ml-4">
+                <h2 class="text-lg font-medium text-gray-900">Template wirklich löschen?</h2>
+                <p class="text-sm text-gray-500 mt-1">
+                    Diese Aktion kann nicht rückgängig gemacht werden.
+                </p>
+            </div>
+        </div>
+
+        <!-- Template Info -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 class="text-sm font-medium text-gray-900 mb-2">Template Details</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Name:</span>
+                    <span class="text-sm font-medium text-gray-900">{{ template.name }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Typ:</span>
+                    <span class="text-sm font-medium text-gray-900">{{ template.get_template_type_display }}</span>
+                </div>
+                {% if template.document_type %}
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Dokumenttyp:</span>
+                    <span class="text-sm font-medium text-gray-900">{{ template.get_document_type_display }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Erstellt:</span>
+                    <span class="text-sm font-medium text-gray-900">{{ template.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end space-x-3">
+            <a href="{% url 'documents:template_detail' template.pk %}" 
+               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                Abbrechen
+            </a>
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" 
+                        class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700">
+                    Template löschen
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -63,8 +63,13 @@ class PatientViewSet(viewsets.ViewSet):
         # Get all documents across all therapies for this patient
         from documents.models import Document
         from documents.prompts import get_available_document_types
+        from documents.services import TemplateService
 
         documents = Document.objects.filter(therapy__patient=patient).order_by("-created_at")
+
+        # Get available templates for document creation
+        template_service = TemplateService()
+        document_templates = template_service.get_document_templates()
 
         return render(
             request,
@@ -76,6 +81,7 @@ class PatientViewSet(viewsets.ViewSet):
                 "documents": documents,
                 "form": PatientForm(instance=patient),
                 "document_types": get_available_document_types(),
+                "document_templates": document_templates,
             },
         )
 
