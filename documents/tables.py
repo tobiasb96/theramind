@@ -128,13 +128,13 @@ class TemplateTable(tables.Table):
     def render_status(self, value, record):
         if record.is_predefined:
             return format_html(
-                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">'
+                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">'
                 "Vordefiniert"
                 "</span>"
             )
         else:
             return format_html(
-                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">'
+                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-800">'
                 "Benutzerdefiniert"
                 "</span>"
             )
