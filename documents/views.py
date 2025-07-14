@@ -30,8 +30,12 @@ class TemplateViewSet(viewsets.ViewSet):
 
     def list(self, request):
         """List all templates"""
-        template_type = request.GET.get("type", "document")
-        templates = self.get_queryset().filter(template_type=template_type)
+        template_type = request.GET.get("type", "")  # Default to empty (all types)
+        templates = self.get_queryset()
+
+        # Filter by template type if specified
+        if template_type:
+            templates = templates.filter(template_type=template_type)
 
         # Handle search
         search_query = request.GET.get("search", "")
