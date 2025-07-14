@@ -636,13 +636,3 @@ Erstelle ein strukturiertes, professionelles Dokument, das die wichtigsten Infor
 Das Dokument sollte professionell und für medizinische Zwecke geeignet sein.""",
     },
 }
-
-def get_document_prompt(document_type: str) -> str:
-    """Get the prompt for a specific document type."""
-    if document_type not in DOCUMENT_PROMPTS:
-        raise ValueError(f"Unknown document type: {document_type}")
-    return DOCUMENT_PROMPTS[document_type]["prompt"]
-
-def get_available_document_types() -> dict:
-    """Get all available document types."""
-    return {key: template["name"] for key, template in DOCUMENT_PROMPTS.items()} 

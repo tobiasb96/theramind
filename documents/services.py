@@ -44,16 +44,9 @@ class TemplateService:
 
         return list(predefined_templates)
 
-    def get_document_templates(
-        self, document_type: str = None, user_id=None
-    ) -> List[DocumentTemplate]:
-        """Get document templates, optionally filtered by document type"""
-        templates = self.get_available_templates("document", user_id)
-
-        if document_type:
-            templates = [t for t in templates if t.document_type == document_type]
-
-        return templates
+    def get_document_templates(self, user_id=None) -> List[DocumentTemplate]:
+        """Get document templates"""
+        return self.get_available_templates("document", user_id)
 
     def get_session_templates(self, user_id=None) -> List[DocumentTemplate]:
         """Get session notes templates"""
@@ -97,7 +90,6 @@ class TemplateService:
             name=new_name,
             description=f"Basiert auf {original_template.name}",
             template_type=original_template.template_type,
-            document_type=original_template.document_type,
             system_prompt=original_template.system_prompt,
             user_prompt=original_template.user_prompt,
             max_tokens=original_template.max_tokens,
@@ -111,15 +103,12 @@ class TemplateService:
 
         return cloned_template
 
-    def get_default_template(
-        self, template_type: str, document_type: str = None, user_id=None
-    ) -> DocumentTemplate:
+    def get_default_template(self, template_type: str, user_id=None) -> DocumentTemplate:
         """
         Get the default template for a specific type
 
         Args:
             template_type: 'document' or 'session_notes'
-            document_type: Document type (for document templates)
             user_id: User ID (TODO: implement when user model is ready)
 
         Returns:
@@ -143,7 +132,6 @@ class TemplateService:
         # Fall back to first predefined template
         return DocumentTemplate.objects.filter(
             template_type=template_type,
-            document_type=document_type if template_type == "document" else None,
             is_predefined=True,
             is_active=True,
         ).first()
@@ -177,22 +165,22 @@ class DocumentService:
         # Build the context prefix
         context_prefix = f"""Erstelle ein professionelles Dokument für eine Psychotherapie.
 
-Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
+            Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
-**PATIENTENINFORMATIONEN**
-- Alter: {context_data["patient_info"]["age"]}
-- Geschlecht: {context_data["patient_info"]["gender"]}
-- Beruf: {context_data["patient_info"]["occupation"]}
-- Familienstand: {context_data["patient_info"]["marital_status"]}
+            **PATIENTENINFORMATIONEN**
+            - Alter: {context_data["patient_info"]["age"]}
+            - Geschlecht: {context_data["patient_info"]["gender"]}
+            - Beruf: {context_data["patient_info"]["occupation"]}
+            - Familienstand: {context_data["patient_info"]["marital_status"]}
 
-**THERAPIEINFORMATIONEN**
-- Therapiebeginn: {context_data["therapy_info"]["start_date"]}
-- Therapieende: {context_data["therapy_info"]["end_date"]}
-- Anzahl Sitzungen: {context_data["therapy_info"]["session_count"]}
-- Therapieziele: {context_data["therapy_info"]["goals"]}
+            **THERAPIEINFORMATIONEN**
+            - Therapiebeginn: {context_data["therapy_info"]["start_date"]}
+            - Therapieende: {context_data["therapy_info"]["end_date"]}
+            - Anzahl Sitzungen: {context_data["therapy_info"]["session_count"]}
+            - Therapieziele: {context_data["therapy_info"]["goals"]}
 
-**THERAPIEVERLAUF**
-{self._format_transcriptions(context_data["transcriptions"])}
+            **THERAPIEVERLAUF**
+            {self._format_transcriptions(context_data["transcriptions"])}
 
 """
         return context_prefix
@@ -245,16 +233,13 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
         except Exception as e:
             raise Exception(f"Fehler bei der Dokumentgenerierung: {str(e)}")
 
-    def generate(
-        self, patient: Patient, therapy: Therapy, document_type: str, template_id: int = None
-    ) -> str:
+    def generate(self, patient: Patient, therapy: Therapy, template_id: int = None) -> str:
         """
-        Generate a document of the specified type for a patient and therapy
+        Generate a document for a patient and therapy
 
         Args:
             patient: The patient for whom to generate the document
             therapy: The therapy context
-            document_type: Type of document to generate (e.g., 'abschlussbericht')
             template_id: Optional specific template ID to use
 
         Returns:
@@ -264,10 +249,10 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
             template = DocumentTemplate.objects.get(id=template_id)
         else:
             # TODO: Pass user_id when user model is implemented
-            template = self.template_service.get_default_template("document", document_type)
+            template = self.template_service.get_default_template("document")
 
         if not template:
-            raise ValueError(f"Kein Template für Dokumenttyp {document_type} gefunden")
+            raise ValueError("Kein Template gefunden")
 
         return self.generate_with_template(patient, therapy, template)
 

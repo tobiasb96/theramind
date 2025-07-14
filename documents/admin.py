@@ -4,8 +4,8 @@ from .models import Document, DocumentTemplate, UserTemplatePreference
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ['title', 'therapy', 'document_type', 'created_at']
-    list_filter = ["document_type", "created_at"]
+    list_display = ["title", "therapy", "created_at"]
+    list_filter = ["created_at"]
     search_fields = ["title", "therapy__patient__first_name", "therapy__patient__last_name"]
     readonly_fields = ["created_at", "updated_at"]
 
@@ -15,19 +15,18 @@ class DocumentTemplateAdmin(admin.ModelAdmin):
     list_display = [
         "name",
         "template_type",
-        "document_type",
         "is_predefined",
         "is_active",
         "created_at",
     ]
-    list_filter = ["template_type", "document_type", "is_predefined", "is_active"]
+    list_filter = ["template_type", "is_predefined", "is_active"]
     search_fields = ["name", "description"]
     readonly_fields = ["created_at", "updated_at"]
     
     fieldsets = (
         (
             "Grundinformationen",
-            {"fields": ("name", "description", "template_type", "document_type")},
+            {"fields": ("name", "description", "template_type")},
         ),
         (
             "Template Inhalt",

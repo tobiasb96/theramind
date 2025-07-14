@@ -1,7 +1,6 @@
 from django import forms
 from .models import Document, DocumentTemplate
 from therapy.models import Therapy, Session
-from .prompts import get_available_document_types
 
 
 class DocumentForm(forms.ModelForm):
@@ -15,12 +14,11 @@ class DocumentForm(forms.ModelForm):
 
     class Meta:
         model = Document
-        fields = ["therapy", "title", "document_type", "sessions", "template"]
+        fields = ["therapy", "title", "sessions", "template"]
         widgets = {
-            'therapy': forms.Select(attrs={'class': 'form-control'}),
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'document_type': forms.Select(attrs={'class': 'form-control'}),
-            'sessions': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            "therapy": forms.Select(attrs={"class": "form-control"}),
+            "title": forms.TextInput(attrs={"class": "form-control"}),
+            "sessions": forms.SelectMultiple(attrs={"class": "form-control"}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -41,23 +39,17 @@ class DocumentTemplateForm(forms.ModelForm):
             "name",
             "description",
             "template_type",
-            "document_type",
             "user_prompt",
         ]
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "template_type": forms.Select(attrs={"class": "form-control"}),
-            "document_type": forms.Select(attrs={"class": "form-control"}),
             "user_prompt": forms.Textarea(attrs={"class": "form-control", "rows": 15}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Make document_type optional for session notes templates
-        if self.instance and self.instance.template_type == "session_notes":
-            self.fields["document_type"].required = False
 
         # Add help text
         self.fields[

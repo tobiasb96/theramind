@@ -47,12 +47,7 @@
                     <span class="text-sm text-gray-600">Typ:</span>
                     <span class="text-sm font-medium text-gray-900">{{ template.get_template_type_display }}</span>
                 </div>
-                {% if template.document_type %}
-                <div class="flex justify-between">
-                    <span class="text-sm text-gray-600">Dokumenttyp:</span>
-                    <span class="text-sm font-medium text-gray-900">{{ template.get_document_type_display }}</span>
-                </div>
-                {% endif %}
+
                 <div class="flex justify-between">
                     <span class="text-sm text-gray-600">Erstellt:</span>
                     <span class="text-sm font-medium text-gray-900">{{ template.created_at|date:"d.m.Y H:i" }}</span>

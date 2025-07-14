@@ -61,16 +61,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Document Type -->
-                <div>
-                    <label for="{{ form.document_type.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">
-                        {{ form.document_type.label }}
-                    </label>
-                    {{ form.document_type }}
-                    {% if form.document_type.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.document_type.errors.0 }}</p>
-                    {% endif %}
-                </div>
+
 
                 <!-- Template Selection -->
                 {% if document_templates %}

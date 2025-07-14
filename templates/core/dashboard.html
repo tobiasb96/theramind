@@ -38,7 +38,7 @@
                         <div>
                             <p class="font-medium">{{ document.title }}</p>
                             <p class="text-sm text-gray-600">{{ document.patient.full_name }} • {{ document.created_at|date:"d.m.Y H:i" }}</p>
-                            <p class="text-xs text-gray-500">{{ document.get_document_type_display }}</p>
+                                                            <p class="text-xs text-gray-500">Dokument</p>
                         </div>
                         <a href="{% url 'documents:document_detail' document.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                             Anzeigen

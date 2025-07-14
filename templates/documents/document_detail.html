@@ -37,7 +37,7 @@
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">{{ document.title }}</h1>
                 <p class="text-gray-600 mt-1">Patient: {{ document.patient.full_name }}</p>
-                <p class="text-gray-600">Typ: {{ document.get_document_type_display }}</p>
+
                 <p class="text-gray-600">Erstellt: {{ document.created_at|date:"d.m.Y H:i" }}</p>
                 {% if document.updated_at != document.created_at %}
                     <p class="text-gray-600">Aktualisiert: {{ document.updated_at|date:"d.m.Y H:i" }}</p>
@@ -187,14 +187,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-span-2">
-                        <label for="edit-document-type" class="block mb-2 text-sm font-medium text-gray-900">Dokumenttyp</label>
-                        <select name="document_type" id="edit-document-type" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" required>
-                            {% for key, name in document_types.items %}
-                                <option value="{{ key }}" {% if key == document.document_type %}selected{% endif %}>{{ name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                    
                     
                     <!-- Template Selection -->
                     {% if document_templates %}

@@ -13,7 +13,7 @@ import json
 from .models import Document, DocumentTemplate
 from .forms import DocumentForm
 from .services import DocumentService, TemplateService
-from .prompts import get_available_document_types
+
 from .tables import DocumentTable
 from patients.models import Patient
 from therapy.models import Therapy
@@ -69,7 +69,6 @@ class TemplateViewSet(viewsets.ViewSet):
                 "documents/template_form.html",
                 {
                     "template_types": DocumentTemplate.TEMPLATE_TYPES,
-                    "document_types": Document.DOCUMENT_TYPES,
                 },
             )
 
@@ -80,7 +79,6 @@ class TemplateViewSet(viewsets.ViewSet):
                     "name": request.POST.get("name"),
                     "description": request.POST.get("description", ""),
                     "template_type": request.POST.get("template_type"),
-                    "document_type": request.POST.get("document_type") or None,
                     "system_prompt": "",  # Always empty, hardcoded in service
                     "user_prompt": request.POST.get("user_prompt"),
                     "max_tokens": int(request.POST.get("max_tokens", 2000)),
@@ -110,7 +108,6 @@ class TemplateViewSet(viewsets.ViewSet):
                     "documents/template_form.html",
                     {
                         "template_types": DocumentTemplate.TEMPLATE_TYPES,
-                        "document_types": Document.DOCUMENT_TYPES,
                     },
                 )
 
@@ -125,7 +122,6 @@ class TemplateViewSet(viewsets.ViewSet):
                 {
                     "template": template,
                     "template_types": DocumentTemplate.TEMPLATE_TYPES,
-                    "document_types": Document.DOCUMENT_TYPES,
                 },
             )
 
@@ -237,12 +233,6 @@ class DocumentViewSet(viewsets.ViewSet):
                 | Q(therapy__patient__first_name__icontains=search_query)
                 | Q(therapy__patient__last_name__icontains=search_query)
             )
-
-        # Handle type filter
-        type_filter = request.GET.get("type", "")
-        if type_filter:
-            documents = documents.filter(document_type=type_filter)
-
         # Create table with proper ordering
         table = DocumentTable(documents)
         RequestConfig(request, paginate={"per_page": 20}).configure(table)
@@ -253,8 +243,6 @@ class DocumentViewSet(viewsets.ViewSet):
             {
                 "table": table,
                 "search_query": search_query,
-                "type_filter": type_filter,
-                "document_types": get_available_document_types(),
             },
         )
 
@@ -271,7 +259,6 @@ class DocumentViewSet(viewsets.ViewSet):
             "documents/document_detail.html",
             {
                 "document": document,
-                "document_types": get_available_document_types(),
                 "document_templates": document_templates,
             },
         )
@@ -320,7 +307,6 @@ class DocumentViewSet(viewsets.ViewSet):
                         generated_content = document_service.generate(
                             document.therapy.patient,
                             document.therapy,
-                            document.document_type,
                             template_id=int(template_id) if template_id else None,
                         )
                         document.content = generated_content
@@ -419,7 +405,6 @@ class DocumentViewSet(viewsets.ViewSet):
 
             # Update basic fields
             document.title = request.POST.get("title", document.title)
-            document.document_type = request.POST.get("document_type", document.document_type)
 
             # Update therapy if provided
             therapy_id = request.POST.get("therapy")
@@ -487,7 +472,6 @@ class DocumentViewSet(viewsets.ViewSet):
         # Create document content
         document_text = f"{document.title}\n\n"
         document_text += f"Patient: {document.therapy.patient.full_name}\n"
-        document_text += f"Typ: {document.get_document_type_display()}\n"
         document_text += f"Datum: {document.created_at.strftime('%d.%m.%Y')}\n"
         if document.updated_at != document.created_at:
             document_text += f"Aktualisiert: {document.updated_at.strftime('%d.%m.%Y %H:%M')}\n"
@@ -512,31 +496,20 @@ class DocumentViewSet(viewsets.ViewSet):
 
         try:
             data = json.loads(request.body)
-            document_type = data.get("document_type")
             template_id = data.get("template_id")
-
-            if not document_type:
-                return JsonResponse({"error": "Dokumenttyp ist erforderlich"}, status=400)
 
             # Generate document using DocumentService
             document_service = DocumentService()
             if not document_service.is_available():
                 return JsonResponse({"error": "OpenAI API Key ist nicht konfiguriert"}, status=400)
 
-            generated_content = document_service.generate(
-                patient, therapy, document_type, template_id=template_id
-            )
-
-            # Get document type name for title
-            document_types = get_available_document_types()
-            document_type_name = document_types.get(document_type, document_type)
+            generated_content = document_service.generate(patient, therapy, template_id=template_id)
 
             # Create document
             document = Document.objects.create(
                 therapy=therapy,
-                title=f"{document_type_name} - {patient.full_name}",
+                title=f"Dokument - {patient.full_name}",
                 content=generated_content,
-                document_type=document_type,
             )
 
             return JsonResponse(
