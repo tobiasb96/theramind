@@ -181,7 +181,7 @@ class SettingsView(UpdateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         # Reinitialize AI service after settings change
-        from transcriptions.services import get_ai_service
+        from therapy.services import get_ai_service
 
         ai_service = get_ai_service()
         ai_service.reinitialize()

@@ -30,7 +30,7 @@ def create_predefined_session_templates(apps, schema_editor):
     DocumentTemplate = apps.get_model('documents', 'DocumentTemplate')
     
     # Import the existing session notes prompts
-    from transcriptions.prompts import SESSION_NOTES_TEMPLATES, SYSTEM_PROMPT
+    from therapy.prompts import SESSION_NOTES_TEMPLATES, SYSTEM_PROMPT
     
     for session_type, template_data in SESSION_NOTES_TEMPLATES.items():
         DocumentTemplate.objects.create(

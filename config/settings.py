@@ -47,9 +47,9 @@ INSTALLED_APPS = [
     "django_tailwind_cli",
     "django_tables2",
     "core",
+    "dashboard",
     "patients",
     "therapy",
-    "transcriptions",
     "documents",
 ]
 

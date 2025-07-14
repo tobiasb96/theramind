@@ -1,5 +1,5 @@
 from core.connector import get_llm_connector
-from transcriptions.prompts import (
+from therapy.prompts import (
     SUMMARY_PROMPT,
     SYSTEM_PROMPT_SUMMARY,
     SYSTEM_PROMPT,  # Fallback

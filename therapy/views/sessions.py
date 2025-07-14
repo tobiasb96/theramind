@@ -13,8 +13,8 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 from therapy.models import Session, Therapy, Transcription
 from therapy.forms import SessionForm, AudioUploadForm
-from transcriptions.services import get_transcription_service
-from transcriptions.prompts import get_available_templates
+from therapy.services import get_transcription_service
+from therapy.prompts import get_available_templates
 
 logger = logging.getLogger(__name__)
 
