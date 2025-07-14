@@ -89,8 +89,8 @@ class TemplateViewSet(viewsets.ViewSet):
                     "template_type": request.POST.get("template_type"),
                     "system_prompt": "",  # Always empty, hardcoded in service
                     "user_prompt": request.POST.get("user_prompt"),
-                    "max_tokens": int(request.POST.get("max_tokens", 2000)),
-                    "temperature": float(request.POST.get("temperature", 0.3)),
+                    "max_tokens": 2000,  # Default value
+                    "temperature": 0.3,  # Default value
                     "is_predefined": False,
                     "is_active": True,
                 }
@@ -148,8 +148,6 @@ class TemplateViewSet(viewsets.ViewSet):
                 template.description = request.POST.get("description", "")
                 template.template_type = request.POST.get("template_type")
                 template.user_prompt = request.POST.get("user_prompt")
-                template.max_tokens = int(request.POST.get("max_tokens", 2000))
-                template.temperature = float(request.POST.get("temperature", 0.3))
                 template.save()
 
                 messages.success(request, "Template wurde erfolgreich aktualisiert.")
