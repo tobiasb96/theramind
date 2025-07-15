@@ -156,3 +156,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # OpenAI API Configuration
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+
+
+DJANGO_TABLES2_TEMPLATE = f"{BASE_DIR}/templates/partials/table.html"
