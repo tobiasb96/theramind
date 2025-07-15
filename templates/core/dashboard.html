@@ -53,24 +53,6 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Patienten</h3>
-            <p class="text-3xl font-bold text-blue-600">{{ patient_count }}</p>
-        </div>
-        
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Sitzungen</h3>
-            <p class="text-3xl font-bold text-green-600">{{ session_count }}</p>
-        </div>
-        
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Dokumente</h3>
-            <p class="text-3xl font-bold text-purple-600">{{ recent_documents_table.data|length }}</p>
-        </div>
-    </div>
-
     <!-- Recent Documents Section -->
     <div class="bg-white rounded-lg shadow">
         <div class="p-6 border-b">
