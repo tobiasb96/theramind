@@ -16,7 +16,7 @@ from .services import DocumentService, TemplateService
 
 from .tables import DocumentTable, TemplateTable
 from patients.models import Patient
-from therapy.models import Therapy
+from therapy.models import Session, Therapy
 
 
 class TemplateViewSet(viewsets.ViewSet):
@@ -435,7 +435,7 @@ class DocumentViewSet(viewsets.ViewSet):
 
             # Regular form update (from edit modal)
             # Handle template and sessions fields
-            template_id = request.POST.get("template_id")
+            request.POST.get("template_id")
             sessions_ids = request.POST.getlist("sessions")
 
             # Update basic fields

@@ -144,7 +144,7 @@ class SessionViewSet(viewsets.ViewSet):
                 )
             
             # Create the session
-            session = Session.objects.create(
+            Session.objects.create(
                 therapy=therapy,
                 date=request.POST.get("date"),
                 duration=int(request.POST.get("duration", 50)),
@@ -339,7 +339,7 @@ class SessionViewSet(viewsets.ViewSet):
                 return self._redirect_to_session_detail(patient_pk, therapy_pk, session_pk)
 
             # Get the template structure from prompts
-            from therapy.prompts import get_session_notes_prompt, SESSION_NOTES_TEMPLATES
+            from therapy.prompts import SESSION_NOTES_TEMPLATES
 
             if template_key not in SESSION_NOTES_TEMPLATES:
                 messages.error(request, "Unbekanntes Template")

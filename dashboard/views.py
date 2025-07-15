@@ -2,9 +2,8 @@ from django.views.generic import TemplateView
 from django.views import View
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
-from django.urls import reverse
 from django_tables2 import RequestConfig
-from documents.models import Document, DocumentTemplate
+from documents.models import Document
 from documents.tables import DocumentTable
 from documents.services import TemplateService, DocumentService
 from patients.models import Patient

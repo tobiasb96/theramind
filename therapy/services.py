@@ -116,7 +116,6 @@ Die folgenden Notizen existieren bereits für diese Sitzung. Bitte berücksichti
             Generated session notes
         """
         # Import here to avoid circular imports
-        from documents.models import DocumentTemplate
         from documents.services import TemplateService
 
         template_service = TemplateService()

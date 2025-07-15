@@ -1,12 +1,10 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
+from django.views.generic import UpdateView
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
-from django.core.paginator import Paginator
 from rest_framework import viewsets
-from rest_framework.decorators import action
 from django_tables2 import RequestConfig
 
 from .models import Patient, Settings
@@ -93,7 +91,7 @@ class PatientViewSet(viewsets.ViewSet):
         elif request.method == "POST":
             form = PatientForm(request.POST)
             if form.is_valid():
-                patient = form.save()
+                form.save()
                 messages.success(request, "Patient wurde erfolgreich angelegt.")
 
                 # Handle HTMX requests

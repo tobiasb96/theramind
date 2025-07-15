@@ -1,6 +1,4 @@
 from django.db import models
-from django.utils import timezone
-from patients.models import Patient
 from therapy.models import Therapy, Session
 
 
@@ -119,4 +117,4 @@ class UserTemplatePreference(models.Model):
 
     def __str__(self):
         # TODO: Update when user model is implemented
-        return f"Template Einstellungen für Benutzer"
+        return "Template Einstellungen für Benutzer"
