@@ -44,7 +44,7 @@ class PatientViewSet(viewsets.ViewSet):
             request,
             "patients/patient_list.html",
             {
-                "table": table,
+                "patients_table": table,
                 "search_query": search_query,
                 "form": PatientForm(),
             },

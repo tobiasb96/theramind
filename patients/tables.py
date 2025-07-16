@@ -40,7 +40,6 @@ class PatientTable(tables.Table):
 
     class Meta:
         model = Patient
-        template_name = "partials/table.html"
         fields = ("full_name", "email", "phone", "session_count", "actions")
         attrs = {
             "class": "w-full table-auto text-md text-left rounded text-gray-900 bg-white",

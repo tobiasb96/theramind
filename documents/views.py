@@ -52,7 +52,7 @@ class TemplateViewSet(viewsets.ViewSet):
             request,
             "documents/template_list.html",
             {
-                "table": table,
+                "templates_table": table,
                 "template_type": template_type,
                 "search_query": search_query,
             },
@@ -276,7 +276,7 @@ class DocumentViewSet(viewsets.ViewSet):
             request,
             "documents/document_list.html",
             {
-                "table": table,
+                "documents_table": table,
                 "search_query": search_query,
             },
         )

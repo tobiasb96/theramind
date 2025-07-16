@@ -32,7 +32,6 @@ class DocumentTable(tables.Table):
 
     class Meta:
         model = Document
-        template_name = "partials/table.html"
         fields = ("title", "created_at", "patient", "actions")
         attrs = {
             "class": "w-full table-auto text-md text-left rounded text-gray-900 bg-white",
@@ -89,7 +88,6 @@ class TemplateTable(tables.Table):
 
     class Meta:
         model = DocumentTemplate
-        template_name = "partials/table.html"
         fields = ("name", "template_type", "status", "created_at", "actions")
         attrs = {
             "class": "w-full table-auto text-md text-left rounded text-gray-900 bg-white",
