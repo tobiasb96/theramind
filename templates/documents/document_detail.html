@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ document.title }} - PsychDocs{% endblock %}
+{% block title %}{{ document.title }} - Theramind{% endblock %}
 
 {% block content %}
 <div class="mx-auto">
@@ -37,7 +37,7 @@
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">{{ document.title }}</h1>
                 <p class="text-gray-600 mt-1">Patient: {{ document.patient.full_name }}</p>
-                <p class="text-gray-600">Typ: {{ document.get_document_type_display }}</p>
+
                 <p class="text-gray-600">Erstellt: {{ document.created_at|date:"d.m.Y H:i" }}</p>
                 {% if document.updated_at != document.created_at %}
                     <p class="text-gray-600">Aktualisiert: {{ document.updated_at|date:"d.m.Y H:i" }}</p>
@@ -187,13 +187,46 @@
                             {% endfor %}
                         </select>
                     </div>
+                    
+                    
+                    <!-- Template Selection -->
+                    {% if document_templates %}
                     <div class="col-span-2">
-                        <label for="edit-document-type" class="block mb-2 text-sm font-medium text-gray-900">Dokumenttyp</label>
-                        <select name="document_type" id="edit-document-type" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" required>
-                            {% for key, name in document_types.items %}
-                                <option value="{{ key }}" {% if key == document.document_type %}selected{% endif %}>{{ name }}</option>
+                        <label for="edit-template" class="block mb-2 text-sm font-medium text-gray-900">
+                            Vorlage
+                            <button data-tooltip-target="tooltip-edit-template" type="button" class="ml-1 text-gray-400 hover:text-gray-600">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                        </label>
+                        <select name="template_id" id="edit-template" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                            <option value="">Standard Vorlage verwenden</option>
+                            {% for template in document_templates %}
+                                <option value="{{ template.id }}" {% if template.id == document.template_id %}selected{% endif %}>{{ template.name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Sessions -->
+                    <div class="col-span-2">
+                        <label for="edit-sessions" class="block mb-2 text-sm font-medium text-gray-900">
+                            Sitzungen (optional)
+                            <button data-tooltip-target="tooltip-edit-sessions" type="button" class="ml-1 text-gray-400 hover:text-gray-600">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                        </label>
+                        <select name="sessions" id="edit-sessions" multiple class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" size="4">
+                            {% for session in document.therapy.session_set.all %}
+                                <option value="{{ session.pk }}" {% if session in document.sessions.all %}selected{% endif %}>
+                                    {% if session.title %}{{ session.title }}{% else %}Sitzung vom {{ session.date|date:"d.m.Y" }}{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Strg+Klick für mehrere Sitzungen</p>
                     </div>
                 </div>
                 <button type="submit" class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
@@ -203,6 +236,20 @@
             </form>
         </div>
     </div>
+</div>
+
+<!-- Tooltips for Edit Document Modal -->
+<div id="tooltip-edit-template" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
+    Die Vorlage bestimmt die Struktur des Dokuments.<br>
+    <strong>Standard:</strong> Vordefinierte Vorlage<br>
+    <strong>Benutzerdefiniert:</strong> Ihre eigene Vorlage
+    <div class="tooltip-arrow" data-popper-arrow></div>
+</div>
+
+<div id="tooltip-edit-sessions" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
+    Wählen Sie Sitzungen aus, die in das Dokument einbezogen werden sollen.<br>
+    Die Inhalte dieser Sitzungen werden bei der Dokumenterstellung berücksichtigt.
+    <div class="tooltip-arrow" data-popper-arrow></div>
 </div>
 
 <!-- Delete Document Modal -->

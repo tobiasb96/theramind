@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="{% static 'css/output.css' %}">
-  <title>{% block title %}PsychDocs{% endblock %}</title>
+  <title>{% block title %}Theramind{% endblock %}</title>
 </head>
 <body class="bg-gray-50">
   {% include 'partials/navbar.html' %}
@@ -117,6 +117,35 @@
         setTimeout(() => {
           dismissToast(toast.id);
         }, 5000 + (index * 100));
+      });
+    });
+    
+    // Tooltip functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const tooltipTriggers = document.querySelectorAll('[data-tooltip-target]');
+      
+      tooltipTriggers.forEach(trigger => {
+        const tooltipId = trigger.getAttribute('data-tooltip-target');
+        const tooltip = document.getElementById(tooltipId);
+        
+        if (tooltip) {
+          // Show tooltip on hover
+          trigger.addEventListener('mouseenter', function() {
+            tooltip.classList.remove('invisible', 'opacity-0');
+            tooltip.classList.add('visible', 'opacity-100');
+            
+            // Position tooltip
+            const rect = trigger.getBoundingClientRect();
+            tooltip.style.top = (rect.top - tooltip.offsetHeight - 5) + 'px';
+            tooltip.style.left = (rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2)) + 'px';
+          });
+          
+          // Hide tooltip on mouse leave
+          trigger.addEventListener('mouseleave', function() {
+            tooltip.classList.remove('visible', 'opacity-100');
+            tooltip.classList.add('invisible', 'opacity-0');
+          });
+        }
       });
     });
   </script>

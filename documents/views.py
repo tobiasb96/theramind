@@ -10,13 +10,242 @@ from rest_framework.decorators import action
 from django_tables2 import RequestConfig
 import json
 
-from .models import Document
+from .models import Document, DocumentTemplate
 from .forms import DocumentForm
-from .services import DocumentService
-from .prompts import get_available_document_types
-from .tables import DocumentTable
+from .services import DocumentService, TemplateService
+
+from .tables import DocumentTable, TemplateTable
 from patients.models import Patient
 from therapy.models import Therapy
+
+
+class TemplateViewSet(viewsets.ViewSet):
+    """
+    A ViewSet for managing custom templates
+    """
+
+    def get_queryset(self):
+        # TODO: Filter by user when user model is implemented
+        return DocumentTemplate.objects.filter(is_active=True).order_by("name")
+
+    def list(self, request):
+        """List all templates"""
+        template_type = request.GET.get("type", "")  # Default to empty (all types)
+        templates = self.get_queryset()
+
+        # Filter by template type if specified
+        if template_type:
+            templates = templates.filter(template_type=template_type)
+
+        # Handle search
+        search_query = request.GET.get("search", "")
+        if search_query:
+            templates = templates.filter(
+                Q(name__icontains=search_query) | Q(description__icontains=search_query)
+            )
+
+        # Create table with proper ordering
+        table = TemplateTable(templates)
+        RequestConfig(request, paginate={"per_page": 20}).configure(table)
+
+        return render(
+            request,
+            "documents/template_list.html",
+            {
+                "table": table,
+                "template_type": template_type,
+                "search_query": search_query,
+            },
+        )
+
+    def retrieve(self, request, pk=None):
+        """Retrieve a specific template"""
+        template = get_object_or_404(DocumentTemplate, pk=pk)
+
+        return render(
+            request,
+            "documents/template_detail.html",
+            {"template": template},
+        )
+
+    def create(self, request):
+        """Create a new template"""
+        if request.method == "GET":
+            # Show template creation form
+            return render(
+                request,
+                "documents/template_form.html",
+                {
+                    "template_types": DocumentTemplate.TEMPLATE_TYPES,
+                },
+            )
+
+        elif request.method == "POST":
+            # Create new template
+            try:
+                template_data = {
+                    "name": request.POST.get("name"),
+                    "description": request.POST.get("description", ""),
+                    "template_type": request.POST.get("template_type"),
+                    "system_prompt": "",  # Always empty, hardcoded in service
+                    "user_prompt": request.POST.get("user_prompt"),
+                    "max_tokens": 2000,  # Default value
+                    "temperature": 0.3,  # Default value
+                    "is_predefined": False,
+                    "is_active": True,
+                }
+
+                template_service = TemplateService()
+                # TODO: Pass user_id when user model is implemented
+                template = template_service.create_custom_template(template_data)
+
+                messages.success(request, "Template wurde erfolgreich erstellt.")
+
+                # Handle HTMX requests
+                if request.headers.get("HX-Request"):
+                    response = HttpResponse()
+                    response["HX-Redirect"] = reverse_lazy(
+                        "documents:template_detail", kwargs={"pk": template.pk}
+                    )
+                    return response
+
+                return HttpResponse(
+                    status=302,
+                    headers={
+                        "Location": reverse_lazy(
+                            "documents:template_detail", kwargs={"pk": template.pk}
+                        )
+                    },
+                )
+
+            except Exception as e:
+                messages.error(request, f"Fehler beim Erstellen des Templates: {str(e)}")
+                return render(
+                    request,
+                    "documents/template_form.html",
+                    {
+                        "template_types": DocumentTemplate.TEMPLATE_TYPES,
+                    },
+                )
+
+    def update(self, request, pk=None):
+        """Update an existing template"""
+        template = get_object_or_404(DocumentTemplate, pk=pk)
+
+        if request.method == "GET":
+            return render(
+                request,
+                "documents/template_form.html",
+                {
+                    "template": template,
+                    "template_types": DocumentTemplate.TEMPLATE_TYPES,
+                },
+            )
+
+        elif request.method == "POST":
+            try:
+                template.name = request.POST.get("name")
+                template.description = request.POST.get("description", "")
+                template.template_type = request.POST.get("template_type")
+                template.user_prompt = request.POST.get("user_prompt")
+                template.save()
+
+                messages.success(request, "Template wurde erfolgreich aktualisiert.")
+
+                # Handle HTMX requests
+                if request.headers.get("HX-Request"):
+                    response = HttpResponse()
+                    response["HX-Redirect"] = reverse_lazy(
+                        "documents:template_detail", kwargs={"pk": template.pk}
+                    )
+                    return response
+
+                return HttpResponse(
+                    status=302,
+                    headers={
+                        "Location": reverse_lazy(
+                            "documents:template_detail", kwargs={"pk": template.pk}
+                        )
+                    },
+                )
+
+            except Exception as e:
+                messages.error(request, f"Fehler beim Aktualisieren des Templates: {str(e)}")
+                return render(
+                    request,
+                    "documents/template_form.html",
+                    {
+                        "template": template,
+                        "template_types": DocumentTemplate.TEMPLATE_TYPES,
+                    },
+                )
+
+    def destroy(self, request, pk=None):
+        """Delete a template"""
+        template = get_object_or_404(DocumentTemplate, pk=pk)
+
+        if request.method == "GET":
+            return render(request, "documents/template_confirm_delete.html", {"template": template})
+
+        elif request.method == "POST":
+            template.delete()
+            messages.success(request, "Template wurde erfolgreich gelöscht.")
+
+            # Handle HTMX requests
+            if request.headers.get("HX-Request"):
+                response = HttpResponse()
+                response["HX-Redirect"] = reverse_lazy("documents:template_list")
+                return response
+
+            return HttpResponse(
+                status=302, headers={"Location": reverse_lazy("documents:template_list")}
+            )
+
+    @action(detail=True, methods=["get", "post"])
+    def clone(self, request, pk=None):
+        """Clone a template"""
+        template = get_object_or_404(DocumentTemplate, pk=pk)
+
+        try:
+            # Handle both GET and POST requests
+            if request.method == "GET":
+                new_name = request.GET.get("name", f"{template.name} (Kopie)")
+            else:
+                new_name = request.POST.get("name", f"{template.name} (Kopie)")
+
+            template_service = TemplateService()
+            # TODO: Pass user_id when user model is implemented
+            cloned_template = template_service.clone_template(template.id, new_name)
+
+            messages.success(request, f"Template '{new_name}' wurde erfolgreich erstellt.")
+
+            # Handle HTMX requests
+            if request.headers.get("HX-Request"):
+                response = HttpResponse()
+                response["HX-Redirect"] = reverse_lazy(
+                    "documents:template_detail", kwargs={"pk": cloned_template.pk}
+                )
+                return response
+
+            return HttpResponse(
+                status=302,
+                headers={
+                    "Location": reverse_lazy(
+                        "documents:template_detail", kwargs={"pk": cloned_template.pk}
+                    )
+                },
+            )
+
+        except Exception as e:
+            messages.error(request, f"Fehler beim Klonen des Templates: {str(e)}")
+            return HttpResponse(
+                status=302,
+                headers={
+                    "Location": reverse_lazy(
+                        "documents:template_detail", kwargs={"pk": template.pk}
+                    )
+                },
+            )
 
 
 class DocumentViewSet(viewsets.ViewSet):
@@ -39,12 +268,6 @@ class DocumentViewSet(viewsets.ViewSet):
                 | Q(therapy__patient__first_name__icontains=search_query)
                 | Q(therapy__patient__last_name__icontains=search_query)
             )
-
-        # Handle type filter
-        type_filter = request.GET.get("type", "")
-        if type_filter:
-            documents = documents.filter(document_type=type_filter)
-
         # Create table with proper ordering
         table = DocumentTable(documents)
         RequestConfig(request, paginate={"per_page": 20}).configure(table)
@@ -55,8 +278,6 @@ class DocumentViewSet(viewsets.ViewSet):
             {
                 "table": table,
                 "search_query": search_query,
-                "type_filter": type_filter,
-                "document_types": get_available_document_types(),
             },
         )
 
@@ -64,12 +285,16 @@ class DocumentViewSet(viewsets.ViewSet):
         """Retrieve a specific document"""
         document = get_object_or_404(Document, pk=pk)
 
+        # Get available templates for document editing
+        template_service = TemplateService()
+        document_templates = template_service.get_document_templates()
+
         return render(
             request,
             "documents/document_detail.html",
             {
                 "document": document,
-                "document_types": get_available_document_types(),
+                "document_templates": document_templates,
             },
         )
 
@@ -87,7 +312,18 @@ class DocumentViewSet(viewsets.ViewSet):
                 except Therapy.DoesNotExist:
                     pass
 
-            return render(request, "documents/document_form.html", {"form": form})
+            # Get available templates for document creation
+            template_service = TemplateService()
+            document_templates = template_service.get_document_templates()
+
+            return render(
+                request,
+                "documents/document_form.html",
+                {
+                    "form": form,
+                    "document_templates": document_templates,
+                },
+            )
 
         elif request.method == "POST":
             form = DocumentForm(request.POST)
@@ -96,14 +332,17 @@ class DocumentViewSet(viewsets.ViewSet):
                 document = form.save(commit=False)
                 document.content = ""  # Start with empty content
                 document.save()
-                form.save_m2m()  # Save many-to-many relationships
+                form.save_m2m()
 
-                # Generate AI content
+                # Generate AI content with selected template
                 try:
                     document_service = DocumentService()
                     if document_service.is_available():
+                        template_id = request.POST.get("template_id")
                         generated_content = document_service.generate(
-                            document.therapy.patient, document.therapy, document.document_type
+                            document.therapy.patient,
+                            document.therapy,
+                            template_id=int(template_id) if template_id else None,
                         )
                         document.content = generated_content
                         document.save()
@@ -131,7 +370,18 @@ class DocumentViewSet(viewsets.ViewSet):
                     },
                 )
 
-            return render(request, "documents/document_form.html", {"form": form})
+            # If form is invalid, get templates again
+            template_service = TemplateService()
+            document_templates = template_service.get_document_templates()
+
+            return render(
+                request,
+                "documents/document_form.html",
+                {
+                    "form": form,
+                    "document_templates": document_templates,
+                },
+            )
 
     def update(self, request, pk=None):
         """Update an existing document (handles both form data and content updates)"""
@@ -183,31 +433,49 @@ class DocumentViewSet(viewsets.ViewSet):
                         },
                     )
 
-            # Regular form update
-            form = DocumentForm(request.POST, instance=document)
-            if form.is_valid():
-                form.save()
-                messages.success(request, "Dokument wurde erfolgreich aktualisiert.")
+            # Regular form update (from edit modal)
+            # Handle template and sessions fields
+            template_id = request.POST.get("template_id")
+            sessions_ids = request.POST.getlist("sessions")
 
-                # Handle HTMX requests
-                if request.headers.get("HX-Request"):
-                    response = HttpResponse()
-                    response["HX-Redirect"] = reverse_lazy(
+            # Update basic fields
+            document.title = request.POST.get("title", document.title)
+
+            # Update therapy if provided
+            therapy_id = request.POST.get("therapy")
+            if therapy_id:
+                try:
+                    therapy = Therapy.objects.get(pk=therapy_id)
+                    document.therapy = therapy
+                except Therapy.DoesNotExist:
+                    pass
+
+            document.save()
+
+            # Update sessions
+            if sessions_ids:
+                sessions = Session.objects.filter(pk__in=sessions_ids)
+                document.sessions.set(sessions)
+            else:
+                document.sessions.clear()
+
+            messages.success(request, "Dokument wurde erfolgreich aktualisiert.")
+
+            # Handle HTMX requests
+            if request.headers.get("HX-Request"):
+                response = HttpResponse()
+                response["HX-Redirect"] = reverse_lazy(
+                    "documents:document_detail", kwargs={"pk": document.pk}
+                )
+                return response
+
+            return HttpResponse(
+                status=302,
+                headers={
+                    "Location": reverse_lazy(
                         "documents:document_detail", kwargs={"pk": document.pk}
                     )
-                    return response
-
-                return HttpResponse(
-                    status=302,
-                    headers={
-                        "Location": reverse_lazy(
-                            "documents:document_detail", kwargs={"pk": document.pk}
-                        )
-                    },
-                )
-
-            return render(
-                request, "documents/document_form.html", {"form": form, "document": document}
+                },
             )
 
     def destroy(self, request, pk=None):
@@ -239,7 +507,6 @@ class DocumentViewSet(viewsets.ViewSet):
         # Create document content
         document_text = f"{document.title}\n\n"
         document_text += f"Patient: {document.therapy.patient.full_name}\n"
-        document_text += f"Typ: {document.get_document_type_display()}\n"
         document_text += f"Datum: {document.created_at.strftime('%d.%m.%Y')}\n"
         if document.updated_at != document.created_at:
             document_text += f"Aktualisiert: {document.updated_at.strftime('%d.%m.%Y %H:%M')}\n"
@@ -264,28 +531,20 @@ class DocumentViewSet(viewsets.ViewSet):
 
         try:
             data = json.loads(request.body)
-            document_type = data.get("document_type")
-
-            if not document_type:
-                return JsonResponse({"error": "Dokumenttyp ist erforderlich"}, status=400)
+            template_id = data.get("template_id")
 
             # Generate document using DocumentService
             document_service = DocumentService()
             if not document_service.is_available():
                 return JsonResponse({"error": "OpenAI API Key ist nicht konfiguriert"}, status=400)
 
-            generated_content = document_service.generate(patient, therapy, document_type)
-
-            # Get document type name for title
-            document_types = get_available_document_types()
-            document_type_name = document_types.get(document_type, document_type)
+            generated_content = document_service.generate(patient, therapy, template_id=template_id)
 
             # Create document
             document = Document.objects.create(
                 therapy=therapy,
-                title=f"{document_type_name} - {patient.full_name}",
+                title=f"Dokument - {patient.full_name}",
                 content=generated_content,
-                document_type=document_type,
             )
 
             return JsonResponse(
