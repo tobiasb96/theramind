@@ -24,9 +24,18 @@ class TherapyForm(forms.ModelForm):
 
 
 class SessionForm(forms.ModelForm):
+    # Optional patient selection field for quick creation
+    patient = forms.ModelChoiceField(
+        queryset=Patient.objects.none(),
+        required=False,
+        empty_label="Patient auswählen",
+        widget=forms.Select(attrs={"class": "form-control"}),
+        label="Patient",
+    )
+
     class Meta:
         model = Session
-        fields = ["therapy", "date", "duration", "title"]
+        fields = ["patient", "therapy", "date", "duration", "title"]
         widgets = {
             "therapy": forms.Select(attrs={"class": "form-control"}),
             "date": forms.DateTimeInput(attrs={"class": "form-control", "type": "datetime-local"}),
@@ -35,8 +44,20 @@ class SessionForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
+        # Extract patient_required parameter
+        patient_required = kwargs.pop("patient_required", False)
         super().__init__(*args, **kwargs)
+
+        # Set up patient field
+        self.fields["patient"].queryset = Patient.objects.order_by("last_name", "first_name")
+        self.fields["patient"].required = patient_required
+
+        # Set up therapy field
         self.fields['therapy'].queryset = Therapy.objects.filter(status='active').order_by('-start_date')
+
+        # If patient is not required, hide the patient field initially
+        if not patient_required:
+            self.fields["patient"].widget = forms.HiddenInput()
 
 
 class AudioUploadForm(forms.ModelForm):

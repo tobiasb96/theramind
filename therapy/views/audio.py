@@ -9,7 +9,7 @@ import os
 import logging
 
 from therapy.models import Session, AudioRecording, Transcription
-from transcriptions.services import get_transcription_service
+from therapy.services import get_transcription_service
 
 logger = logging.getLogger(__name__)
 

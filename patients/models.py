@@ -1,6 +1,5 @@
 from django.db import models
 from uuid import uuid4
-from django.utils import timezone
 
 
 class Patient(models.Model):

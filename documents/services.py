@@ -1,7 +1,6 @@
 from typing import Dict, Any, List
-from django.db.models import Q
 from core.connector import get_llm_connector
-from .models import DocumentTemplate, UserTemplatePreference
+from .models import DocumentTemplate
 from .prompts import DOCUMENT_SYSTEM_PROMPT
 from patients.models import Patient
 from therapy.models import Therapy

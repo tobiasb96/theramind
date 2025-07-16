@@ -75,7 +75,6 @@
                         </button>
                     </label>
                     <select name="template_id" id="template_id" class="form-control">
-                        <option value="">Standard Vorlage verwenden</option>
                         {% for template in document_templates %}
                             <option value="{{ template.id }}">{{ template.name }}</option>
                         {% endfor %}

@@ -82,6 +82,11 @@ urlpatterns = [
         session_viewset.save_notes,
         name="session_save_notes",
     ),
+    path(
+        "patients/<uuid:patient_pk>/therapies/<int:therapy_pk>/sessions/<int:session_pk>/create-from-template/",
+        session_viewset.create_from_template,
+        name="session_create_from_template",
+    ),
     # Audio processing URLs
     path("recordings/<int:pk>/transcribe/", audio_viewset.transcribe, name="transcribe"),
     path("recordings/<int:pk>/download/", audio_viewset.download, name="audio_download"),

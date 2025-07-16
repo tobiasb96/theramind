@@ -1,6 +1,4 @@
-import os
 import time
-from typing import Optional, List, Dict, Any
 from openai import OpenAI
 from django.conf import settings
 
