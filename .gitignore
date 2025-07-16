@@ -208,5 +208,7 @@ __marimo__/
 
 
 media/
+media/*
+!media/.gitkeep
 
 .docker/
