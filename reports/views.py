@@ -304,7 +304,9 @@ class ReportViewSet(viewsets.ViewSet):
 
             # Get the template
             try:
-                template = DocumentTemplate.objects.get(id=template_id, template_type="report")
+                template = DocumentTemplate.objects.get(
+                    id=template_id, template_type=DocumentTemplate.TemplateType.REPORT
+                )
             except DocumentTemplate.DoesNotExist:
                 messages.error(request, "Template nicht gefunden")
                 return redirect("reports:report_detail", pk=report.pk)

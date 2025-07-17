@@ -196,7 +196,7 @@ class SessionViewSet(viewsets.ViewSet):
 
             try:
                 template = DocumentTemplate.objects.get(
-                    id=template_id, template_type="session_notes"
+                    id=template_id, template_type=DocumentTemplate.TemplateType.SESSION_NOTES
                 )
             except DocumentTemplate.DoesNotExist:
                 messages.error(request, "Template nicht gefunden")
@@ -286,7 +286,7 @@ class SessionViewSet(viewsets.ViewSet):
 
             try:
                 template = DocumentTemplate.objects.get(
-                    id=template_id, template_type="session_notes"
+                    id=template_id, template_type=DocumentTemplate.TemplateType.SESSION_NOTES
                 )
             except DocumentTemplate.DoesNotExist:
                 messages.error(request, "Template nicht gefunden")
