@@ -289,6 +289,39 @@ class ReportViewSet(viewsets.ViewSet):
                 messages.error(request, f"Fehler beim Speichern: {str(e)}")
                 return redirect("reports:report_detail", pk=report.pk)
 
+    @action(detail=True, methods=["post"])
+    @method_decorator(csrf_exempt)
+    def create_from_template(self, request, pk=None):
+        """Create report content from a template without context files"""
+        report = get_object_or_404(Report, pk=pk)
+
+        try:
+            template_id = request.POST.get("template")
+
+            if not template_id:
+                messages.error(request, "Template ist erforderlich")
+                return redirect("reports:report_detail", pk=report.pk)
+
+            # Get the template
+            try:
+                template = DocumentTemplate.objects.get(id=template_id, template_type="report")
+            except DocumentTemplate.DoesNotExist:
+                messages.error(request, "Template nicht gefunden")
+                return redirect("reports:report_detail", pk=report.pk)
+
+            # Use the template's user_prompt as the structure for report content
+            # This is the template structure that will be filled out manually
+            report.content = template.user_prompt
+            report.save()
+
+            messages.success(request, f"Vorlage '{template.name}' wurde erfolgreich angewendet.")
+
+        except Exception as e:
+            logger.error(f"Fehler beim Erstellen des Berichts aus Template: {str(e)}")
+            messages.error(request, f"Fehler beim Erstellen des Berichts: {str(e)}")
+
+        return redirect("reports:report_detail", pk=report.pk)
+
     @action(detail=True, methods=["get"])
     def export(self, request, pk=None):
         """Export report as text file"""
