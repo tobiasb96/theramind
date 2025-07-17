@@ -58,14 +58,14 @@
     <div class="bg-white rounded-lg shadow">
         <div class="p-6 border-b">
             <div class="flex justify-between items-center">
-                <h2 class="text-lg font-semibold text-gray-900">Neueste Berichte</h2>
+                <h2 class="text-lg font-semibold text-gray-900">Zuletzt erstellte Berichte</h2>
                 <a href="{% url 'reports:reports_list' %}" class="text-blue-600 hover:text-blue-800 font-medium">
                     Alle Berichte anzeigen
                 </a>
             </div>
         </div>
         
-        <div class="bg-white rounded-lg">
+        <div class="bg-white p-4 rounded-lg">
             {% if recent_reports_table.data %}
                 {% render_table recent_reports_table %}
             {% else %}

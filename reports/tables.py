@@ -6,12 +6,12 @@ from .models import Report
 
 class ReportTable(tables.Table):
     title = tables.Column(
-        verbose_name="Name", orderable=True, attrs={"td": {"class": "px-6 py-4 whitespace-nowrap"}}
+        verbose_name="Name", orderable=False, attrs={"td": {"class": "px-6 py-4 whitespace-nowrap"}}
     )
 
     created_at = tables.Column(
         verbose_name="Erstellt",
-        orderable=True,
+        orderable=False,
         attrs={"td": {"class": "px-6 py-4 whitespace-nowrap text-sm text-gray-500"}},
     )
 

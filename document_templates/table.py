@@ -7,12 +7,12 @@ from .models import DocumentTemplate
 
 class TemplateTable(tables.Table):
     name = tables.Column(
-        verbose_name="Name", orderable=True, attrs={"td": {"class": "px-6 py-4 whitespace-nowrap"}}
+        verbose_name="Name", orderable=False, attrs={"td": {"class": "px-6 py-4 whitespace-nowrap"}}
     )
 
     template_type = tables.Column(
         verbose_name="Typ",
-        orderable=True,
+        orderable=False,
         attrs={"td": {"class": "px-6 py-4 whitespace-nowrap text-sm text-gray-500"}},
     )
 
@@ -25,7 +25,7 @@ class TemplateTable(tables.Table):
 
     created_at = tables.Column(
         verbose_name="Erstellt",
-        orderable=True,
+        orderable=False,
         attrs={"td": {"class": "px-6 py-4 whitespace-nowrap text-sm text-gray-500"}},
     )
 
