@@ -3,34 +3,28 @@ from django.views import View
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django_tables2 import RequestConfig
-from documents.models import Document
-from documents.tables import DocumentTable
-from documents.services import TemplateService, DocumentService
-from patients.models import Patient
-from therapy.models import Session, Therapy
+from reports.models import Report
+from reports.tables import ReportTable
+from reports.services import TemplateService, ReportService
+from therapy_sessions.models import Session
 
 
 class DashboardView(TemplateView):
-    template_name = 'core/dashboard.html'
+    template_name = "dashboard/dashboard.html"
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Get recent documents for table display
-        recent_documents = Document.objects.select_related("therapy__patient").order_by(
-            "-created_at"
-        )[:10]
+        recent_reports = Report.objects.order_by("-created_at")[:10]
 
         # Create table for recent documents (convert to list to avoid queryset ordering issues)
-        table = DocumentTable(list(recent_documents))
+        table = ReportTable(list(recent_reports))
         RequestConfig(self.request, paginate=False).configure(table)
-        context["recent_documents_table"] = table
-
-        # Get data for quick creation modals
-        context["patients"] = Patient.objects.order_by("last_name", "first_name")
+        context["recent_reports_table"] = table
 
         # Get document templates for quick document creation
         template_service = TemplateService()
-        context["document_templates"] = template_service.get_document_templates()
+        context["report_templates"] = template_service.get_document_templates()
 
         return context
 
@@ -40,43 +34,19 @@ class QuickSessionCreateView(View):
 
     def post(self, request):
         try:
-            patient_id = request.POST.get("patient")
             title = request.POST.get("title", "")
             date = request.POST.get("date")
-            duration = int(request.POST.get("duration", 50))
-
-            # Get or create patient
-            patient = get_object_or_404(Patient, pk=patient_id)
-
-            # Find or create an active therapy for this patient
-            therapy = Therapy.objects.filter(patient=patient, status="active").first()
-            if not therapy:
-                therapy = Therapy.objects.create(
-                    patient=patient,
-                    title=f"Therapie für {patient.full_name}",
-                    description="Automatisch erstellt",
-                    status="active",
-                )
 
             # Create the session
             session = Session.objects.create(
-                therapy=therapy,
                 date=date,
-                duration=duration,
                 title=title,
             )
 
-            messages.success(
-                request, f"Sitzung für {patient.full_name} wurde erfolgreich erstellt."
-            )
+            messages.success(request, "Sitzung wurde erfolgreich erstellt.")
 
             # Redirect to session detail
-            return redirect(
-                "therapy:session_detail",
-                patient_pk=patient.pk,
-                therapy_pk=therapy.pk,
-                session_pk=session.pk,
-            )
+            return redirect("sessions:session_detail", pk=session.pk)
 
         except Exception as e:
             messages.error(request, f"Fehler beim Erstellen der Sitzung: {str(e)}")
@@ -88,58 +58,41 @@ class QuickDocumentCreateView(View):
 
     def post(self, request):
         try:
-            patient_id = request.POST.get("patient")
             title = request.POST.get("title")
             template_id = request.POST.get("template_id")
 
-            # Get patient
-            patient = get_object_or_404(Patient, pk=patient_id)
-
-            # Find or create an active therapy for this patient
-            therapy = Therapy.objects.filter(patient=patient, status="active").first()
-            if not therapy:
-                therapy = Therapy.objects.create(
-                    patient=patient,
-                    title=f"Therapie für {patient.full_name}",
-                    description="Automatisch erstellt",
-                    status="active",
-                )
-
             # Create the document first without content
-            document = Document.objects.create(
-                therapy=therapy,
+            report = Report.objects.create(
                 title=title,
                 content="",
             )
 
             # Generate AI content with selected template
             try:
-                document_service = DocumentService()
-                if document_service.is_available():
+                report_service = ReportService()
+                if report_service.is_available():
                     template_id_int = int(template_id) if template_id else None
-                    generated_content = document_service.generate(
-                        patient, therapy, template_id=template_id_int
-                    )
-                    document.content = generated_content
-                    document.save()
+                    generated_content = report_service.generate(template_id=template_id_int)
+                    report.content = generated_content
+                    report.save()
                     messages.success(
                         request,
-                        f"Dokument für {patient.full_name} wurde erfolgreich erstellt und mit KI-Inhalt generiert.",
+                        "Bericht wurde erfolgreich erstellt und mit KI-Inhalt generiert.",
                     )
                 else:
                     messages.warning(
                         request,
-                        f"Dokument für {patient.full_name} wurde erstellt, aber KI-Generierung ist nicht verfügbar. Bitte fügen Sie den Inhalt manuell hinzu.",
+                        "Bericht wurde erstellt, aber KI-Generierung ist nicht verfügbar. Bitte fügen Sie den Inhalt manuell hinzu.",
                     )
             except Exception as e:
                 messages.warning(
                     request,
-                    f"Dokument wurde erstellt, aber KI-Generierung fehlgeschlagen: {str(e)}. Bitte fügen Sie den Inhalt manuell hinzu.",
+                    f"Bericht wurde erstellt, aber KI-Generierung fehlgeschlagen: {str(e)}. Bitte fügen Sie den Inhalt manuell hinzu.",
                 )
 
             # Redirect to document detail
-            return redirect("documents:document_detail", pk=document.pk)
+            return redirect("reports:report_detail", pk=report.pk)
 
         except Exception as e:
-            messages.error(request, f"Fehler beim Erstellen des Dokuments: {str(e)}")
+            messages.error(request, f"Fehler beim Erstellen des Berichts: {str(e)}")
             return redirect("core:dashboard")

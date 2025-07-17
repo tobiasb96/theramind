@@ -6,258 +6,288 @@
     </div>
     <div class="w-full border border-gray-200 rounded-lg bg-gray-50">
         <!-- Toolbar -->
-        <div class="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2 rounded-t-lg">
-            <div class="flex items-center space-x-1">
-                <!-- Bold -->
-                <button type="button" data-toolbar-target="toolbar-bold" class="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">
-                    <svg class="w-4 h-4" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 5h4.5a3.5 3.5 0 1 1 0 7H8m0-7v7m0-7H6m2 7h6.5a3.5 3.5 0 1 1 0 7H8m0-7v7m0 0H6"/>
+        <div class="px-3 py-2 border-b border-gray-200">
+            <div class="flex flex-wrap items-center">
+                <div class="flex items-center space-x-1 rtl:space-x-reverse flex-wrap">
+                    <!-- Bold -->
+                    <button id="toggleBoldButton-{{ editor_id }}" type="button" class="p-1.5 text-gray-500 rounded-sm cursor-pointer hover:text-gray-900 hover:bg-gray-100">
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5h4.5a3.5 3.5 0 1 1 0 7H8m0-7v7m0-7H6m2 7h6.5a3.5 3.5 0 1 1 0 7H8m0-7v7m0 0H6"/>
+                        </svg>
+                        <span class="sr-only">Bold</span>
+                    </button>
+                    
+                    <!-- Italic -->
+                    <button id="toggleItalicButton-{{ editor_id }}" type="button" class="p-1.5 text-gray-500 rounded-sm cursor-pointer hover:text-gray-900 hover:bg-gray-100">
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8.874 19 6.143-14M6 19h6.33m-.66-14H18"/>
+                        </svg>
+                        <span class="sr-only">Italic</span>
+                    </button>
+                    
+                    <!-- Underline -->
+                    <button id="toggleUnderlineButton-{{ editor_id }}" type="button" class="p-1.5 text-gray-500 rounded-sm cursor-pointer hover:text-gray-900 hover:bg-gray-100">
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M6 19h12M8 5v9a4 4 0 0 0 8 0V5M6 5h4m4 0h4"/>
+                        </svg>
+                        <span class="sr-only">Underline</span>
+                    </button>
+                    
+                    <!-- Bullet List -->
+                    <button id="toggleListButton-{{ editor_id }}" type="button" class="p-1.5 text-gray-500 rounded-sm cursor-pointer hover:text-gray-900 hover:bg-gray-100">
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M9 8h10M9 12h10M9 16h10M4.99 8H5m-.02 4h.01m0 4H5"/>
+                        </svg>
+                        <span class="sr-only">Toggle list</span>
+                    </button>
+                    
+                    <!-- Numbered List -->
+                    <button id="toggleOrderedListButton-{{ editor_id }}" type="button" class="p-1.5 text-gray-500 rounded-sm cursor-pointer hover:text-gray-900 hover:bg-gray-100">
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6h8m-8 6h8m-8 6h8M4 16a2 2 0 1 1 3.321 1.5L4 20h5M4 5l2-1v6m-2 0h4"/>
+                        </svg>
+                        <span class="sr-only">Toggle ordered list</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Format Dropdown Row -->
+            <div class="flex items-center gap-2 pt-2 flex-wrap">
+                <button id="typographyDropdownButton-{{ editor_id }}" data-dropdown-toggle="typographyDropdown-{{ editor_id }}" class="flex items-center justify-center rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-500 hover:bg-gray-200 hover:text-gray-900 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-50" type="button">
+                    Format
+                    <svg class="-me-0.5 ms-1.5 h-3.5 w-3.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
                     </svg>
                 </button>
                 
-                <!-- Italic -->
-                <button type="button" data-toolbar-target="toolbar-italic" class="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">
-                    <svg class="w-4 h-4" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19 4h-9M14 20H5M15 4L9 20"/>
-                    </svg>
-                </button>
-                
-                <!-- Underline -->
-                <button type="button" data-toolbar-target="toolbar-underline" class="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">
-                    <svg class="w-4 h-4" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3M4 21h16"/>
-                    </svg>
-                </button>
-                
-                <!-- Divider -->
-                <div class="w-px h-6 bg-gray-300 mx-2"></div>
-                
-                <!-- Bullet List -->
-                <button type="button" data-toolbar-target="toolbar-ul" class="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">
-                    <svg class="w-4 h-4" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
-                    </svg>
-                </button>
-                
-                <!-- Numbered List -->
-                <button type="button" data-toolbar-target="toolbar-ol" class="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100">
-                    <svg class="w-4 h-4" stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 6h13M8 12h13M8 18h13M3 6h1v4H3V6zm0 6h1v4H3v-4zm2-6h14v2H5V6zm0 6h14v2H5v-2z"/>
-                    </svg>
-                </button>
+                <!-- Heading Dropdown -->
+                <div id="typographyDropdown-{{ editor_id }}" class="z-10 hidden w-72 rounded-sm bg-white p-2 shadow-sm border border-gray-200">
+                    <ul class="space-y-1 text-sm font-medium" aria-labelledby="typographyDropdownButton-{{ editor_id }}">
+                        <li>
+                            <button id="toggleParagraphButton-{{ editor_id }}" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900">Paragraph</button>
+                        </li>
+                        <li>
+                            <button data-heading-level="1" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900 heading-button-{{ editor_id }}">Heading 1</button>
+                        </li>
+                        <li>
+                            <button data-heading-level="2" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900 heading-button-{{ editor_id }}">Heading 2</button>
+                        </li>
+                        <li>
+                            <button data-heading-level="3" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900 heading-button-{{ editor_id }}">Heading 3</button>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
         
         <!-- Editor Area -->
-        <div class="bg-white rounded-b-lg">
-            <div class="px-4 py-2 bg-white rounded-b-lg">
-                <div id="{{ editor_id }}" class="w-full text-sm text-gray-800 bg-white border-0 outline-none resize-none wysiwyg-editor" style="min-height: {{ min_height|default:'400px' }};" contenteditable="true" data-placeholder="{{ placeholder|default:'Text eingeben...' }}">{{ content|safe }}</div>
-                <input type="hidden" name="{{ input_name }}" id="{{ editor_id }}-input" value="{{ content|escape }}">
-            </div>
+        <div class="px-4 py-2 bg-white rounded-b-lg">
+            <label for="{{ editor_id }}" class="sr-only">{{ label|default:"Editor" }}</label>
+            <div id="{{ editor_id }}" class="block w-full px-0 text-sm text-gray-800 bg-white border-0 focus:ring-0" style="min-height: {{ min_height|default:'400px' }};"></div>
+            <input type="hidden" name="{{ input_name }}" id="{{ editor_id }}-input" value="{{ content|escape }}">
         </div>
     </div>
 </div>
 
-<style>
-    /* WYSIWYG Editor Styles */
-    .wysiwyg-editor {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        line-height: 1.6;
-        color: #374151;
-    }
-    
-    .wysiwyg-editor:focus {
-        outline: none;
-    }
-    
-    .wysiwyg-editor p {
-        margin-bottom: 1rem;
-    }
-    
-    .wysiwyg-editor ul, .wysiwyg-editor ol {
-        margin-left: 1.5rem;
-        margin-bottom: 1rem;
-        list-style-position: outside;
-    }
-    
-    .wysiwyg-editor ul {
-        list-style-type: disc;
-    }
-    
-    .wysiwyg-editor ol {
-        list-style-type: decimal;
-    }
-    
-    .wysiwyg-editor li {
-        margin-bottom: 0.25rem;
-        display: list-item;
-    }
-    
-    /* Toolbar button active states */
-    [data-toolbar-target].active {
-        background-color: #3b82f6 !important;
-        color: white !important;
-    }
-</style>
+<script type="module">
+import { Editor } from 'https://esm.sh/@tiptap/core@2.6.6';
+import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.6.6';
+import Underline from 'https://esm.sh/@tiptap/extension-underline@2.6.6';
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const editor = document.getElementById('{{ editor_id }}');
+window.addEventListener('load', function() {
+    const editorElement = document.getElementById('{{ editor_id }}');
     const hiddenInput = document.getElementById('{{ editor_id }}-input');
     
-    if (editor) {
-        // Initialize toolbar functionality
-        const toolbarButtons = document.querySelectorAll('[data-toolbar-target]');
+    if (editorElement && !editorElement.hasAttribute('data-editor-initialized')) {
+        editorElement.setAttribute('data-editor-initialized', 'true');
         
-        toolbarButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const command = this.getAttribute('data-toolbar-target').replace('toolbar-', '');
-                
-                // Remove active class from all buttons
-                toolbarButtons.forEach(btn => btn.classList.remove('active'));
-                
-                switch(command) {
-                    case 'bold':
-                        document.execCommand('bold', false, null);
-                        if (document.queryCommandState('bold')) {
-                            this.classList.add('active');
-                        }
-                        break;
-                    case 'italic':
-                        document.execCommand('italic', false, null);
-                        if (document.queryCommandState('italic')) {
-                            this.classList.add('active');
-                        }
-                        break;
-                    case 'underline':
-                        document.execCommand('underline', false, null);
-                        if (document.queryCommandState('underline')) {
-                            this.classList.add('active');
-                        }
-                        break;
-                    case 'ul':
-                        document.execCommand('insertUnorderedList', false, null);
-                        // Ensure proper list styling
-                        setTimeout(() => {
-                            const lists = editor.querySelectorAll('ul');
-                            lists.forEach(list => {
-                                if (!list.style.listStyleType) {
-                                    list.style.listStyleType = 'disc';
-                                }
-                            });
-                        }, 10);
-                        break;
-                    case 'ol':
-                        document.execCommand('insertOrderedList', false, null);
-                        // Ensure proper list styling
-                        setTimeout(() => {
-                            const lists = editor.querySelectorAll('ol');
-                            lists.forEach(list => {
-                                if (!list.style.listStyleType) {
-                                    list.style.listStyleType = 'decimal';
-                                }
-                            });
-                        }, 10);
-                        break;
-                }
-                
+        // Initialize TipTap editor
+        const editor = new Editor({
+            element: editorElement,
+            extensions: [
+                StarterKit,
+                Underline,
+            ],
+            content: `{{ content|safe|escapejs }}` || `<p>{{ placeholder|default:"Text eingeben..."|escapejs }}</p>`,
+            editorProps: {
+                attributes: {
+                    class: 'format format-sm focus:outline-none format-blue max-w-none',
+                },
+            },
+            onUpdate: ({ editor }) => {
                 // Update hidden input with current content
-                updateHiddenInput();
-            });
+                hiddenInput.value = editor.getHTML();
+            },
         });
-        
-        // Update toolbar state when selection changes
-        editor.addEventListener('keyup', updateToolbarState);
-        editor.addEventListener('mouseup', updateToolbarState);
-        editor.addEventListener('input', updateToolbarState);
-        
-        function updateToolbarState() {
-            toolbarButtons.forEach(button => {
-                const command = button.getAttribute('data-toolbar-target').replace('toolbar-', '');
-                
-                switch(command) {
-                    case 'bold':
-                        if (document.queryCommandState('bold')) {
-                            button.classList.add('active');
-                        } else {
-                            button.classList.remove('active');
-                        }
-                        break;
-                    case 'italic':
-                        if (document.queryCommandState('italic')) {
-                            button.classList.add('active');
-                        } else {
-                            button.classList.remove('active');
-                        }
-                        break;
-                    case 'underline':
-                        if (document.queryCommandState('underline')) {
-                            button.classList.add('active');
-                        } else {
-                            button.classList.remove('active');
-                        }
-                        break;
-                }
-            });
-        }
-        
-        // Update hidden input when content changes
-        editor.addEventListener('input', updateHiddenInput);
-        editor.addEventListener('keyup', updateHiddenInput);
-        editor.addEventListener('paste', updateHiddenInput);
-        
-        // Handle paste to clean up formatting
-        editor.addEventListener('paste', function(e) {
+
+        // Toolbar button event listeners with proper event handling
+        document.getElementById('toggleBoldButton-{{ editor_id }}')?.addEventListener('click', (e) => {
             e.preventDefault();
-            const text = (e.originalEvent || e).clipboardData.getData('text/plain');
-            document.execCommand('insertText', false, text);
+            editor.chain().focus().toggleBold().run();
         });
-        
-        // Placeholder functionality
-        if (!editor.textContent.trim()) {
-            editor.textContent = editor.getAttribute('data-placeholder');
-            editor.classList.add('text-gray-400');
-        }
-        
-        editor.addEventListener('focus', function() {
-            if (this.textContent === this.getAttribute('data-placeholder')) {
-                this.textContent = '';
-                this.classList.remove('text-gray-400');
+
+        document.getElementById('toggleItalicButton-{{ editor_id }}')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleItalic().run();
+        });
+
+        document.getElementById('toggleUnderlineButton-{{ editor_id }}')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleUnderline().run();
+        });
+
+        document.getElementById('toggleListButton-{{ editor_id }}')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleBulletList().run();
+        });
+
+        document.getElementById('toggleOrderedListButton-{{ editor_id }}')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleOrderedList().run();
+        });
+
+        document.getElementById('toggleParagraphButton-{{ editor_id }}')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            editor.chain().focus().setParagraph().run();
+            // Hide dropdown using Flowbite instance
+            const typographyDropdown = FlowbiteInstances.getInstance('Dropdown', 'typographyDropdown-{{ editor_id }}');
+            if (typographyDropdown) {
+                typographyDropdown.hide();
             }
         });
-        
-        editor.addEventListener('blur', function() {
-            if (!this.textContent.trim()) {
-                this.textContent = this.getAttribute('data-placeholder');
-                this.classList.add('text-gray-400');
-            }
-        });
-        
-        function updateHiddenInput() {
-            hiddenInput.value = editor.innerHTML;
-        }
-        
-        // Initialize with current content
-        updateHiddenInput();
-        
-        // Ensure existing lists are properly styled
-        function ensureListStyling() {
-            const lists = editor.querySelectorAll('ul, ol');
-            lists.forEach(list => {
-                if (list.tagName === 'UL' && !list.style.listStyleType) {
-                    list.style.listStyleType = 'disc';
-                } else if (list.tagName === 'OL' && !list.style.listStyleType) {
-                    list.style.listStyleType = 'decimal';
+
+        // Heading buttons
+        document.querySelectorAll('.heading-button-{{ editor_id }}').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const level = parseInt(button.getAttribute('data-heading-level'));
+                editor.chain().focus().toggleHeading({ level }).run();
+                // Hide dropdown using Flowbite instance
+                const typographyDropdown = FlowbiteInstances.getInstance('Dropdown', 'typographyDropdown-{{ editor_id }}');
+                if (typographyDropdown) {
+                    typographyDropdown.hide();
                 }
             });
-        }
-        
-        // Apply styling to existing lists
-        ensureListStyling();
-        
-        // Also apply styling when content changes
-        editor.addEventListener('input', ensureListStyling);
+        });
+
+        // Initialize hidden input with current content
+        hiddenInput.value = editor.getHTML();
     }
 });
-</script> 
+</script>
+
+<style>
+/* TipTap Editor Styles - Compact Version */
+.ProseMirror {
+    outline: none;
+    padding: 0.75rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.875rem; /* 14px instead of 16px */
+    line-height: 1.4; /* Tighter line height instead of 1.6 */
+    color: #374151;
+}
+
+.ProseMirror p {
+    margin-bottom: 0.5rem; /* Reduced from 1rem */
+}
+
+.ProseMirror h1 {
+    font-size: 1.5rem; /* Reduced from 2rem */
+    font-weight: 700;
+    margin-bottom: 0.75rem; /* Reduced from 1rem */
+    margin-top: 1rem; /* Reduced from 1.5rem */
+}
+
+.ProseMirror h2 {
+    font-size: 1.25rem; /* Reduced from 1.5rem */
+    font-weight: 600;
+    margin-bottom: 0.5rem; /* Reduced from 0.75rem */
+    margin-top: 0.75rem; /* Reduced from 1.25rem */
+}
+
+.ProseMirror h3 {
+    font-size: 1.125rem; /* Reduced from 1.25rem */
+    font-weight: 600;
+    margin-bottom: 0.375rem; /* Reduced from 0.5rem */
+    margin-top: 0.5rem; /* Reduced from 1rem */
+}
+
+.ProseMirror ul, .ProseMirror ol {
+    margin-left: 1.25rem; /* Reduced from 1.5rem */
+    margin-bottom: 0.5rem; /* Reduced from 1rem */
+    padding-left: 0;
+}
+
+.ProseMirror ul {
+    list-style-type: disc;
+}
+
+.ProseMirror ol {
+    list-style-type: decimal;
+}
+
+.ProseMirror li {
+    margin-bottom: 0.125rem; /* Reduced from 0.25rem */
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: #9ca3af;
+    pointer-events: none;
+    height: 0;
+}
+
+/* Ensure proper list styling */
+.ProseMirror ul li {
+    display: list-item;
+    list-style-type: disc;
+    list-style-position: outside;
+}
+
+.ProseMirror ol li {
+    display: list-item;
+    list-style-type: decimal;
+    list-style-position: outside;
+}
+
+/* Custom format-sm class for smaller typography */
+.format-sm {
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.format-sm p {
+    margin-bottom: 0.5rem;
+}
+
+.format-sm h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    margin-top: 1rem;
+}
+
+.format-sm h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.format-sm h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.375rem;
+    margin-top: 0.5rem;
+}
+
+.format-sm ul, .format-sm ol {
+    margin-left: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.format-sm li {
+    margin-bottom: 0.125rem;
+}
+</style> 
