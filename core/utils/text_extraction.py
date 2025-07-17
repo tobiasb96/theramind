@@ -25,15 +25,16 @@ class TextExtractionService:
         """
         try:
             file_extension = self._get_file_extension(filename)
+            logger.info(f"Extracting text from {filename} with extension {file_extension}")
             
-            if file_extension == '.txt':
+            if file_extension == 'txt':
                 return self._extract_from_txt(file_path)
-            elif file_extension == '.pdf':
+            elif file_extension == 'pdf':
                 return self._extract_from_pdf(file_path)
-            elif file_extension in ['.docx', '.doc']:
+            elif file_extension in ['docx', 'doc']:
                 return self._extract_from_word(file_path)
             else:
-                logger.warning(f"Unsupported file format: {file_extension}")
+                logger.warning(f"Unsupported file format: {file_extension} for file {filename}")
                 return None
                 
         except Exception as e:
@@ -42,7 +43,9 @@ class TextExtractionService:
     
     def _get_file_extension(self, filename: str) -> str:
         """Get file extension in lowercase"""
-        return filename.lower().split('.')[-1] if '.' in filename else ''
+        if '.' not in filename:
+            return ''
+        return filename.lower().split('.')[-1]
     
     def _extract_from_txt(self, file_path: str) -> str:
         """Extract text from TXT file"""
@@ -66,16 +69,18 @@ class TextExtractionService:
                 text = ""
                 
                 for page in pdf_reader.pages:
-                    text += page.extract_text() + "\n"
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
                     
                 return self._clean_text(text)
                 
-        except ImportError:
+        except ImportError as e:
             logger.error("PyPDF2 not installed. Cannot extract PDF text.")
-            return None
+            raise Exception("PyPDF2 library not available")
         except Exception as e:
             logger.error(f"Error extracting PDF text: {str(e)}")
-            return None
+            raise Exception(f"PDF extraction failed: {str(e)}")
     
     def _extract_from_word(self, file_path: str) -> str:
         """Extract text from Word document"""
@@ -90,12 +95,12 @@ class TextExtractionService:
                 
             return self._clean_text(text)
             
-        except ImportError:
+        except ImportError as e:
             logger.error("python-docx not installed. Cannot extract Word text.")
-            return None
+            raise Exception("python-docx library not available")
         except Exception as e:
             logger.error(f"Error extracting Word text: {str(e)}")
-            return None
+            raise Exception(f"Word extraction failed: {str(e)}")
     
     def _clean_text(self, text: str) -> str:
         """Clean extracted text"""
