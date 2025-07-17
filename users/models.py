@@ -81,7 +81,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # The `USERNAME_FIELD` property tells us which field we will use to log in.
     # In this case we want it to be the email field.
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name", "last_name"]
+    REQUIRED_FIELDS = []
 
     objects = UserManager()
 
