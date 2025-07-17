@@ -12,7 +12,7 @@
             <p class="text-gray-600 mt-1">Verwalte deine aktuellen Therapieberichte</p>
         </div>
         <div class="flex space-x-3">
-            <button data-modal-target="create-template-modal" data-modal-toggle="create-template-modal" 
+            <button data-modal-target="quick-report-modal" data-modal-toggle="quick-report-modal" 
                     class="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 inline-flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                     <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
@@ -28,13 +28,13 @@
     <div class="flex items-center justify-between p-4 space-x-4">
         <div class="flex-1">
             <form class="flex items-center" method="get">
-                <label for="search" class="sr-only">Search</label>
+                <label for="search" class="sr-only">Suche</label>
                 <div class="relative flex-1">
                     <input type="text" id="search" name="search" value="{{ search_query }}" 
                            class="block w-full p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500" 
                            placeholder="Nach Titel suchen...">
                 </div>
-                <button type="submit" class="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 inline-flex items-center">
+                <button type="submit" class="ml-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 inline-flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
@@ -55,5 +55,68 @@
     </div>
 </div>
 
+
+    <!-- Quick Document Creation Modal -->
+    <div id="quick-report-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Bericht erstellen
+                    </h3>
+                    <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="quick-document-modal">
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                <form class="p-4 md:p-5" method="post" action="{% url 'core:quick_document_create' %}">
+                    {% csrf_token %}
+                    <div class="grid gap-4 mb-4">
+                        <div class="col-span-2">
+                            <label for="document-title" class="block mb-2 text-sm font-medium text-gray-900">Titel</label>
+                            <input type="text" name="title" id="document-title" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="Berichtstitel" required>
+                        </div>
+                        
+                        <!-- Template Selection -->
+                        {% if document_templates %}
+                        <div class="col-span-2">
+                            <label for="document-template" class="block mb-2 text-sm font-medium text-gray-900">
+                                Vorlage
+                                <button data-tooltip-target="tooltip-template-modal" type="button" class="ml-1 text-gray-400 hover:text-gray-600">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </button>
+                            </label>
+                            <select name="template_id" id="document-template" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                                {% for template in document_templates %}
+                                    <option value="{{ template.id }}">{{ template.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="text-white inline-flex items-center bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                        <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                        Mit KI erstellen
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltips for Document Modal -->
+    <div id="tooltip-template-modal" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
+        Die Vorlage bestimmt die Struktur des generierten Berichts.<br>
+        <strong>Standard:</strong> Vordefinierte Vorlage<br>
+        <strong>Benutzerdefiniert:</strong> Deine eigene Vorlage
+        <div class="tooltip-arrow" data-popper-arrow></div>
+    </div>
+</div>
 
 {% endblock %} 
