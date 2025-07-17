@@ -1,9 +1,10 @@
 from django import forms
 from document_templates.models import DocumentTemplate
 from .models import Report, ReportContextFile
+from users.mixins import UserFormMixin
 
 
-class ReportForm(forms.ModelForm):
+class ReportForm(UserFormMixin, forms.ModelForm):
     template = forms.ModelChoiceField(
         queryset=DocumentTemplate.objects.none(),
         required=False,
@@ -21,9 +22,22 @@ class ReportForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["template"].queryset = DocumentTemplate.objects.filter(
-            template_type=DocumentTemplate.TemplateType.REPORT, is_active=True
-        ).order_by("is_predefined", "name")
+        # CRITICAL SECURITY: Filter templates to show only predefined ones and user's own templates
+        if hasattr(self, 'user') and self.user:
+            from django.db.models import Q
+            self.fields["template"].queryset = DocumentTemplate.objects.filter(
+                template_type=DocumentTemplate.TemplateType.REPORT, 
+                is_active=True
+            ).filter(
+                Q(is_predefined=True) | Q(user=self.user)
+            ).order_by("is_predefined", "name")
+        else:
+            # Fallback: show only predefined templates if no user context
+            self.fields["template"].queryset = DocumentTemplate.objects.filter(
+                template_type=DocumentTemplate.TemplateType.REPORT, 
+                is_active=True,
+                is_predefined=True
+            ).order_by("name")
 
 
 class ReportContextFileForm(forms.ModelForm):

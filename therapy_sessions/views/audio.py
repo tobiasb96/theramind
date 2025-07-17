@@ -11,6 +11,7 @@ import logging
 
 from therapy_sessions.models import Session, AudioRecording, Transcription
 from therapy_sessions.services import get_transcription_service
+from users.mixins import RelatedUserOwnershipMixin
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +24,13 @@ class AudioViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        return AudioRecording.objects.all().order_by('-created_at')
+        # CRITICAL SECURITY: Only return audio recordings for the current user
+        return AudioRecording.objects.filter(session__user=self.request.user).order_by('-created_at')
 
     def get_session(self, pk):
-        """Get session with nested relationship validation"""
-        return get_object_or_404(Session, pk=pk)
+        """Get session with nested relationship validation - SECURITY CRITICAL"""
+        # CRITICAL SECURITY: Only allow access to user's own sessions
+        return get_object_or_404(Session, pk=pk, user=self.request.user)
     
     @action(detail=False, methods=['post'])
     @method_decorator(csrf_exempt)
@@ -119,7 +122,8 @@ class AudioViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'])
     def transcribe(self, request, pk=None):
         """Manually transcribe an audio recording"""
-        recording = get_object_or_404(AudioRecording, pk=pk)
+        # CRITICAL SECURITY: Only allow access to user's own recordings
+        recording = get_object_or_404(AudioRecording, pk=pk, session__user=self.request.user)
         
         transcription_service = get_transcription_service()
         if not transcription_service.is_available():
@@ -162,7 +166,8 @@ class AudioViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['get'])
     def download(self, request, pk=None):
         """Download an audio recording"""
-        recording = get_object_or_404(AudioRecording, pk=pk)
+        # CRITICAL SECURITY: Only allow access to user's own recordings
+        recording = get_object_or_404(AudioRecording, pk=pk, session__user=self.request.user)
         
         if not recording.audio or not os.path.exists(recording.audio.path):
             raise Http404("Audio-Datei nicht gefunden")
@@ -178,7 +183,8 @@ class AudioViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     def delete(self, request, pk=None):
         """Delete an audio recording"""
-        recording = get_object_or_404(AudioRecording, pk=pk)
+        # CRITICAL SECURITY: Only allow access to user's own recordings
+        recording = get_object_or_404(AudioRecording, pk=pk, session__user=self.request.user)
         
         try:
             # Delete the audio file from disk

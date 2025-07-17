@@ -1,8 +1,9 @@
 from django import forms
 from .models import Session, AudioRecording
+from users.mixins import UserFormMixin
 
 
-class SessionForm(forms.ModelForm):
+class SessionForm(UserFormMixin, forms.ModelForm):
 
     class Meta:
         model = Session

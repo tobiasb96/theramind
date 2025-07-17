@@ -15,6 +15,7 @@ from django.shortcuts import render
 from therapy_sessions.models import Session, Transcription
 from therapy_sessions.forms import SessionForm, AudioUploadForm
 from therapy_sessions.services import get_transcription_service
+from users.mixins import UserOwnershipMixin
 
 logger = logging.getLogger(__name__)
 
@@ -27,12 +28,14 @@ class SessionViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        return Session.objects.order_by("-date")
+        # CRITICAL SECURITY: Only return sessions for the current user
+        return Session.objects.filter(user=self.request.user).order_by("-date")
 
     def get_object(self, pk=None):
-        """Get session with nested relationship validation"""
+        """Get session with nested relationship validation - SECURITY CRITICAL"""
         if pk:
-            return get_object_or_404(Session, pk=pk)
+            # CRITICAL SECURITY: Only allow access to user's own sessions
+            return get_object_or_404(Session, pk=pk, user=self.request.user)
         return None
     
     def list(self, request):
@@ -64,7 +67,7 @@ class SessionViewSet(viewsets.ViewSet):
         from document_templates.service import TemplateService
 
         template_service = TemplateService()
-        session_notes_templates = template_service.get_session_templates()
+        session_notes_templates = template_service.get_session_templates(user=request.user)
 
         return render(
             request,
@@ -80,14 +83,14 @@ class SessionViewSet(viewsets.ViewSet):
     def create(self, request):
         """Create a new session"""
         if request.method == 'GET':
-            form = SessionForm()
+            form = SessionForm(user=request.user)
 
             return render(request, "sessions/session_form.html", {"form": form})
 
         elif request.method == "POST":
-            form = SessionForm(request.POST)
+            form = SessionForm(request.POST, user=request.user)
             if form.is_valid():
-                session = form.save(commit=False)
+                session = form.save()  # UserFormMixin handles setting the user
                 messages.success(request, "Sitzung wurde erfolgreich angelegt.")
                 return HttpResponseRedirect(
                     reverse_lazy("sessions:session_detail", kwargs={"pk": session.pk})
@@ -98,6 +101,7 @@ class SessionViewSet(viewsets.ViewSet):
         """Handle HTMX session creation"""
         try:
             session = Session.objects.create(
+                user=request.user,  # CRITICAL SECURITY: Set user when creating session
                 date=request.POST.get("date"),
                 title=request.POST.get("title", ""),
             )
@@ -115,11 +119,11 @@ class SessionViewSet(viewsets.ViewSet):
         session = self.get_object(pk)
 
         if request.method == "GET":
-            form = SessionForm(instance=session)
+            form = SessionForm(instance=session, user=request.user)
             return render(request, "sessions/session_form.html", {"form": form, "session": session})
 
         elif request.method == "POST":
-            form = SessionForm(request.POST, instance=session)
+            form = SessionForm(request.POST, instance=session, user=request.user)
             if form.is_valid():
                 session_notes = request.POST.get("session_notes")
                 if session_notes is not None:
@@ -195,16 +199,22 @@ class SessionViewSet(viewsets.ViewSet):
 
             # Get the template
             from document_templates.models import DocumentTemplate
+            from django.db.models import Q
 
             try:
-                template = DocumentTemplate.objects.get(
-                    id=template_id, template_type=DocumentTemplate.TemplateType.SESSION_NOTES
-                )
+                # CRITICAL SECURITY: Only allow access to predefined templates or user's own templates
+                template = DocumentTemplate.objects.filter(
+                    id=template_id, 
+                    template_type=DocumentTemplate.TemplateType.SESSION_NOTES,
+                    is_active=True
+                ).filter(
+                    Q(is_predefined=True) | Q(user=request.user)
+                ).get()
             except DocumentTemplate.DoesNotExist:
                 messages.error(request, "Template nicht gefunden")
                 return self._redirect_to_session_detail(pk)
 
-            # Get all transcriptions for this session
+            # Get all transcriptions for this session (already secured by session ownership)
             transcriptions = Transcription.objects.filter(recording__session=session)
 
             if not transcriptions.exists():
@@ -285,11 +295,17 @@ class SessionViewSet(viewsets.ViewSet):
 
             # Get the template
             from document_templates.models import DocumentTemplate
+            from django.db.models import Q
 
             try:
-                template = DocumentTemplate.objects.get(
-                    id=template_id, template_type=DocumentTemplate.TemplateType.SESSION_NOTES
-                )
+                # CRITICAL SECURITY: Only allow access to predefined templates or user's own templates
+                template = DocumentTemplate.objects.filter(
+                    id=template_id, 
+                    template_type=DocumentTemplate.TemplateType.SESSION_NOTES,
+                    is_active=True
+                ).filter(
+                    Q(is_predefined=True) | Q(user=request.user)
+                ).get()
             except DocumentTemplate.DoesNotExist:
                 messages.error(request, "Template nicht gefunden")
                 return self._redirect_to_session_detail(pk)
