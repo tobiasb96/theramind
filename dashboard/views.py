@@ -2,6 +2,7 @@ from django.views.generic import TemplateView
 from django.views import View
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django_tables2 import RequestConfig
 from reports.models import Report
 from reports.tables import ReportTable
@@ -9,7 +10,7 @@ from reports.services import TemplateService
 from therapy_sessions.models import Session
 
 
-class DashboardView(TemplateView):
+class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/dashboard.html"
     
     def get_context_data(self, **kwargs):
@@ -29,7 +30,7 @@ class DashboardView(TemplateView):
         return context
 
 
-class QuickSessionCreateView(View):
+class QuickSessionCreateView(LoginRequiredMixin, View):
     """Quick session creation from dashboard"""
 
     def post(self, request):
@@ -53,7 +54,7 @@ class QuickSessionCreateView(View):
             return redirect("core:dashboard")
 
 
-class QuickDocumentCreateView(View):
+class QuickDocumentCreateView(LoginRequiredMixin, View):
     """Quick document creation from dashboard"""
 
     def post(self, request):
