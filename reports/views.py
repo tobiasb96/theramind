@@ -213,8 +213,13 @@ class ReportViewSet(viewsets.ViewSet):
         report = get_object_or_404(Report, pk=pk)
         
         try:
-            data = json.loads(request.body)
-            context_file_id = data.get('context_file_id')
+            # Handle both JSON and form data
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                context_file_id = data.get('context_file_id')
+            else:
+                # Handle form data from HTMX
+                context_file_id = request.POST.get('context_file_id')
             
             if not context_file_id:
                 return JsonResponse({'error': 'Kontext-Datei-ID fehlt'}, status=400)
@@ -239,8 +244,13 @@ class ReportViewSet(viewsets.ViewSet):
         report = get_object_or_404(Report, pk=pk)
         
         try:
-            data = json.loads(request.body)
-            template_id = data.get('template_id')
+            # Handle both JSON and form data
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                template_id = data.get('template_id')
+            else:
+                # Handle form data from HTMX
+                template_id = request.POST.get('template_id')
             
             if not template_id:
                 return JsonResponse({'error': 'Template-ID ist erforderlich'}, status=400)

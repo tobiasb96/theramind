@@ -305,14 +305,17 @@
                     </div>
                     <div class="flex space-x-2">
                         {% if not recording.is_processed %}
-                            <button onclick="transcribeAudio({{ recording.pk }})" class="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800">
-                                Transkribieren
-                            </button>
+                            <form method="post" action="{% url 'sessions:transcribe' recording.pk %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800">
+                                    Transkribieren
+                                </button>
+                            </form>
                         {% endif %}
                         <a href="{% url 'sessions:audio_download' recording.pk %}" class="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800">
                             Download
                         </a>
-                        <button onclick="deleteRecording({{ recording.pk }})" class="px-3 py-1 text-xs font-medium text-center inline-flex items-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
+                        <button data-recording-id="{{ recording.pk }}" data-recording-name="{{ recording.filename }}" data-modal-target="delete-recording-modal" data-modal-toggle="delete-recording-modal" class="px-3 py-1 text-xs font-medium text-center inline-flex items-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
                             <svg class="w-3 h-3 text-white me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z"/>
                             </svg>
@@ -520,72 +523,120 @@
         </div>
     </div>
 
-<!-- Edit Session Modal -->
-<div id="edit-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-    <div class="relative p-4 w-full max-w-md max-h-full">
-        <!-- Modal content -->
-        <div class="relative bg-white rounded-lg shadow">
-            <!-- Modal header -->
-            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">
-                    Sitzung bearbeiten
-                </h3>
-                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="edit-modal">
-                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
-                    </svg>
+    <!-- Delete Recording Modal -->
+    <div id="delete-recording-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <div class="relative p-4 text-center bg-white rounded-lg shadow sm:p-5">
+                <button type="button" class="text-gray-400 absolute top-2.5 right-2.5 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-toggle="delete-recording-modal">
+                    <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                     <span class="sr-only">Close modal</span>
                 </button>
-            </div>
-            <!-- Modal body -->
-            <form class="p-4 md:p-5" method="post" action="{% url 'sessions:session_edit' pk=session.pk %}" hx-post="{% url 'sessions:session_edit' pk=session.pk %}">
-                {% csrf_token %}
-                <div class="grid gap-4 mb-4">
-                    <div class="col-span-2">
-                        <label for="edit-title" class="block mb-2 text-sm font-medium text-gray-900">Titel (optional)</label>
-                        <input type="text" name="title" id="edit-title" value="{{ session.title }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="z.B. Erstgespräch">
-                    </div>
-                    <div class="col-span-2">
-                        <label for="edit-date" class="block mb-2 text-sm font-medium text-gray-900">Datum</label>
-                        <input type="datetime-local" name="date" id="edit-date" value="{{ session.date|date:'Y-m-d\TH:i' }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" required>
-                    </div>
+                <svg class="text-gray-400 w-6 h-6 mb-3.5 mx-auto" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                <h4 class="mb-3 text-lg font-medium text-gray-900">Audio-Aufnahme löschen</h4>
+                <p class="mb-4 text-gray-500">Sind Sie sicher, dass Sie die Aufnahme <strong id="recording-name-to-delete"></strong> löschen möchten?</p>
+                <div class="flex justify-center items-center space-x-4">
+                    <button data-modal-toggle="delete-recording-modal" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
+                        Abbrechen
+                    </button>
+                    <form id="delete-recording-form" method="post" action="" class="inline"
+                          hx-post=""
+                          hx-target="#delete-recording-response"
+                          hx-swap="innerHTML">
+                        {% csrf_token %}
+                        <button type="submit" class="py-2 px-3 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
+                            Ja, löschen
+                        </button>
+                    </form>
                 </div>
-                <button type="submit" class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
-                    Sitzung aktualisieren
-                </button>
-            </form>
+                <div id="delete-recording-response" class="mt-4"></div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Delete Session Modal -->
-<div id="delete-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-    <div class="relative p-4 w-full max-w-md max-h-full">
-        <!-- Modal content -->
-        <div class="relative p-4 text-center bg-white rounded-lg shadow sm:p-5">
-            <button type="button" class="text-gray-400 absolute top-2.5 right-2.5 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-toggle="delete-modal">
-                <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                <span class="sr-only">Close modal</span>
-            </button>
-            <svg class="text-gray-400 w-6 h-6 mb-3.5 mx-auto" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-            <p class="mb-4 text-gray-500">Sind Sie sicher, dass Sie diese Sitzung löschen möchten?</p>
-            <div class="flex justify-center items-center space-x-4">
-                <button data-modal-toggle="delete-modal" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
-                    Nein, abbrechen
-                </button>
-                <form method="post" action="{% url 'sessions:session_delete' pk=session.pk %}" hx-post="{% url 'sessions:session_delete' pk=session.pk %}" hx-target="#delete-modal" hx-swap="outerHTML" class="inline">
+    <!-- Edit Session Modal -->
+    <div id="edit-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Sitzung bearbeiten
+                    </h3>
+                    <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="edit-modal">
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                        </svg>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                <form class="p-4 md:p-5" method="post" action="{% url 'sessions:session_edit' pk=session.pk %}" hx-post="{% url 'sessions:session_edit' pk=session.pk %}">
                     {% csrf_token %}
-                    <button type="submit" class="py-2 px-3 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
-                        Ja, löschen
+                    <div class="grid gap-4 mb-4">
+                        <div class="col-span-2">
+                            <label for="edit-title" class="block mb-2 text-sm font-medium text-gray-900">Titel (optional)</label>
+                            <input type="text" name="title" id="edit-title" value="{{ session.title }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="z.B. Erstgespräch">
+                        </div>
+                        <div class="col-span-2">
+                            <label for="edit-date" class="block mb-2 text-sm font-medium text-gray-900">Datum</label>
+                            <input type="datetime-local" name="date" id="edit-date" value="{{ session.date|date:'Y-m-d\TH:i' }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                        <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                        Sitzung aktualisieren
                     </button>
                 </form>
             </div>
         </div>
     </div>
-</div>
 
+    <!-- Delete Session Modal -->
+    <div id="delete-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative p-4 w-full max-w-md max-h-full">
+            <!-- Modal content -->
+            <div class="relative p-4 text-center bg-white rounded-lg shadow sm:p-5">
+                <button type="button" class="text-gray-400 absolute top-2.5 right-2.5 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-toggle="delete-modal">
+                    <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+                <svg class="text-gray-400 w-6 h-6 mb-3.5 mx-auto" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                <p class="mb-4 text-gray-500">Sind Sie sicher, dass Sie diese Sitzung löschen möchten?</p>
+                <div class="flex justify-center items-center space-x-4">
+                    <button data-modal-toggle="delete-modal" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
+                        Nein, abbrechen
+                    </button>
+                    <form method="post" action="{% url 'sessions:session_delete' pk=session.pk %}" hx-post="{% url 'sessions:session_delete' pk=session.pk %}" hx-target="#delete-modal" hx-swap="outerHTML" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="py-2 px-3 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
+                            Ja, löschen
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Error Toast -->
+    <div id="error-toast" class="hidden fixed top-4 right-4 z-50 p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200" role="alert">
+        <div class="flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+            </svg>
+            <span id="error-message"></span>
+        </div>
+    </div>
+
+    <!-- Success Toast -->
+    <div id="success-toast" class="hidden fixed top-4 right-4 z-50 p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 border border-green-200" role="alert">
+        <div class="flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span id="success-message"></span>
+        </div>
+    </div>
 
 <script>
 // Improved recording and tab logic for modal
@@ -656,7 +707,7 @@ document.getElementById('record-toggle').onclick = async function() {
             };
             modalMediaRecorder.start();
         } catch (error) {
-            alert('Fehler beim Zugriff auf das Mikrofon: ' + error.message);
+            showErrorToast('Fehler beim Zugriff auf das Mikrofon: ' + error.message);
             isRecording = false;
         }
     } else {
@@ -667,7 +718,7 @@ document.getElementById('record-toggle').onclick = async function() {
         }
         isRecording = false;
         document.getElementById('record-text').textContent = 'Aufnahme starten';
-        document.getElementById('record-icon-path').setAttribute('d', 'M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z');
+        document.getElementById('record-icon-path').setAttribute('d', 'M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 715 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z');
         document.getElementById('record-toggle').className = 'w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center justify-center mb-2';
         document.getElementById('recording-indicator').classList.add('hidden');
         if (recordingTimer) clearInterval(recordingTimer);
@@ -680,7 +731,7 @@ document.getElementById('audio-upload-form').onsubmit = function(e) {
         // We're in record mode
         if (modalRecordedChunks.length === 0) {
             e.preventDefault();
-            alert('Bitte nehmen Sie zuerst etwas auf.');
+            showErrorToast('Bitte nehmen Sie zuerst etwas auf.');
             return;
         }
         
@@ -695,15 +746,13 @@ document.getElementById('audio-upload-form').onsubmit = function(e) {
         const fileInput = document.getElementById('modal-audio-upload');
         if (!fileInput.files[0]) {
             e.preventDefault();
-            alert('Bitte wählen Sie eine Datei aus.');
+            showErrorToast('Bitte wählen Sie eine Datei aus.');
             return;
         }
     }
     
     // Let the form submit naturally - no preventDefault()
 };
-
-
 
 // Toggle transcript visibility
 function toggleTranscript(pk) {
@@ -715,52 +764,68 @@ function toggleTranscript(pk) {
     }
 }
 
-// Delete recording via AJAX
-function deleteRecording(pk) {
-    if (!confirm('Möchten Sie diese Aufnahme wirklich löschen?')) return;
-    
-    // Get CSRF token from a form on the page
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    
-    fetch(`/sessions/recordings/${pk}/delete/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrfToken,
-        },
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Remove the recording card from the DOM
-            const card = document.querySelector(`[data-recording-id="${pk}"]`);
-            if (card) card.remove();
+// Setup delete recording modal
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('[data-modal-target="delete-recording-modal"]');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const recordingId = this.getAttribute('data-recording-id');
+            const recordingName = this.getAttribute('data-recording-name');
+            
+            document.getElementById('recording-name-to-delete').textContent = recordingName;
+            
+            const form = document.getElementById('delete-recording-form');
+            const deleteUrl = `/sessions/recordings/${recordingId}/delete/`;
+            form.action = deleteUrl;
+            form.setAttribute('hx-post', deleteUrl);
+        });
+    });
+});
+
+// Handle delete recording response
+document.body.addEventListener('htmx:afterRequest', function(evt) {
+    if (evt.detail.elt.id === 'delete-recording-form') {
+        const response = evt.detail.xhr;
+        if (response.status === 200) {
+            try {
+                const data = JSON.parse(response.responseText);
+                if (data.success) {
+                    showSuccessToast('Aufnahme wurde erfolgreich gelöscht.');
+                    // Close modal and reload page
+                    const modal = document.getElementById('delete-recording-modal');
+                    modal.classList.add('hidden');
+                    location.reload();
+                } else {
+                    showErrorToast(data.error || 'Fehler beim Löschen der Aufnahme.');
+                }
+            } catch (e) {
+                showErrorToast('Fehler beim Verarbeiten der Antwort.');
+            }
         } else {
-            alert(data.error || 'Fehler beim Löschen der Aufnahme.');
+            showErrorToast('Fehler beim Löschen der Aufnahme.');
         }
-    })
-    .catch(() => alert('Fehler beim Löschen der Aufnahme.'));
+    }
+});
+
+// Toast functions
+function showErrorToast(message) {
+    const toast = document.getElementById('error-toast');
+    const messageElement = document.getElementById('error-message');
+    messageElement.textContent = message;
+    toast.classList.remove('hidden');
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 5000);
 }
 
-// Transcribe audio via AJAX (optional, if you want to keep this button)
-function transcribeAudio(pk) {
-    // Get CSRF token from a form on the page
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    
-    fetch(`/sessions/recordings/${pk}/transcribe/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrfToken,
-        },
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert(data.error || 'Fehler bei der Transkription.');
-        }
-    })
-    .catch(() => alert('Fehler bei der Transkription.'));
+function showSuccessToast(message) {
+    const toast = document.getElementById('success-toast');
+    const messageElement = document.getElementById('success-message');
+    messageElement.textContent = message;
+    toast.classList.remove('hidden');
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 3000);
 }
 
 // Auto-save functionality
@@ -933,7 +998,7 @@ document.getElementById('copy-notes-btn').addEventListener('click', function() {
         
         // Check if there's content to copy
         if (!textContent.trim()) {
-            alert('Kein Inhalt zum Kopieren verfügbar.');
+            showErrorToast('Kein Inhalt zum Kopieren verfügbar.');
             return;
         }
         
@@ -977,8 +1042,6 @@ document.getElementById('copy-notes-btn').addEventListener('click', function() {
         }, 2000);
     }
 });
-
-
 
 </script>
 </div>
