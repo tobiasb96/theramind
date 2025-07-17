@@ -132,52 +132,140 @@
         {% endif %}
     </div>
 
-    <!-- Report Generation Section -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold text-gray-900">Bericht generieren</h2>
-            <div class="flex space-x-2">
-                {% if report_templates %}
-                    <select id="template-selector" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                        <option value="">Template auswählen</option>
-                        {% for template in report_templates %}
-                            <option value="{{ template.id }}">{{ template.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="button" id="generate-btn" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700" onclick="generateReport()">
-                        Generieren
-                    </button>
-                {% else %}
-                    <p class="text-sm text-gray-500">Keine Templates verfügbar</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div id="generation-status" class="mb-4 hidden">
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div class="flex items-center">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span class="text-sm text-blue-600">Bericht wird generiert...</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Report Content Section -->
+    <!-- Report Content Section with Workflow -->
     <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-semibold text-gray-900">Berichtinhalt</h2>
-            <button type="button" id="save-content-btn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" onclick="saveContent()">
-                Inhalt speichern
-            </button>
+            {% if report.content %}
+                <div class="flex space-x-2">
+                    {% with successful_files=context_files|length %}
+                        {% if successful_files > 0 %}
+                            <button type="button" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700" onclick="openReportGenerationModal()">
+                                Neu generieren
+                            </button>
+                        {% endif %}
+                    {% endwith %}
+                    <button type="button" id="save-content-btn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700" onclick="saveContent()">
+                        Inhalt speichern
+                    </button>
+                </div>
+            {% endif %}
         </div>
         
-        <div id="content-editor">
-            {% include 'partials/wysiwyg_editor.html' with editor_id='report-content-editor' input_name='content' content=report.content label='' placeholder='Berichtinhalt wird hier angezeigt...' min_height='500px' %}
-        </div>
+        {% if not report.content %}
+            {% comment %}
+            Determine the current state:
+            - No context files: Show initial choice
+            - Has context files: Show generate report option
+            {% endcomment %}
+            
+            {% if not context_files %}
+                <!-- State 1: No context files - Initial workflow selection -->
+                <div class="mb-8">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 mr-2 bg-blue-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-medium text-sm">1</span>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-blue-900">Wählen Sie Ihren Workflow</h3>
+                                <p class="text-blue-700 text-sm mt-1">Wie möchten Sie den Bericht erstellen?</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="openFileUploadModal()" 
+                                class="flex flex-col items-center p-6 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                            <svg class="w-8 h-8 text-blue-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <h4 class="text-sm font-medium text-blue-900">Dokumente hochladen</h4>
+                            <p class="text-xs text-blue-700 mt-1 text-center">Für automatische KI-Berichtgenerierung</p>
+                        </button>
+                        <button onclick="startManualReport()"
+                                class="flex flex-col items-center p-6 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
+                            <svg class="w-8 h-8 text-green-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            <h4 class="text-sm font-medium text-green-900">Manuell von Grund auf</h4>
+                            <p class="text-xs text-green-700 mt-1 text-center">Bericht direkt bearbeiten</p>
+                        </button>
+                    </div>
+                </div>
+            {% else %}
+                <!-- State 2: Has context files - Show generate report option -->
+                {% with successful_files=context_files %}
+                    {% if successful_files %}
+                        <div class="mb-8">
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4 flex-1">
+                                        <h3 class="text-lg font-medium text-green-900">Dokumente sind bereit</h3>
+                                        <p class="text-green-700 text-sm mt-1">{{ context_files|length }} Datei{{ context_files|length|pluralize:"en" }} bereit für KI-Berichtgenerierung</p>
+                                    </div>
+                                    <div class="ml-4">
+                                        <button type="button" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-6 py-3 text-center inline-flex items-center" onclick="openReportGenerationModal()">
+                                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            Bericht generieren
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-center">
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-600 mb-4">Oder wählen Sie eine andere Option:</p>
+                                    <div class="flex space-x-4">
+                                        <button type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center" onclick="openFileUploadModal()">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                            </svg>
+                                            Weitere Dokumente
+                                        </button>
+                                        <button type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center" onclick="startManualReport()">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                            Manuell starten
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+        {% else %}
+            <!-- Report Content Editor when content exists -->
+            <form id="report-content-form" method="post" action="{% url 'reports:save_content' pk=report.pk %}" 
+                  hx-post="{% url 'reports:save_content' pk=report.pk %}"
+                  hx-target="#autosave-response"
+                  hx-swap="innerHTML">
+                {% csrf_token %}
+                <div class="mb-4">
+                    {% include 'partials/wysiwyg_editor.html' with editor_id='report-content-editor' input_name='content' content=report.content label='Berichtinhalt' placeholder='Berichtinhalt wird hier angezeigt und kann bearbeitet werden...' min_height='500px' %}
+                </div>
+            </form>
+                
+            <!-- Auto-save indicator -->
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div id="autosave-response"></div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 
@@ -185,7 +273,15 @@
 <div id="file-upload-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Datei hochladen</h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Datei hochladen</h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" onclick="closeFileUploadModal()">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
             <form method="post" enctype="multipart/form-data" action="{% url 'reports:upload_context_file' report.pk %}">
                 {% csrf_token %}
                 <div class="mb-4">
@@ -212,7 +308,15 @@
 <div id="text-input-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
     <div class="relative top-10 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
         <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Text eingeben</h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Text eingeben</h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" onclick="closeTextInputModal()">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
             <form method="post" action="{% url 'reports:add_context_text' report.pk %}">
                 {% csrf_token %}
                 <div class="mb-4">
@@ -240,7 +344,66 @@
     </div>
 </div>
 
+<!-- Report Generation Modal -->
+<div id="report-generation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Bericht generieren</h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" onclick="closeReportGenerationModal()">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            <div class="mb-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="text-sm">
+                            <p class="font-medium text-blue-900">Alle Kontextdateien werden kombiniert</p>
+                            <p class="text-blue-700 mt-1">Die KI erstellt einen strukturierten Bericht basierend auf allen verfügbaren Dokumenten.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="template-select" class="block mb-2 text-sm font-medium text-gray-900">Report-Vorlage auswählen</label>
+                <select id="template-select" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
+                    <option value="">Bitte wählen Sie eine Vorlage</option>
+                    {% for template in report_templates %}
+                        <option value="{{ template.id }}">{{ template.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="generation-status" class="mb-4 hidden">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-sm text-blue-600">Bericht wird generiert...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300" onclick="closeReportGenerationModal()">
+                    Abbrechen
+                </button>
+                <button type="button" id="generate-report-btn" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700" onclick="generateReport()">
+                    Generieren
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+// Modal functions
 function openFileUploadModal() {
     document.getElementById('file-upload-modal').classList.remove('hidden');
 }
@@ -255,6 +418,14 @@ function openTextInputModal() {
 
 function closeTextInputModal() {
     document.getElementById('text-input-modal').classList.add('hidden');
+}
+
+function openReportGenerationModal() {
+    document.getElementById('report-generation-modal').classList.remove('hidden');
+}
+
+function closeReportGenerationModal() {
+    document.getElementById('report-generation-modal').classList.add('hidden');
 }
 
 function toggleContextPreview(contextFileId) {
@@ -291,15 +462,24 @@ function deleteContextFile(contextFileId) {
     });
 }
 
+function startManualReport() {
+    // Set empty content and show editor
+    if (window.reportContentEditor) {
+        window.reportContentEditor.commands.setContent('<p>Hier können Sie Ihren Bericht manuell verfassen...</p>');
+    }
+    // Trigger save to update database
+    saveContent();
+}
+
 function generateReport() {
-    const templateId = document.getElementById('template-selector').value;
+    const templateId = document.getElementById('template-select').value;
     if (!templateId) {
-        alert('Bitte wählen Sie ein Template aus');
+        alert('Bitte wählen Sie eine Vorlage aus');
         return;
     }
 
     const statusDiv = document.getElementById('generation-status');
-    const generateBtn = document.getElementById('generate-btn');
+    const generateBtn = document.getElementById('generate-report-btn');
     
     statusDiv.classList.remove('hidden');
     generateBtn.disabled = true;
@@ -320,11 +500,9 @@ function generateReport() {
         generateBtn.disabled = false;
         
         if (data.success) {
-            // Update the editor content
-            if (window.reportContentEditor) {
-                window.reportContentEditor.commands.setContent(data.content);
-            }
-            alert('Bericht wurde erfolgreich generiert!');
+            closeReportGenerationModal();
+            // Reload page to show the generated content
+            location.reload();
         } else {
             alert('Fehler bei der Generierung: ' + data.error);
         }
@@ -339,15 +517,23 @@ function generateReport() {
 
 function saveContent() {
     if (!window.reportContentEditor) {
-        alert('Editor ist nicht verfügbar');
         return;
     }
 
     const content = window.reportContentEditor.getHTML();
     const saveBtn = document.getElementById('save-content-btn');
     
+    if (!saveBtn) return;
+    
+    const originalText = saveBtn.innerHTML;
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Speichern...';
+    saveBtn.innerHTML = `
+        <svg class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Speichern...
+    `;
 
     fetch(`{% url 'reports:save_content' report.pk %}`, {
         method: 'POST',
@@ -359,10 +545,19 @@ function saveContent() {
     })
     .then(response => {
         if (response.ok) {
-            saveBtn.textContent = 'Gespeichert ✓';
+            saveBtn.innerHTML = `
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                Gesichert
+            `;
+            saveBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            saveBtn.classList.add('bg-green-600');
             setTimeout(() => {
-                saveBtn.textContent = 'Inhalt speichern';
+                saveBtn.innerHTML = originalText;
                 saveBtn.disabled = false;
+                saveBtn.classList.remove('bg-green-600');
+                saveBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
             }, 2000);
         } else {
             throw new Error('Fehler beim Speichern');
@@ -370,19 +565,143 @@ function saveContent() {
     })
     .catch(error => {
         console.error('Error:', error);
-        saveBtn.textContent = 'Fehler beim Speichern';
+        saveBtn.innerHTML = `
+            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+            </svg>
+            Fehler
+        `;
+        saveBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        saveBtn.classList.add('bg-red-600');
         saveBtn.disabled = false;
         setTimeout(() => {
-            saveBtn.textContent = 'Inhalt speichern';
+            saveBtn.innerHTML = originalText;
+            saveBtn.classList.remove('bg-red-600');
+            saveBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
         }, 2000);
     });
 }
 
-// Auto-save every 30 seconds
-setInterval(() => {
-    if (window.reportContentEditor) {
-        saveContent();
+// Auto-save functionality
+document.addEventListener('DOMContentLoaded', function() {
+    let autoSaveTimeout;
+    const autosaveResponse = document.getElementById('autosave-response');
+    const reportContentForm = document.getElementById('report-content-form');
+    
+    if (reportContentForm && autosaveResponse) {
+        // Function to trigger auto-save
+        function triggerAutoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                // Get the editor content and update hidden input
+                const editorElement = document.getElementById('report-content-editor');
+                const hiddenInput = document.getElementById('report-content-editor-input');
+                
+                if (editorElement && hiddenInput) {
+                    // Update hidden input with current editor content
+                    hiddenInput.value = editorElement.innerHTML;
+                    
+                    // Show saving indicator
+                    autosaveResponse.innerHTML = `
+                        <div class="flex items-center text-sm text-gray-500">
+                            <svg class="w-4 h-4 mr-1 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Wird gespeichert...</span>
+                        </div>
+                    `;
+                    
+                    // Submit the form via HTMX
+                    htmx.trigger(reportContentForm, 'submit');
+                }
+            }, 2000); // 2 second delay
+        }
+        
+        // Wait for the editor to be initialized, then set up event listeners
+        setTimeout(() => {
+            const editorElement = document.getElementById('report-content-editor');
+            if (editorElement) {
+                // Listen for input events on the contenteditable div
+                editorElement.addEventListener('input', function() {
+                    triggerAutoSave();
+                });
+                
+                editorElement.addEventListener('keyup', function() {
+                    triggerAutoSave();
+                });
+                
+                // Also use MutationObserver for more comprehensive change detection
+                const observer = new MutationObserver(function(mutations) {
+                    let shouldTrigger = false;
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                            shouldTrigger = true;
+                        }
+                    });
+                    if (shouldTrigger) {
+                        triggerAutoSave();
+                    }
+                });
+                
+                observer.observe(editorElement, {
+                    childList: true,
+                    subtree: true,
+                    characterData: true
+                });
+            }
+        }, 1000);
     }
-}, 30000);
+    
+    // Show saving indicator when HTMX request starts
+    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+        if (evt.detail.elt.id === 'report-content-form') {
+            autosaveResponse.innerHTML = `
+                <div class="flex items-center text-sm text-gray-500">
+                    <svg class="w-4 h-4 mr-1 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Wird gespeichert...</span>
+                </div>
+            `;
+        }
+    });
+    
+    // Show success indicator when HTMX request completes
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.detail.elt.id === 'report-content-form') {
+            
+            if (evt.detail.xhr.status === 200) {
+                autosaveResponse.innerHTML = `
+                    <div class="flex items-center text-sm text-green-600">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Gesichert</span>
+                    </div>
+                `;
+                
+                // Hide the indicator after 3 seconds
+                setTimeout(() => {
+                    autosaveResponse.innerHTML = '';
+                }, 3000);
+            } else {
+                autosaveResponse.innerHTML = `
+                    <div class="flex items-center text-sm text-red-600">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Fehler beim Speichern</span>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    autosaveResponse.innerHTML = '';
+                }, 5000);
+            }
+        }
+    });
+});
 </script>
 {% endblock %} 
