@@ -79,7 +79,7 @@ class ChangePasswordView(View):
                             request, "Das neue Passwort darf nicht nur aus Zahlen bestehen."
                         )
                     else:
-                        messages.error(request, str(error.message))
+                        messages.error(request, str(error))
                 else:
                     # Fallback for errors without codes
                     messages.error(request, str(error))
