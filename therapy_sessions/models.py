@@ -59,7 +59,6 @@ class Transcription(models.Model):
         return f"Transkript: {self.recording.session}"
 
 
-# Settings model moved from patients app
 class Settings(models.Model):
     transcript_ttl_hours = models.PositiveIntegerField(
         default=24,

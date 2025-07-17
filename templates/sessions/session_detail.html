@@ -81,33 +81,160 @@
 
     <!-- Session Notes Card with Workflow -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Sitzungsnotizen</h2>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-semibold text-gray-900">Sitzungsnotizen</h2>
+            {% if session.notes %}
+                <div class="flex space-x-2">
+                    {% if recordings %}
+                        <button data-modal-target="ai-notes-modal" data-modal-toggle="ai-notes-modal" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                            </svg>
+                            Aus Audio regenerieren
+                        </button>
+                    {% endif %}
+                    <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal" type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Vorlage anwenden
+                    </button>
+                </div>
+            {% endif %}
+        </div>
         
         {% if not session.notes %}
-            <!-- Initial workflow selection when no notes exist -->
-            <div class="text-center py-8">
-                <div class="max-w-md mx-auto">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Wie möchten Sie die Sitzungsnotizen erstellen?</h3>
+            {% comment %}
+            Determine the current state:
+            - No recordings: Show initial choice
+            - Has recordings with transcriptions: Show generate notes option
+            - Has recordings without transcriptions: Show waiting/processing state
+            {% endcomment %}
+            
+            {% if not recordings %}
+                <!-- State 1: No recordings - Initial workflow selection -->
+                <div class="mb-8">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 mr-2 bg-blue-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-medium text-sm">1</span>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-blue-900">Wählen Sie Ihren Workflow</h3>
+                                <p class="text-blue-700 text-sm mt-1">Wie möchten Sie die Sitzungsnotizen erstellen?</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button data-modal-target="beobachtungen-modal" data-modal-toggle="beobachtungen-modal" 
+                        <button data-modal-target="audio-workflow-modal" data-modal-toggle="audio-workflow-modal" 
                                 class="flex flex-col items-center p-6 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
                             <svg class="w-8 h-8 text-blue-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
                             </svg>
-                            <h4 class="text-sm font-medium text-blue-900">Beobachtungen hinzufügen</h4>
-                            <p class="text-xs text-blue-700 mt-1 text-center">Audio aufnehmen oder hochladen und automatisch transkribieren</p>
+                            <h4 class="text-sm font-medium text-blue-900">Audio aufnehmen/hochladen</h4>
+                            <p class="text-xs text-blue-700 mt-1 text-center">Für automatische Transkription und KI-Notizen</p>
                         </button>
                         <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal"
                                 class="flex flex-col items-center p-6 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
                             <svg class="w-8 h-8 text-green-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
-                            <h4 class="text-sm font-medium text-green-900">Manuell starten</h4>
-                            <p class="text-xs text-green-700 mt-1 text-center">Vorlage auswählen und direkt mit der Eingabe beginnen</p>
+                            <h4 class="text-sm font-medium text-green-900">Manuell mit Vorlage</h4>
+                            <p class="text-xs text-green-700 mt-1 text-center">Vorlage auswählen und direkt bearbeiten</p>
                         </button>
                     </div>
                 </div>
-            </div>
+            {% else %}
+                <!-- State 2: Has recordings - Check for transcriptions -->
+                {% with transcribed_recordings=recordings|length %}
+                    {% if transcribed_recordings > 0 %}
+                        <!-- Check if we have any transcriptions -->
+                        {% for recording in recordings %}
+                            {% if recording.transcription %}
+                                <!-- State 2a: Has transcribed recordings - Show generate notes option -->
+                                <div class="mb-8">
+                                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <div class="ml-4 flex-1">
+                                                <h3 class="text-lg font-medium text-green-900">Audio transkribiert</h3>
+                                                <p class="text-green-700 text-sm mt-1">{{ recordings|length }} Audio-Aufnahme{{ recordings|length|pluralize:"n" }} bereit für KI-Notizen</p>
+                                            </div>
+                                            <div class="ml-4">
+                                                <button data-modal-target="ai-notes-modal" data-modal-toggle="ai-notes-modal" type="button" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-6 py-3 text-center inline-flex items-center">
+                                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                    KI-Notizen generieren
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex justify-center">
+                                        <div class="text-center">
+                                            <p class="text-sm text-gray-600 mb-4">Oder wählen Sie eine andere Option:</p>
+                                            <div class="flex space-x-4">
+                                                <button data-modal-target="audio-workflow-modal" data-modal-toggle="audio-workflow-modal" type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center">
+                                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                                    </svg>
+                                                    Weitere Audio-Aufnahme
+                                                </button>
+                                                <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal" type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center">
+                                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                    Manuell mit Vorlage
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% empty %}
+                            <!-- State 2b: Has recordings but no transcriptions yet -->
+                            <div class="mb-8">
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                                                <svg class="w-4 h-4 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4 flex-1">
+                                            <h3 class="text-lg font-medium text-yellow-900">Audio wird verarbeitet</h3>
+                                            <p class="text-yellow-700 text-sm mt-1">Transkription läuft... Bitte warten Sie einen Moment.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-600 mb-4">Oder starten Sie bereits mit einer Vorlage:</p>
+                                    <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal" type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                        Manuell mit Vorlage starten
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
         {% else %}
             <!-- Session Notes Editor when notes exist -->
             <form method="post" action="{% url 'sessions:session_save_notes' pk=session.pk %}">
@@ -125,27 +252,17 @@
         {% endif %}
     </div>
 
-    <!-- Beobachtungen Section (renamed from Audio Recordings) -->
+    <!-- Audio Recordings Section -->
+    {% if recordings %}
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold text-gray-900">Beobachtungen</h2>
-            <div class="flex space-x-2">
-                {% if recordings %}
-                    <button data-modal-target="ai-notes-modal" data-modal-toggle="ai-notes-modal" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
-                        </svg>
-                        KI-Notizen generieren
-                    </button>
-                {% endif %}
-                <button data-modal-target="beobachtungen-modal" data-modal-toggle="beobachtungen-modal" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 011 1v6h6a1 1 0 110 2h-6v6a1 1 0 11-2 0v-6H3a1 1 0 110-2h6V3a1 1 0 011-1z"/></svg>
-                    Beobachtung hinzufügen
-                </button>
-            </div>
+            <h2 class="text-lg font-semibold text-gray-900">Audio-Aufnahmen</h2>
+            <button data-modal-target="audio-workflow-modal" data-modal-toggle="audio-workflow-modal" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 011 1v6h6a1 1 0 110 2h-6v6a1 1 0 11-2 0v-6H3a1 1 0 110-2h6V3a1 1 0 011-1z"/></svg>
+                Weitere Audio-Aufnahme
+            </button>
         </div>
         
-        {% if recordings %}
         <div class="space-y-4">
             {% for recording in recordings %}
             <div class="border rounded-lg p-4" data-recording-id="{{ recording.pk }}">
@@ -215,13 +332,8 @@
             </div>
             {% endfor %}
         </div>
-        {% else %}
-        <div class="text-center py-8 text-gray-500">
-            <p>Noch keine Beobachtungen vorhanden.</p>
-            <p class="text-sm mt-2">Laden Sie eine Audio-Datei hoch oder nehmen Sie eine neue Aufnahme auf.</p>
-        </div>
-        {% endif %}
     </div>
+    {% endif %}
 
     <!-- Template Selection Modal -->
     <div id="template-selection-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
@@ -262,23 +374,36 @@
         </div>
     </div>
 
-    <!-- Beobachtungen Modal (renamed from Audio Modal) -->
-    <div id="beobachtungen-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <!-- Audio Workflow Modal (renamed from Beobachtungen Modal) -->
+    <div id="audio-workflow-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="relative p-4 w-full max-w-md max-h-full">
             <div class="relative bg-white rounded-lg shadow-sm">
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900">
-                        Beobachtung hinzufügen
+                        Audio hinzufügen
                     </h3>
-                    <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="beobachtungen-modal">
+                    <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="audio-workflow-modal">
                         <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
                         </svg>
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
                 <form id="audio-upload-form" class="p-4 md:p-5" method="post" enctype="multipart/form-data" action="{% url 'sessions:session_audio_upload' pk=session.pk %}">
                     {% csrf_token %}
+                    <div class="mb-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                <div class="text-sm">
+                                    <p class="font-medium text-blue-900">Audio wird automatisch transkribiert</p>
+                                    <p class="text-blue-700 mt-1">Nach dem Upload können Sie KI-Notizen aus der Transkription generieren lassen.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex mb-4 gap-2">
                         <button id="tab-record" type="button" class="flex-1 px-3 py-2 rounded-t-lg bg-blue-50 text-blue-700 font-medium">Aufnahme starten</button>
                         <button id="tab-upload" type="button" class="flex-1 px-3 py-2 rounded-t-lg bg-gray-50 text-gray-700 font-medium">Datei hochladen</button>
@@ -311,15 +436,8 @@
                         <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" id="modal-audio-upload" name="audio" type="file" accept="audio/*">
                         <p class="mt-1 text-sm text-gray-500">MP3, WAV, M4A oder FLAC (max. 25MB)</p>
                     </div>
-                    <div class="mt-4">
-                        <button class="w-full flex items-center justify-between text-left py-2 px-3 rounded bg-gray-50" type="button" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                            <span class="font-medium">Therapeutische Beobachtungen</span>
-                            <span class="text-xs text-gray-400">(optional)</span>
-                        </button>
-                        <textarea id="modal-observations" name="observations" rows="3" class="hidden mt-2 block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Beobachtungen..."></textarea>
-                    </div>
                     <div class="mt-6 flex justify-end">
-                        <button type="submit" class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800">Hinzufügen</button>
+                        <button type="submit" class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800">Audio hinzufügen</button>
                     </div>
                 </form>
             </div>
@@ -332,17 +450,30 @@
             <div class="relative bg-white rounded-lg shadow-sm">
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900">
-                        KI-Notizen generieren
+                        KI-Notizen aus Audio generieren
                     </h3>
                     <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="ai-notes-modal">
                         <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
                         </svg>
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
                 <form id="ai-notes-form" class="p-4 md:p-5" method="post" action="{% url 'sessions:session_generate_notes' pk=session.pk %}">
                     {% csrf_token %}
+                    <div class="mb-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                <div class="text-sm">
+                                    <p class="font-medium text-blue-900">Alle Audio-Transkriptionen werden kombiniert</p>
+                                    <p class="text-blue-700 mt-1">Die KI erstellt strukturierte Notizen basierend auf allen verfügbaren Transkriptionen dieser Sitzung.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="mb-4">
                         <label for="template-select" class="block mb-2 text-sm font-medium text-gray-900">Vorlage auswählen</label>
                         <select id="template-select" name="template" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
@@ -357,7 +488,7 @@
                             Abbrechen
                         </button>
                         <button type="submit" class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300">
-                            Generieren
+                            KI-Notizen generieren
                         </button>
                     </div>
                 </form>
@@ -577,7 +708,7 @@ function toggleTranscript(pk) {
 // Delete recording via AJAX
 function deleteRecording(pk) {
     if (!confirm('Möchten Sie diese Aufnahme wirklich löschen?')) return;
-    fetch(`/therapy/recordings/${pk}/delete/`, {
+    fetch(`/sessions/recordings/${pk}/delete/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCsrfToken(),

@@ -51,13 +51,10 @@ class AudioViewSet(viewsets.ViewSet):
                 audio=audio_file, 
                 file_size=audio_file.size
             )
-            
+
             # Auto-transcribe if enabled
-            from patients.models import Settings
-            settings = Settings.get_settings()
             transcription_service = get_transcription_service()
-            
-            if settings.auto_transcribe and transcription_service.is_available():
+            if transcription_service.is_available():
                 try:
                     # Transcribe audio
                     file_path = recording.audio.path
@@ -74,8 +71,8 @@ class AudioViewSet(viewsets.ViewSet):
                     recording.save()
                     
                     # Auto-summarize if enabled
-                    if settings.auto_summarize and transcribed_text:
-                        summary = transcription_service.summarize(transcribed_text)
+                    if transcribed_text:
+                        summary = transcription_service.summarize_session_notes(transcribed_text)
                         if summary:
                             session.summary = summary
                             session.save()

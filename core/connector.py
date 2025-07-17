@@ -12,21 +12,8 @@ class LLMConnector:
     
     def _init_client(self):
         """Initialize the OpenAI client with API key from database or environment"""
-        try:
-            # Try to get API key from database settings first
-            from patients.models import Settings
-            db_settings = Settings.get_settings()
-            api_key = db_settings.openai_api_key
-        except Exception:
-            # Database might not be ready yet, use None
-            api_key = None
-        
-        # Fall back to Django settings (which reads from .env)
-        if not api_key:
-            api_key = settings.OPENAI_API_KEY
-        
-        if api_key:
-            self.client = OpenAI(api_key=api_key)
+        if settings.OPENAI_API_KEY:
+            self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
         else:
             self.client = None
     

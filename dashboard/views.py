@@ -62,19 +62,19 @@ class QuickDocumentCreateView(View):
             template_id = request.POST.get("template_id")
 
             # Create the document first without content
-            document = Report.objects.create(
+            report = Report.objects.create(
                 title=title,
                 content="",
             )
 
             # Generate AI content with selected template
             try:
-                document_service = ReportService()
-                if document_service.is_available():
+                report_service = ReportService()
+                if report_service.is_available():
                     template_id_int = int(template_id) if template_id else None
-                    generated_content = document_service.generate(template_id=template_id_int)
-                    document.content = generated_content
-                    document.save()
+                    generated_content = report_service.generate(template_id=template_id_int)
+                    report.content = generated_content
+                    report.save()
                     messages.success(
                         request,
                         "Bericht wurde erfolgreich erstellt und mit KI-Inhalt generiert.",
@@ -91,7 +91,7 @@ class QuickDocumentCreateView(View):
                 )
 
             # Redirect to document detail
-            return redirect("reports:report_detail", pk=document.pk)
+            return redirect("reports:report_detail", pk=report.pk)
 
         except Exception as e:
             messages.error(request, f"Fehler beim Erstellen des Berichts: {str(e)}")
