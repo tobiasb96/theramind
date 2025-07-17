@@ -48,9 +48,9 @@ INSTALLED_APPS = [
     "django_tables2",
     "core",
     "dashboard",
-    "patients",
-    "therapy",
-    "documents",
+    "document_templates",
+    "reports",
+    "sessions",
 ]
 
 MIDDLEWARE = [
