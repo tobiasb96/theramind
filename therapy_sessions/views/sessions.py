@@ -14,7 +14,6 @@ from django.shortcuts import render
 from therapy_sessions.models import Session, Transcription
 from therapy_sessions.forms import SessionForm, AudioUploadForm
 from therapy_sessions.services import get_transcription_service
-from therapy_sessions.prompts import get_available_templates
 
 logger = logging.getLogger(__name__)
 
@@ -361,7 +360,6 @@ class SessionViewSet(viewsets.ViewSet):
 
     def _sanitize_html(self, html_content):
         """Sanitize HTML content to allow only safe tags"""
-        import re
 
         allowed_tags = ["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]
 

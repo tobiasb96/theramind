@@ -1,11 +1,11 @@
 from django.views.generic import TemplateView
 from django.views import View
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect
 from django.contrib import messages
 from django_tables2 import RequestConfig
 from reports.models import Report
 from reports.tables import ReportTable
-from reports.services import TemplateService, ReportService
+from reports.services import TemplateService
 from therapy_sessions.models import Session
 
 

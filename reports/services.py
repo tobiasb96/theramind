@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from django.core.files.uploadedfile import UploadedFile
 from core.connector import get_llm_connector
 from core.utils.text_extraction import TextExtractionService

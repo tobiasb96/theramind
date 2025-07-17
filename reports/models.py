@@ -1,7 +1,5 @@
 from django.db import models
-from django.utils import timezone
 from django.core.files.storage import default_storage
-import os
 
 
 class Report(models.Model):
