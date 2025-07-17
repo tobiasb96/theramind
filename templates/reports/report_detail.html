@@ -45,29 +45,6 @@
         </div>
     </div>
 
-    <!-- Context Summary -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Kontext-Übersicht</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-blue-50 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-blue-600">{{ context_summary.total_files }}</div>
-                <div class="text-sm text-gray-600">Dateien insgesamt</div>
-            </div>
-            <div class="bg-green-50 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-green-600">{{ context_summary.successful_extractions }}</div>
-                <div class="text-sm text-gray-600">Erfolgreich verarbeitet</div>
-            </div>
-            <div class="bg-red-50 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-red-600">{{ context_summary.failed_extractions }}</div>
-                <div class="text-sm text-gray-600">Fehlgeschlagen</div>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-lg">
-                <div class="text-2xl font-bold text-gray-600">{{ context_summary.total_text_length|floatformat:0 }}</div>
-                <div class="text-sm text-gray-600">Zeichen gesamt</div>
-            </div>
-        </div>
-    </div>
-
     <!-- Context Files Section -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="flex justify-between items-center mb-4">
