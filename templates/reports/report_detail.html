@@ -303,10 +303,20 @@
                 </div>
             </form>
                 
-            <!-- Auto-save indicator -->
+            <!-- Auto-save indicator and action buttons -->
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center">
                     <div id="autosave-response"></div>
+                </div>
+                
+                <!-- Copy button -->
+                <div class="flex items-center space-x-2">
+                    <button type="button" id="copy-content-btn" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        Kopieren
+                    </button>
                 </div>
             </div>
         {% endif %}
@@ -801,6 +811,99 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+});
+
+// Copy content to clipboard
+document.getElementById('copy-content-btn').addEventListener('click', function() {
+    // Get the content from the WYSIWYG editor
+    const editorElement = document.getElementById('report-content-editor');
+    
+    if (editorElement) {
+        // Get formatted text content preserving line breaks and structure
+        let textContent = '';
+        
+        // Process the content to preserve formatting
+        const processNode = (node) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                return node.textContent;
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                let result = '';
+                const tagName = node.tagName.toLowerCase();
+                
+                // Add line breaks for block elements
+                if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+                    if (result.length > 0) result += '\n';
+                }
+                
+                // Process child nodes
+                for (let child of node.childNodes) {
+                    result += processNode(child);
+                }
+                
+                // Add line breaks after block elements
+                if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+                    result += '\n';
+                } else if (tagName === 'br') {
+                    result += '\n';
+                } else if (tagName === 'li') {
+                    result = '• ' + result + '\n';
+                }
+                
+                return result;
+            }
+            return '';
+        };
+        
+        textContent = processNode(editorElement);
+        
+        // Clean up multiple line breaks and trim
+        textContent = textContent.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+        
+        // Check if there's content to copy
+        if (!textContent.trim()) {
+            alert('Kein Inhalt zum Kopieren verfügbar.');
+            return;
+        }
+        
+        // Use modern clipboard API if available, fallback to old method
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textContent).then(() => {
+                showCopySuccess();
+            }).catch(() => {
+                // Fallback to old method
+                copyWithFallback(textContent);
+            });
+        } else {
+            copyWithFallback(textContent);
+        }
+    }
+    
+    function copyWithFallback(text) {
+        // Create a temporary textarea to copy the text content
+        const tempTextarea = document.createElement('textarea');
+        tempTextarea.value = text;
+        document.body.appendChild(tempTextarea);
+        tempTextarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempTextarea);
+        showCopySuccess();
+    }
+    
+    function showCopySuccess() {
+        // Show success message
+        const copyBtn = document.getElementById('copy-content-btn');
+        const originalText = copyBtn.innerHTML;
+        copyBtn.innerHTML = `
+            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            Kopiert!
+        `;
+        
+        setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+        }, 2000);
+    }
 });
 </script>
 {% endblock %} 

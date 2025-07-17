@@ -37,7 +37,7 @@ class ReportTable(tables.Table):
         order_by = "-created_at"  # Default ordering by most recent
 
     def render_created_at(self, value):
-        return value.strftime("%d.%m.Y")
+        return value.strftime("%d.%m.%Y")
 
     def render_actions(self, record):
         detail_url = reverse('reports:report_detail', kwargs={'pk': record.pk})
