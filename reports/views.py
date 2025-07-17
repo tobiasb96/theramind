@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.http import JsonResponse, HttpResponse
@@ -9,15 +9,17 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from django_tables2 import RequestConfig
 import json
+import logging
 
 from document_templates.models import DocumentTemplate
+from document_templates.service import TemplateService
 
-from .models import Report
-from .forms import ReportForm
-from .services import ReportService, TemplateService
-
+from .models import Report, ReportContextFile
+from .forms import ReportForm, ReportContextFileForm, ReportContextTextForm, ReportContentForm
+from .services import ReportService
 from .tables import ReportTable
-from therapy_sessions.models import Session
+
+logger = logging.getLogger(__name__)
 
 
 class ReportViewSet(viewsets.ViewSet):
@@ -36,6 +38,7 @@ class ReportViewSet(viewsets.ViewSet):
         search_query = request.GET.get("search", "")
         if search_query:
             reports = reports.filter(Q(title__icontains=search_query))
+        
         # Create table with proper ordering
         table = ReportTable(reports)
         RequestConfig(request, paginate={"per_page": 20}).configure(table)
@@ -50,19 +53,38 @@ class ReportViewSet(viewsets.ViewSet):
         )
 
     def retrieve(self, request, pk=None):
-        """Retrieve a specific report"""
+        """Retrieve a specific report detail view"""
         report = get_object_or_404(Report, pk=pk)
-
-        # Get available templates for report editing
+        
+        # Get context files
+        context_files = report.context_files.order_by("-created_at")
+        
+        # Get available templates for report generation
         template_service = TemplateService()
-        report_templates = template_service.get_document_templates()
+        report_templates = template_service.get_available_templates(
+            DocumentTemplate.TemplateType.REPORT
+        )
+        
+        # Initialize forms
+        file_form = ReportContextFileForm()
+        text_form = ReportContextTextForm()
+        content_form = ReportContentForm(instance=report)
+        
+        # Get context summary
+        report_service = ReportService()
+        context_summary = report_service.get_context_summary(report)
 
         return render(
             request,
             "reports/report_detail.html",
             {
                 "report": report,
+                "context_files": context_files,
                 "report_templates": report_templates,
+                "file_form": file_form,
+                "text_form": text_form,
+                "content_form": content_form,
+                "context_summary": context_summary,
             },
         )
 
@@ -70,160 +92,39 @@ class ReportViewSet(viewsets.ViewSet):
         """Create a new report"""
         if request.method == "GET":
             form = ReportForm()
-
-            # Get available templates for report creation
-            template_service = TemplateService()
-            report_templates = template_service.get_document_templates()
-
-            return render(
-                request,
-                "reports/report_form.html",
-                {
-                    "form": form,
-                    "report_templates": report_templates,
-                },
-            )
+            return render(request, "reports/report_form.html", {"form": form})
 
         elif request.method == "POST":
             form = ReportForm(request.POST)
             if form.is_valid():
-                # Save the report first without content
+                # Save the report first with empty content
                 report = form.save(commit=False)
-                report.content = ""  # Start with empty content
+                report.content = ""
                 report.save()
-                form.save_m2m()
 
-                # Generate AI content with selected template
-                try:
-                    report_service = ReportService()
-                    if report_service.is_available():
-                        template_id = request.POST.get("template_id")
-                        generated_content = report_service.generate(
-                            template_id=int(template_id) if template_id else None,
-                        )
-                        report.content = generated_content
-                        report.save()
-                        messages.success(
-                            request,
-                            "Bericht wurde erfolgreich erstellt und mit KI-Inhalt generiert.",
-                        )
-                    else:
-                        messages.warning(
-                            request,
-                            "Bericht wurde erstellt, aber KI-Generierung ist nicht verfügbar. Bitte fügen Sie den Inhalt manuell hinzu.",
-                        )
-                except Exception as e:
-                    messages.warning(
-                        request,
-                        f"Bericht wurde erstellt, aber KI-Generierung fehlgeschlagen: {str(e)}. Bitte fügen Sie den Inhalt manuell hinzu.",
-                    )
+                messages.success(request, "Bericht wurde erfolgreich erstellt.")
+                
+                # Redirect to detail view for context input
+                return redirect("reports:report_detail", pk=report.pk)
 
-                return HttpResponse(
-                    status=302,
-                    headers={
-                        "Location": reverse_lazy(
-                            "reports:report_detail", kwargs={"pk": report.pk}
-                        )
-                    },
-                )
-
-            # If form is invalid, get templates again
-            template_service = TemplateService()
-            templates = template_service.get_document_templates()
-
-            return render(
-                request,
-                "reports/report_form.html",
-                {
-                    "form": form,
-                    "report_templates": templates,
-                },
-            )
+            return render(request, "reports/report_form.html", {"form": form})
 
     def update(self, request, pk=None):
-        """Update an existing report (handles both form data and content updates)"""
+        """Update an existing report"""
         report = get_object_or_404(Report, pk=pk)
 
         if request.method == "GET":
             form = ReportForm(instance=report)
-            return render(
-                request, "reports/report_form.html", {"form": form, "report": report}
-            )
+            return render(request, "reports/report_form.html", {"form": form, "report": report})
 
         elif request.method == "POST":
-            # Check if this is a content-only update (from report detail page)
-            if (
-                "content" in request.POST and len(request.POST) == 2
-            ):  # content + csrfmiddlewaretoken
-                try:
-                    content = request.POST.get("content", "")
-                    report.content = content
-                    report.save()
+            form = ReportForm(request.POST, instance=report)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Bericht wurde erfolgreich aktualisiert.")
+                return redirect("reports:report_detail", pk=report.pk)
 
-                    messages.success(request, "Berichtinhalt wurde erfolgreich gespeichert.")
-
-                    # Handle HTMX requests
-                    if request.headers.get("HX-Request"):
-                        response = HttpResponse()
-                        response["HX-Redirect"] = reverse_lazy(
-                            "reports:report_detail", kwargs={"pk": report.pk}
-                        )
-                        return response
-
-                    return HttpResponse(
-                        status=302,
-                        headers={
-                            "Location": reverse_lazy(
-                                "reports:report_detail", kwargs={"pk": report.pk}
-                            )
-                        },
-                    )
-
-                except Exception as e:
-                    messages.error(request, f"Fehler beim Speichern: {str(e)}")
-                    return HttpResponse(
-                        status=302,
-                        headers={
-                            "Location": reverse_lazy(
-                                "reports:report_detail", kwargs={"pk": report.pk}
-                            )
-                        },
-                    )
-
-            # Regular form update (from edit modal)
-            # Handle template and sessions fields
-            request.POST.get("template_id")
-            sessions_ids = request.POST.getlist("sessions")
-
-            # Update basic fields
-            report.title = request.POST.get("title", report.title)
-            report.save()
-
-            # Update sessions
-            if sessions_ids:
-                sessions = Session.objects.filter(pk__in=sessions_ids)
-                report.sessions.set(sessions)
-            else:
-                report.sessions.clear()
-
-            messages.success(request, "Bericht wurde erfolgreich aktualisiert.")
-
-            # Handle HTMX requests
-            if request.headers.get("HX-Request"):
-                response = HttpResponse()
-                response["HX-Redirect"] = reverse_lazy(
-                    "reports:report_detail", kwargs={"pk": report.pk}
-                )
-                return response
-
-            return HttpResponse(
-                status=302,
-                headers={
-                    "Location": reverse_lazy(
-                        "reports:report_detail", kwargs={"pk": report.pk}
-                    )
-                },
-            )
+            return render(request, "reports/report_form.html", {"form": form, "report": report})
 
     def destroy(self, request, pk=None):
         """Delete a report"""
@@ -235,16 +136,156 @@ class ReportViewSet(viewsets.ViewSet):
         elif request.method == "POST":
             report.delete()
             messages.success(request, "Bericht wurde erfolgreich gelöscht.")
+            return redirect("reports:reports_list")
 
-            # Handle HTMX requests
+    @action(detail=True, methods=["post"])
+    @method_decorator(csrf_exempt)
+    def upload_context_file(self, request, pk=None):
+        """Upload a context file to a report"""
+        report = get_object_or_404(Report, pk=pk)
+        
+        if 'original_file' not in request.FILES:
+            messages.error(request, "Keine Datei hochgeladen")
+            return redirect("reports:report_detail", pk=report.pk)
+        
+        uploaded_file = request.FILES['original_file']
+        
+        try:
+            # Use report service to add context file
+            report_service = ReportService()
+            context_file = report_service.add_context_file(report, uploaded_file)
+            
+            if context_file.extraction_successful:
+                messages.success(
+                    request, 
+                    f"Datei '{context_file.file_name}' wurde erfolgreich hochgeladen und verarbeitet."
+                )
+            else:
+                messages.warning(
+                    request,
+                    f"Datei '{context_file.file_name}' wurde hochgeladen, aber die Textextraktion fehlgeschlagen: {context_file.extraction_error}"
+                )
+                
+        except Exception as e:
+            logger.error(f"Error uploading context file: {str(e)}")
+            messages.error(request, f"Fehler beim Hochladen der Datei: {str(e)}")
+        
+        return redirect("reports:report_detail", pk=report.pk)
+
+    @action(detail=True, methods=["post"])
+    @method_decorator(csrf_exempt)
+    def add_context_text(self, request, pk=None):
+        """Add manual text as context to a report"""
+        report = get_object_or_404(Report, pk=pk)
+        
+        form = ReportContextTextForm(request.POST)
+        if form.is_valid():
+            try:
+                # Use report service to add context text
+                report_service = ReportService()
+                context_file = report_service.add_context_text(
+                    report=report,
+                    text=form.cleaned_data['text_input'],
+                    file_name=form.cleaned_data['file_name']
+                )
+                
+                messages.success(
+                    request, 
+                    f"Text '{context_file.file_name}' wurde erfolgreich hinzugefügt."
+                )
+                
+            except Exception as e:
+                logger.error(f"Error adding context text: {str(e)}")
+                messages.error(request, f"Fehler beim Hinzufügen des Texts: {str(e)}")
+        else:
+            messages.error(request, "Ungültige Eingabe. Bitte prüfen Sie die Eingaben.")
+        
+        return redirect("reports:report_detail", pk=report.pk)
+
+    @action(detail=True, methods=["post"])
+    @method_decorator(csrf_exempt)
+    def delete_context_file(self, request, pk=None):
+        """Delete a context file from a report"""
+        report = get_object_or_404(Report, pk=pk)
+        
+        try:
+            data = json.loads(request.body)
+            context_file_id = data.get('context_file_id')
+            
+            if not context_file_id:
+                return JsonResponse({'error': 'Kontext-Datei-ID fehlt'}, status=400)
+            
+            context_file = get_object_or_404(ReportContextFile, id=context_file_id, report=report)
+            file_name = context_file.file_name
+            context_file.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Kontext-Datei "{file_name}" wurde erfolgreich gelöscht.'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error deleting context file: {str(e)}")
+            return JsonResponse({'error': f'Fehler beim Löschen: {str(e)}'}, status=500)
+
+    @action(detail=True, methods=["post"])
+    @method_decorator(csrf_exempt)
+    def generate_content(self, request, pk=None):
+        """Generate report content using AI"""
+        report = get_object_or_404(Report, pk=pk)
+        
+        try:
+            data = json.loads(request.body)
+            template_id = data.get('template_id')
+            
+            if not template_id:
+                return JsonResponse({'error': 'Template-ID ist erforderlich'}, status=400)
+            
+            # Generate content using ReportService
+            report_service = ReportService()
+            if not report_service.is_available():
+                return JsonResponse({'error': 'KI-Service ist nicht verfügbar'}, status=400)
+            
+            generated_content = report_service.generate(report, template_id=int(template_id))
+            
+            # Update report content
+            report.content = generated_content
+            report.save()
+            
+            return JsonResponse({
+                'success': True,
+                'content': generated_content,
+                'message': 'Berichtinhalt wurde erfolgreich generiert.'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error generating report content: {str(e)}")
+            return JsonResponse({'error': f'Fehler bei der Generierung: {str(e)}'}, status=500)
+
+    @action(detail=True, methods=["post"])
+    @method_decorator(csrf_exempt)
+    def save_content(self, request, pk=None):
+        """Save report content"""
+        report = get_object_or_404(Report, pk=pk)
+        
+        try:
+            content = request.POST.get('content', '')
+            report.content = content
+            report.save()
+            
             if request.headers.get("HX-Request"):
-                response = HttpResponse()
-                response["HX-Redirect"] = reverse_lazy("reports:reports_list")
-                return response
-
-            return HttpResponse(
-                status=302, headers={"Location": reverse_lazy("reports:reports_list")}
-            )
+                return HttpResponse("")  # Empty response for HTMX auto-save
+            else:
+                messages.success(request, "Berichtinhalt wurde erfolgreich gespeichert.")
+                return redirect("reports:report_detail", pk=report.pk)
+                
+        except Exception as e:
+            logger.error(f"Error saving content: {str(e)}")
+            if request.headers.get("HX-Request"):
+                return HttpResponse("", status=500)
+            else:
+                messages.error(request, f"Fehler beim Speichern: {str(e)}")
+                return redirect("reports:report_detail", pk=report.pk)
 
     @action(detail=True, methods=["get"])
     def export(self, request, pk=None):
@@ -265,34 +306,3 @@ class ReportViewSet(viewsets.ViewSet):
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
         return response
-
-    @action(detail=False, methods=["post"])
-    @method_decorator(csrf_exempt)
-    def generate(self, request):
-        """Generate report using AI"""
-        try:
-            data = json.loads(request.body)
-            template_id = data.get("template_id")
-
-            # Generate report using ReportService
-            report_service = ReportService()
-            if not report_service.is_available():
-                return JsonResponse({"error": "OpenAI API Key ist nicht konfiguriert"}, status=400)
-
-            generated_content = report_service.generate(template_id=template_id)
-
-            # Create report
-            template = DocumentTemplate.objects.get(pk=template_id)
-            report = Report.objects.create(
-                title=f"Bericht {template.name}",
-                content=generated_content,
-            )
-
-            return JsonResponse(
-                {"success": True, "report_id": report.pk, "content": generated_content}
-            )
-
-        except Exception as e:
-            return JsonResponse(
-                {"error": f"Fehler bei der Berichtgenerierung: {str(e)}"}, status=400
-            )
