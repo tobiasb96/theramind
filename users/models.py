@@ -91,4 +91,7 @@ class User(AbstractBaseUser):
 
         This string is used when a `User` is printed in the console.
         """
-        return f"{self.first_name} {self.last_name}" or self.email
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        else:
+            return self.email
