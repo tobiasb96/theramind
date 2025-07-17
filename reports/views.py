@@ -324,22 +324,38 @@ class ReportViewSet(viewsets.ViewSet):
 
         return redirect("reports:report_detail", pk=report.pk)
 
-    @action(detail=True, methods=["get"])
-    def export(self, request, pk=None):
-        """Export report as text file"""
+    @action(detail=True, methods=["post"])
+    @method_decorator(csrf_exempt)
+    def export_pdf(self, request, pk=None):
+        """Export report content to PDF"""
         report = get_object_or_404(Report, pk=pk)
 
-        report_text = f"{report.title}\n\n"
-        report_text += f"Datum: {report.created_at.strftime('%d.%m.%Y')}\n"
-        if report.updated_at != report.created_at:
-            report_text += f"Aktualisiert: {report.updated_at.strftime('%d.%m.%Y %H:%M')}\n"
-        report_text += f"\n{report.content}\n"
+        try:
+            # Use the export service with database content
+            from core.services import PDFExportService
 
-        # Create filename
-        filename = f"{report.title.replace(' ', '_').replace('/', '_').lower()}.txt"
+            export_service = PDFExportService()
 
-        # Create response
-        response = HttpResponse(report_text, content_type="text/plain; charset=utf-8")
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            # Prepare title
+            title = report.title
 
-        return response
+            pdf_data = export_service.export_notes_to_pdf(
+                title=title,
+                date=report.created_at,
+                content=report.content,
+                filename_prefix="Bericht",
+            )
+
+            # Create Django response
+            response = HttpResponse(pdf_data["content"], content_type=pdf_data["content_type"])
+            response["Content-Disposition"] = f"attachment; filename={pdf_data['filename']}"
+
+            return response
+
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect("reports:report_detail", pk=report.pk)
+        except Exception as e:
+            logger.error(f"Fehler beim Exportieren des Berichts als PDF: {str(e)}")
+            messages.error(request, f"Fehler beim Exportieren des Berichts als PDF: {str(e)}")
+            return redirect("reports:report_detail", pk=report.pk)

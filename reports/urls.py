@@ -13,7 +13,6 @@ urlpatterns = [
     path("<int:pk>/", report_viewset.retrieve, name="report_detail"),
     path("<int:pk>/edit/", report_viewset.update, name="report_edit"),
     path("<int:pk>/delete/", report_viewset.destroy, name="report_delete"),
-    path("<int:pk>/export/", report_viewset.export, name="report_export"),
     # Context file management
     path(
         "<int:pk>/upload-context-file/",
@@ -34,4 +33,6 @@ urlpatterns = [
         report_viewset.create_from_template,
         name="report_create_from_template",
     ),
+    # Export
+    path("<int:pk>/export/pdf/", report_viewset.export_pdf, name="report_export_pdf"),
 ] 
