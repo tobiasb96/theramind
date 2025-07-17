@@ -554,7 +554,7 @@
                 </button>
             </div>
             <!-- Modal body -->
-            <form class="p-4 md:p-5" method="post" action="{% url 'sessions:session_edit' pk=session.pk %}" hx-post="{% url 'sessions:session_edit' pk=session.pk %}">
+            <form class="p-4 md:p-5" method="post" action="{% url 'sessions:session_edit' pk=session.pk %}">
                 {% csrf_token %}
                 <div class="grid gap-4 mb-4">
                     <div class="col-span-2">
@@ -590,7 +590,7 @@
                 <button data-modal-toggle="delete-modal" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
                     Nein, abbrechen
                 </button>
-                <form method="post" action="{% url 'sessions:session_delete' pk=session.pk %}" hx-post="{% url 'sessions:session_delete' pk=session.pk %}" hx-target="#delete-modal" hx-swap="outerHTML" class="inline">
+                <form method="post" action="{% url 'sessions:session_delete' pk=session.pk %}" class="inline">
                     {% csrf_token %}
                     <button type="submit" class="py-2 px-3 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
                         Ja, löschen
