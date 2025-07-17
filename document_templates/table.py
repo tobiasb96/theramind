@@ -67,7 +67,7 @@ class TemplateTable(tables.Table):
             else "bg-green-100 text-green-800"
         )
         return format_html(
-            '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {}">'
+            '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {}">'
             "{}"
             "</span>",
             color_class,
@@ -77,19 +77,19 @@ class TemplateTable(tables.Table):
     def render_status(self, value, record):
         if record.is_predefined:
             return format_html(
-                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">'
+                '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">'
                 "Vordefiniert"
                 "</span>"
             )
         else:
             return format_html(
-                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-800">'
+                '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-800">'
                 "Benutzerdefiniert"
                 "</span>"
             )
 
     def render_created_at(self, value):
-        return value.strftime("%d.%m.Y")
+        return value.strftime("%d.%m.%Y")
 
     def render_actions(self, record):
         detail_url = reverse("document_templates:template_detail", kwargs={"pk": record.pk})
