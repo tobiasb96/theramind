@@ -22,18 +22,20 @@ class TemplateViewSet(viewsets.ViewSet):
 
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
+    def get_queryset(self, request=None):
         # CRITICAL SECURITY: Show predefined templates and user's own templates only
-        return DocumentTemplate.objects.filter(
-            is_active=True
-        ).filter(
-            Q(is_predefined=True) | Q(user=self.request.user)
-        ).order_by("name")
+        if request is None:
+            raise ValueError("Request is required for get_queryset")
+        return (
+            DocumentTemplate.objects.filter(is_active=True)
+            .filter(Q(is_predefined=True) | Q(user=request.user))
+            .order_by("name")
+        )
 
     def list(self, request):
         """List all templates"""
         template_type = request.GET.get("type", "")  # Default to empty (all types)
-        templates = self.get_queryset()
+        templates = self.get_queryset(request)
 
         # Filter by template type if specified
         if template_type:

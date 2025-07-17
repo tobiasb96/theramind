@@ -15,7 +15,6 @@ from django.shortcuts import render
 from therapy_sessions.models import Session, Transcription
 from therapy_sessions.forms import SessionForm, AudioUploadForm
 from therapy_sessions.services import get_transcription_service
-from users.mixins import UserOwnershipMixin
 
 logger = logging.getLogger(__name__)
 
@@ -26,24 +25,26 @@ class SessionViewSet(viewsets.ViewSet):
     """
 
     permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        # CRITICAL SECURITY: Only return sessions for the current user
-        return Session.objects.filter(user=self.request.user).order_by("-date")
 
-    def get_object(self, pk=None):
-        """Get session with nested relationship validation - SECURITY CRITICAL"""
+    def get_queryset(self, request=None):
+        if request is None:
+            raise ValueError("Request is required for get_queryset")
+        return Session.objects.filter(user=request.user).order_by("-date")
+
+    def get_object(self, pk=None, request=None):
+        """Get session with nested relationship validation"""
         if pk:
-            # CRITICAL SECURITY: Only allow access to user's own sessions
-            return get_object_or_404(Session, pk=pk, user=self.request.user)
+            if request is None:
+                raise ValueError("Request is required for get_object")
+            return get_object_or_404(Session, pk=pk, user=request.user)
         return None
-    
+
     def list(self, request):
         """List all sessions"""
-        sessions = self.get_queryset()
-        
+        sessions = self.get_queryset(request)
+
         paginator = Paginator(sessions, 20)
-        page_number = request.GET.get('page')
+        page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
 
         return render(
@@ -57,7 +58,7 @@ class SessionViewSet(viewsets.ViewSet):
 
     def retrieve(self, request, pk=None):
         """Retrieve a specific session"""
-        session = self.get_object(pk)
+        session = self.get_object(pk, request)
 
         # Get related data
         recordings = session.audiorecording_set.order_by("-created_at")
@@ -82,7 +83,7 @@ class SessionViewSet(viewsets.ViewSet):
 
     def create(self, request):
         """Create a new session"""
-        if request.method == 'GET':
+        if request.method == "GET":
             form = SessionForm(user=request.user)
 
             return render(request, "sessions/session_form.html", {"form": form})
@@ -90,7 +91,7 @@ class SessionViewSet(viewsets.ViewSet):
         elif request.method == "POST":
             form = SessionForm(request.POST, user=request.user)
             if form.is_valid():
-                session = form.save()  # UserFormMixin handles setting the user
+                session = form.save()
                 messages.success(request, "Sitzung wurde erfolgreich angelegt.")
                 return HttpResponseRedirect(
                     reverse_lazy("sessions:session_detail", kwargs={"pk": session.pk})
@@ -101,7 +102,7 @@ class SessionViewSet(viewsets.ViewSet):
         """Handle HTMX session creation"""
         try:
             session = Session.objects.create(
-                user=request.user,  # CRITICAL SECURITY: Set user when creating session
+                user=request.user,
                 date=request.POST.get("date"),
                 title=request.POST.get("title", ""),
             )
@@ -116,7 +117,7 @@ class SessionViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         """Update an existing session"""
-        session = self.get_object(pk)
+        session = self.get_object(pk, request)
 
         if request.method == "GET":
             form = SessionForm(instance=session, user=request.user)
@@ -156,7 +157,7 @@ class SessionViewSet(viewsets.ViewSet):
 
     def destroy(self, request, pk=None):
         """Delete a session"""
-        session = self.get_object(pk)
+        session = self.get_object(pk, request)
 
         if request.method == "GET":
             return render(request, "sessions/session_confirm_delete.html", {"session": session})
@@ -171,7 +172,7 @@ class SessionViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     def save_transcript(self, request, pk=None):
         """Save transcript text to session notes"""
-        session = self.get_object(pk)
+        session = self.get_object(pk, request)
 
         try:
             data = json.loads(request.body)
@@ -188,7 +189,7 @@ class SessionViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     def generate_notes(self, request, pk=None):
         """Generate AI session notes from transcriptions"""
-        session = self.get_object(pk)
+        session = self.get_object(pk, request)
 
         try:
             template_id = request.POST.get("template")
@@ -202,19 +203,19 @@ class SessionViewSet(viewsets.ViewSet):
             from django.db.models import Q
 
             try:
-                # CRITICAL SECURITY: Only allow access to predefined templates or user's own templates
-                template = DocumentTemplate.objects.filter(
-                    id=template_id, 
-                    template_type=DocumentTemplate.TemplateType.SESSION_NOTES,
-                    is_active=True
-                ).filter(
-                    Q(is_predefined=True) | Q(user=request.user)
-                ).get()
+                template = (
+                    DocumentTemplate.objects.filter(
+                        id=template_id,
+                        template_type=DocumentTemplate.TemplateType.SESSION_NOTES,
+                        is_active=True,
+                    )
+                    .filter(Q(is_predefined=True) | Q(user=request.user))
+                    .get()
+                )
             except DocumentTemplate.DoesNotExist:
                 messages.error(request, "Template nicht gefunden")
                 return self._redirect_to_session_detail(pk)
 
-            # Get all transcriptions for this session (already secured by session ownership)
             transcriptions = Transcription.objects.filter(recording__session=session)
 
             if not transcriptions.exists():
@@ -259,7 +260,7 @@ class SessionViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     def save_notes(self, request, pk=None):
         """Save session notes with HTML sanitization"""
-        session = self.get_object(pk)
+        session = self.get_object(pk, request)
         
         try:
             session_notes = request.POST.get("session_notes", "")
@@ -284,7 +285,7 @@ class SessionViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     def create_from_template(self, request, pk=None):
         """Create session notes from a template without audio transcriptions"""
-        session = self.get_object(pk)
+        session = self.get_object(pk, request)
 
         try:
             template_id = request.POST.get("template")
@@ -298,7 +299,6 @@ class SessionViewSet(viewsets.ViewSet):
             from django.db.models import Q
 
             try:
-                # CRITICAL SECURITY: Only allow access to predefined templates or user's own templates
                 template = DocumentTemplate.objects.filter(
                     id=template_id, 
                     template_type=DocumentTemplate.TemplateType.SESSION_NOTES,
@@ -327,7 +327,7 @@ class SessionViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     def export_notes_pdf(self, request, pk=None):
         """Export session notes to PDF"""
-        session = self.get_object(pk)
+        session = self.get_object(pk, request)
 
         try:
             # Use the export service with database content
@@ -365,7 +365,7 @@ class SessionViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     def delete_notes(self, request, pk=None):
         """Delete session notes"""
-        session = self.get_object(pk)
+        session = self.get_object(pk, request)
 
         try:
             session.notes = ""

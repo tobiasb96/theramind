@@ -10,11 +10,11 @@ class DocumentTemplate(models.Model):
         SESSION_NOTES = "session_notes", "Sitzungsnotiz"
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        verbose_name="Benutzer",
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="User",
         null=True,
-        blank=True
+        blank=True,
     )
 
     name = models.CharField(max_length=200, verbose_name="Template Name")
@@ -75,11 +75,11 @@ class UserTemplatePreference(models.Model):
     """User preferences for default templates"""
 
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        verbose_name="Benutzer",
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="User",
         null=True,
-        blank=True
+        blank=True,
     )
 
     # Default templates for document types
@@ -100,8 +100,8 @@ class UserTemplatePreference(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Benutzer Template Einstellungen"
-        verbose_name_plural = "Benutzer Template Einstellungen"
+        verbose_name = "User Vorlagen Einstellung"
+        verbose_name_plural = "User Vorlagen Einstellungen"
 
     def __str__(self):
         return f"Template Einstellungen für {self.user}"

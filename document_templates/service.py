@@ -19,8 +19,7 @@ class TemplateService:
 
         Args:
             template_type: 'document' or 'session_notes'
-            user: User object (CRITICAL SECURITY: must filter by user)
-
+            user: User object
         Returns:
             List of available templates
         """
@@ -29,7 +28,6 @@ class TemplateService:
             template_type=template_type, is_predefined=True, is_active=True
         )
 
-        # CRITICAL SECURITY: Add user-specific templates
         if user:
             from django.db.models import Q
             all_templates = DocumentTemplate.objects.filter(
@@ -58,12 +56,11 @@ class TemplateService:
 
         Args:
             template_data: Template data dictionary
-            user: User object (CRITICAL SECURITY: must set user)
+            user: User object
 
         Returns:
             Created template
         """
-        # CRITICAL SECURITY: Set user when creating template
         if user:
             template_data['user'] = user
 
@@ -77,12 +74,11 @@ class TemplateService:
         Args:
             template_id: ID of template to clone
             new_name: Name for the new template
-            user: User object (CRITICAL SECURITY: must set user)
+            user: User object
 
         Returns:
             Cloned template
         """
-        # CRITICAL SECURITY: Verify user can access the original template
         from django.db.models import Q
         original_template = DocumentTemplate.objects.filter(
             id=template_id,
@@ -105,7 +101,6 @@ class TemplateService:
             is_predefined=False,
             is_active=True,
             based_on_template=original_template,
-            # CRITICAL SECURITY: Set user when cloning template
             user=user
         )
 
@@ -117,12 +112,11 @@ class TemplateService:
 
         Args:
             template_type: 'document' or 'session_notes'
-            user: User object (CRITICAL SECURITY: must filter by user)
+            user: User object
 
         Returns:
             Default template
         """
-        # CRITICAL SECURITY: Check user preferences with proper filtering
         if user:
             try:
                 from .models import UserTemplatePreference
@@ -130,7 +124,6 @@ class TemplateService:
                 if template_type == 'document':
                     template_id = preferences.default_document_templates.get('default')
                     if template_id:
-                        # Verify user has access to this template
                         from django.db.models import Q
                         template = DocumentTemplate.objects.filter(
                             id=template_id,
@@ -143,7 +136,6 @@ class TemplateService:
                 elif template_type == 'session_notes':
                     template_id = preferences.default_session_templates.get('default')
                     if template_id:
-                        # Verify user has access to this template
                         from django.db.models import Q
                         template = DocumentTemplate.objects.filter(
                             id=template_id,

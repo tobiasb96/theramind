@@ -18,7 +18,6 @@ from .models import Report, ReportContextFile
 from .forms import ReportForm, ReportContextFileForm, ReportContextTextForm, ReportContentForm
 from .services import ReportService
 from .tables import ReportTable
-from users.mixins import UserOwnershipMixin
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +29,14 @@ class ReportViewSet(viewsets.ViewSet):
 
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        # CRITICAL SECURITY: Only return reports for the current user
-        return Report.objects.filter(user=self.request.user).order_by("-created_at")
+    def get_queryset(self, request=None):
+        if request is None:
+            raise ValueError("Request is required for get_queryset")
+        return Report.objects.filter(user=request.user).order_by("-created_at")
 
     def list(self, request):
         """List all reports"""
-        reports = self.get_queryset()
+        reports = self.get_queryset(request)
 
         # Handle search
         search_query = request.GET.get("search", "")
@@ -59,7 +59,7 @@ class ReportViewSet(viewsets.ViewSet):
     def retrieve(self, request, pk=None):
         """Retrieve a specific report detail view"""
         # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=self.request.user)
+        report = get_object_or_404(Report, pk=pk, user=request.user)
         
         # Get context files
         context_files = report.context_files.filter(extraction_successful=True).order_by(
@@ -120,7 +120,7 @@ class ReportViewSet(viewsets.ViewSet):
     def update(self, request, pk=None):
         """Update an existing report"""
         # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=self.request.user)
+        report = get_object_or_404(Report, pk=pk, user=request.user)
 
         if request.method == "GET":
             form = ReportForm(instance=report, user=request.user)
@@ -138,7 +138,7 @@ class ReportViewSet(viewsets.ViewSet):
     def destroy(self, request, pk=None):
         """Delete a report"""
         # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=self.request.user)
+        report = get_object_or_404(Report, pk=pk, user=request.user)
 
         if request.method == "GET":
             return render(request, "reports/report_confirm_delete.html", {"report": report})
@@ -153,7 +153,7 @@ class ReportViewSet(viewsets.ViewSet):
     def upload_context_file(self, request, pk=None):
         """Upload a context file to a report"""
         # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=self.request.user)
+        report = get_object_or_404(Report, pk=pk, user=request.user)
         
         if 'original_file' not in request.FILES:
             messages.error(request, "Keine Datei hochgeladen")
@@ -188,7 +188,7 @@ class ReportViewSet(viewsets.ViewSet):
     def add_context_text(self, request, pk=None):
         """Add manual text as context to a report"""
         # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=self.request.user)
+        report = get_object_or_404(Report, pk=pk, user=request.user)
         
         form = ReportContextTextForm(request.POST)
         if form.is_valid():
@@ -219,7 +219,7 @@ class ReportViewSet(viewsets.ViewSet):
     def delete_context_file(self, request, pk=None):
         """Delete a context file from a report"""
         # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=self.request.user)
+        report = get_object_or_404(Report, pk=pk, user=request.user)
         
         try:
             data = json.loads(request.body)
@@ -247,7 +247,7 @@ class ReportViewSet(viewsets.ViewSet):
     def generate_content(self, request, pk=None):
         """Generate report content using AI"""
         # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=self.request.user)
+        report = get_object_or_404(Report, pk=pk, user=request.user)
         
         try:
             data = json.loads(request.body)
@@ -282,7 +282,7 @@ class ReportViewSet(viewsets.ViewSet):
     def save_content(self, request, pk=None):
         """Save report content"""
         # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=self.request.user)
+        report = get_object_or_404(Report, pk=pk, user=request.user)
         
         try:
             content = request.POST.get('content', '')
@@ -308,7 +308,7 @@ class ReportViewSet(viewsets.ViewSet):
     def create_from_template(self, request, pk=None):
         """Create report content from a template without context files"""
         # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=self.request.user)
+        report = get_object_or_404(Report, pk=pk, user=request.user)
 
         try:
             template_id = request.POST.get("template")
@@ -350,7 +350,7 @@ class ReportViewSet(viewsets.ViewSet):
     def export_pdf(self, request, pk=None):
         """Export report content to PDF"""
         # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=self.request.user)
+        report = get_object_or_404(Report, pk=pk, user=request.user)
 
         try:
             # Use the export service with database content

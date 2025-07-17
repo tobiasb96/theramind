@@ -14,17 +14,29 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='documenttemplate',
-            name='user',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Benutzer'),
+            model_name="documenttemplate",
+            name="user",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="User",
+            ),
         ),
         migrations.AddField(
-            model_name='usertemplatepreference',
-            name='user',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Benutzer'),
+            model_name="usertemplatepreference",
+            name="user",
+            field=models.OneToOneField(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="User",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='documenttemplate',
-            unique_together={('user', 'name', 'template_type')},
+            name="documenttemplate",
+            unique_together={("user", "name", "template_type")},
         ),
     ]

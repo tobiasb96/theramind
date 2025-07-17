@@ -15,7 +15,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # CRITICAL SECURITY: Get recent documents for current user only
         recent_reports = Report.objects.filter(user=self.request.user).order_by("-created_at")[:10]
 
         # Create table for recent documents (convert to list to avoid queryset ordering issues)
@@ -23,7 +22,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         RequestConfig(self.request, paginate=False).configure(table)
         context["recent_reports_table"] = table
 
-        # Get document templates for quick document creation (includes user filtering)
         template_service = TemplateService()
         context["report_templates"] = template_service.get_document_templates(user=self.request.user)
 
@@ -40,7 +38,7 @@ class QuickSessionCreateView(LoginRequiredMixin, View):
 
             # Create the session
             session = Session.objects.create(
-                user=request.user,  # CRITICAL SECURITY: Set user when creating session
+                user=request.user,
                 date=date,
                 title=title,
             )
@@ -62,7 +60,7 @@ class QuickDocumentCreateView(LoginRequiredMixin, View):
         try:
             title = request.POST.get("title")
             report = Report.objects.create(
-                user=request.user,  # CRITICAL SECURITY: Set user when creating report
+                user=request.user,
                 title=title
             )
             return redirect("reports:report_detail", pk=report.pk)

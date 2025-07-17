@@ -22,7 +22,6 @@ class ReportForm(UserFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # CRITICAL SECURITY: Filter templates to show only predefined ones and user's own templates
         if hasattr(self, 'user') and self.user:
             from django.db.models import Q
             self.fields["template"].queryset = DocumentTemplate.objects.filter(
