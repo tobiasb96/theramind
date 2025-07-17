@@ -253,13 +253,20 @@ class SessionViewSet(viewsets.ViewSet):
             session_notes = request.POST.get("session_notes", "")
             session.notes = self._sanitize_html(session_notes)
             session.save()
-            
-            messages.success(request, "Notizen wurden erfolgreich gespeichert.")
-            
-        except Exception as e:
-            messages.error(request, f"Fehler beim Speichern: {str(e)}")
 
-        return self._redirect_to_session_detail(pk)
+            # Return different responses based on request type
+            if request.headers.get("HX-Request"):
+                return HttpResponse("")  # Empty response for HTMX auto-save
+            else:
+                messages.success(request, "Notizen wurden erfolgreich gespeichert.")
+                return self._redirect_to_session_detail(pk)
+
+        except Exception as e:
+            if request.headers.get("HX-Request"):
+                return HttpResponse("", status=500)  # Error response for HTMX
+            else:
+                messages.error(request, f"Fehler beim Speichern: {str(e)}")
+                return self._redirect_to_session_detail(pk)
 
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
@@ -298,20 +305,85 @@ class SessionViewSet(viewsets.ViewSet):
 
         return self._redirect_to_session_detail(pk)
 
+    @action(detail=True, methods=["post"])
+    @method_decorator(csrf_exempt)
+    def export_notes_pdf(self, request, pk=None):
+        """Export session notes to PDF"""
+        session = self.get_object(pk)
+
+        try:
+            # Use the export service with database content
+            from core.services import PDFExportService
+
+            export_service = PDFExportService()
+
+            # Prepare title
+            title = "Sitzungsnotizen"
+            if session.title:
+                title += f" - {session.title}"
+
+            pdf_data = export_service.export_notes_to_pdf(
+                title=title,
+                date=session.date,
+                content=session.notes,
+                filename_prefix="Sitzungsnotizen",
+            )
+
+            # Create Django response
+            response = HttpResponse(pdf_data["content"], content_type=pdf_data["content_type"])
+            response["Content-Disposition"] = f"attachment; filename={pdf_data['filename']}"
+
+            return response
+
+        except ValueError as e:
+            return JsonResponse({"error": str(e)}, status=400)
+        except Exception as e:
+            logger.error(f"Fehler beim Exportieren der Notizen als PDF: {str(e)}")
+            return JsonResponse(
+                {"error": f"Fehler beim Exportieren der Notizen als PDF: {str(e)}"}, status=500
+            )
+
+    @action(detail=True, methods=["post"])
+    @method_decorator(csrf_exempt)
+    def delete_notes(self, request, pk=None):
+        """Delete session notes"""
+        session = self.get_object(pk)
+
+        try:
+            session.notes = ""
+            session.save()
+            return JsonResponse(
+                {"success": True, "message": "Sitzungsnotizen wurden erfolgreich gelöscht."}
+            )
+        except Exception as e:
+            logger.error(f"Fehler beim Löschen der Notizen: {str(e)}")
+            return JsonResponse({"error": f"Fehler beim Löschen der Notizen: {str(e)}"}, status=500)
+
     def _sanitize_html(self, html_content):
         """Sanitize HTML content to allow only safe tags"""
+        import re
+
         allowed_tags = ["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]
-        
-        # Remove all tags except allowed ones
-        pattern = re.compile(
-            r"<(?!\/?(?:" + "|".join(allowed_tags) + r")\b)[^>]+>", re.IGNORECASE
-        )
-        html_content = pattern.sub("", html_content)
-        
-        # Remove all attributes for all tags
+
+        # First, remove all attributes from allowed tags (but keep the tags themselves)
         for tag in allowed_tags:
-            html_content = re.sub(r"<" + tag + r"[^>]*>", f"<{tag}>", html_content)
-        
+            # Handle opening tags with attributes
+            html_content = re.sub(
+                r"<(" + re.escape(tag) + r")\s[^>]*>", r"<\1>", html_content, flags=re.IGNORECASE
+            )
+
+        # Remove all disallowed tags completely (opening and closing)
+        # This pattern matches any tag that's not in our allowed list
+        allowed_pattern = "|".join(re.escape(tag) for tag in allowed_tags)
+        disallowed_pattern = re.compile(
+            r"<(?!/?\s*(?:" + allowed_pattern + r")\s*(?:\s[^>]*)?/?)\s*[^>]*>", re.IGNORECASE
+        )
+        html_content = disallowed_pattern.sub("", html_content)
+
+        # Clean up any malformed or empty tags
+        html_content = re.sub(r"<\s*>", "", html_content)  # Remove empty tags like <>
+        html_content = re.sub(r"<\s*/\s*>", "", html_content)  # Remove empty closing tags like </>
+
         return html_content
 
     def _redirect_to_session_detail(self, pk):

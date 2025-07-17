@@ -32,6 +32,17 @@ urlpatterns = [
         session_viewset.create_from_template,
         name="session_create_from_template",
     ),
+    # Export and delete notes
+    path(
+        "<int:pk>/export-notes/pdf/",
+        session_viewset.export_notes_pdf,
+        name="session_export_notes_pdf",
+    ),
+    path(
+        "<int:pk>/delete-notes/",
+        session_viewset.delete_notes,
+        name="session_delete_notes",
+    ),
     # Audio processing URLs
     path("recordings/<int:pk>/transcribe/", audio_viewset.transcribe, name="transcribe"),
     path("recordings/<int:pk>/download/", audio_viewset.download, name="audio_download"),

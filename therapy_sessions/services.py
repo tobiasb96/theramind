@@ -56,11 +56,16 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
         # Include existing notes if they exist
         if existing_notes and existing_notes.strip():
             context_prefix += f"""**VORHANDENE NOTIZEN**
-Die folgenden Notizen existieren bereits für diese Sitzung. Bitte berücksichtige diese und erweitere sie sinnvoll mit den Informationen aus dem Transkript, wo es angemessen ist:
+                Die folgenden Notizen existieren bereits für diese Sitzung. Bitte berücksichtige diese und 
+                erweitere sie sinnvoll mit den Informationen aus dem Transkript, wo es angemessen ist. 
+                Füge keine neuen Abschnitte hinzu:
+                1. Entweder erweitere die bestehenden Abschnitte wenn das neue Format mit dem vorhandenen Format kompatibel ist.
+                2. Oder ersetze die bestehenden Abschnitte mit dem neuen Format, schau dir aber den Inhalt an und übertrage
+                wenn es sinnvoll ist.
 
-{existing_notes}
+                {existing_notes}
 
-"""
+                """
 
         context_prefix += "**SITZUNGSNOTIZEN**\n\n"
 
