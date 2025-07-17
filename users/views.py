@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.contrib.auth import update_session_auth_hash
 
 
 class LoginView(auth_views.LoginView):
@@ -59,23 +60,37 @@ class ChangePasswordView(View):
         try:
             validate_password(new_password1, request.user)
         except ValidationError as e:
-            # Convert validation errors to German messages
-            for error in e.messages:
-                if "at least 8 characters" in error:
-                    messages.error(request, 'Das neue Passwort muss mindestens 8 Zeichen lang sein.')
-                elif "too similar" in error:
-                    messages.error(request, 'Das neue Passwort ist zu ähnlich zu Ihren persönlichen Informationen.')
-                elif "too common" in error:
-                    messages.error(request, 'Das neue Passwort ist zu häufig verwendet.')
-                elif "entirely numeric" in error:
-                    messages.error(request, 'Das neue Passwort darf nicht nur aus Zahlen bestehen.')
+            # Use Django's error codes for stable, locale-independent error handling
+            for error in e.error_list:
+                if hasattr(error, "code"):
+                    if error.code == "password_too_short":
+                        messages.error(
+                            request, "Das neue Passwort muss mindestens 8 Zeichen lang sein."
+                        )
+                    elif error.code == "password_too_similar":
+                        messages.error(
+                            request,
+                            "Das neue Passwort ist zu ähnlich zu Ihren persönlichen Informationen.",
+                        )
+                    elif error.code == "password_too_common":
+                        messages.error(request, "Das neue Passwort ist zu häufig verwendet.")
+                    elif error.code == "password_entirely_numeric":
+                        messages.error(
+                            request, "Das neue Passwort darf nicht nur aus Zahlen bestehen."
+                        )
+                    else:
+                        messages.error(request, str(error.message))
                 else:
-                    messages.error(request, error)
+                    # Fallback for errors without codes
+                    messages.error(request, str(error))
             return redirect('users:profile')
         
         # Set new password
         request.user.set_password(new_password1)
         request.user.save()
-        
+
+        # Update session to prevent logout after password change
+        update_session_auth_hash(request, request.user)
+
         messages.success(request, 'Ihr Passwort wurde erfolgreich geändert.')
         return redirect('users:profile')
