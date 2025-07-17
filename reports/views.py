@@ -6,6 +6,7 @@ from django.utils.decorators import method_decorator
 from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from django_tables2 import RequestConfig
 import json
 import logging
@@ -25,6 +26,8 @@ class ReportViewSet(viewsets.ViewSet):
     """
     A ViewSet for managing report CRUD operations and custom actions.
     """
+
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Report.objects.order_by("-created_at")

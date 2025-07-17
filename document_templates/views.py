@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from django_tables2 import RequestConfig
 
 from .models import DocumentTemplate
@@ -17,6 +18,8 @@ class TemplateViewSet(viewsets.ViewSet):
     """
     A ViewSet for managing custom templates
     """
+
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         # TODO: Filter by user when user model is implemented
