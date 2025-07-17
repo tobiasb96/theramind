@@ -43,7 +43,12 @@
           </ul>
           <ul class="py-1 text-gray-500" aria-labelledby="dropdown-user">
             <li>
-              <a href="{% url 'users:logout' %}" class="block py-2 px-4 text-sm hover:bg-gray-100 text-gray-700">Abmelden</a>
+              <a href="{% url 'users:logout' %}" class="flex items-center py-2 px-4 text-sm hover:bg-gray-100 text-red-600">
+                <svg class="w-5 h-5 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H8m12 0-4 4m4-4-4-4M9 4H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h2"/>
+                </svg>
+                Abmelden
+              </a>
             </li>
           </ul>
         </div>
