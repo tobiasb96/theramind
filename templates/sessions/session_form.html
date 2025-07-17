@@ -37,9 +37,12 @@
                             <a href="{% url 'sessions:session_detail' pk=object.pk %}" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
                 Abbrechen
             </a>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                {% if object %}Aktualisieren{% else %}Anlegen{% endif %}
-            </button>
+            <button type="submit" class="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 inline-flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {% if object %}Sitzung aktualisieren{% else %}Sitzung anlegen{% endif %}
+                </button>
         </div>
     </form>
 </div>
