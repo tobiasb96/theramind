@@ -46,7 +46,7 @@ class QuickSessionCreateView(View):
             messages.success(request, "Sitzung wurde erfolgreich erstellt.")
 
             # Redirect to session detail
-            return redirect("sessions:session_detail", session_pk=session.pk)
+            return redirect("sessions:session_detail", pk=session.pk)
 
         except Exception as e:
             messages.error(request, f"Fehler beim Erstellen der Sitzung: {str(e)}")

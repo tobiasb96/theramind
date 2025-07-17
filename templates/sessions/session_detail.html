@@ -4,39 +4,6 @@
 
 {% block content %}
 <div class="mx-auto">
-    <!-- Breadcrumb -->
-    <nav class="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-white mb-6" aria-label="Breadcrumb">
-        <ol class="inline-flex items-center space-x-2 md:space-x-2 rtl:space-x-reverse">
-            <li class="inline-flex items-center">
-                <a href="{% url 'patients:patient_list' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                    Patienten
-                </a>
-            </li>
-            <li>
-                <div class="flex items-center">
-                    <svg class="rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                    </svg>
-                    <a href="{% url 'patients:patient_detail' patient.pk %}" class="ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2">{{ patient.full_name }}</a>
-                </div>
-            </li>
-            <li aria-current="page">
-                <div class="flex items-center">
-                    <svg class="rtl:rotate-180 w-3 h-3 mx-1 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                    </svg>
-                    <span class="ms-1 text-sm font-medium text-gray-500 md:ms-2">
-                        {% if session.title %}
-                            {{ session.title }}
-                        {% else %}
-                            Sitzung vom {{ session.date|date:"d.m.Y" }}
-                        {% endif %}
-                    </span>
-                </div>
-            </li>
-        </ol>
-    </nav>
-
     <!-- Session Information Card -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="flex justify-between items-start">
@@ -143,7 +110,7 @@
             </div>
         {% else %}
             <!-- Session Notes Editor when notes exist -->
-            <form method="post" action="{% url 'therapy:session_save_notes' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}">
+            <form method="post" action="{% url 'sessions:session_save_notes' pk=session.pk %}">
                 {% csrf_token %}
                 <div class="mb-4">
                     {% include 'partials/wysiwyg_editor.html' with editor_id='session-notes-editor' input_name='session_notes' content=session.notes label='Sitzungsnotizen' placeholder='Sitzungsnotizen werden hier angezeigt und können bearbeitet werden...' min_height='400px' %}
@@ -201,7 +168,7 @@
                                 Transkribieren
                             </button>
                         {% endif %}
-                        <a href="{% url 'therapy:audio_download' recording.pk %}" class="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800">
+                        <a href="{% url 'sessions:audio_download' recording.pk %}" class="bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-800">
                             Download
                         </a>
                         <button onclick="deleteRecording({{ recording.pk }})" class="px-3 py-1 text-xs font-medium text-center inline-flex items-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
@@ -271,14 +238,14 @@
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
-                <form id="template-selection-form" class="p-4 md:p-5" method="post" action="{% url 'therapy:session_create_from_template' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}">
+                <form id="template-selection-form" class="p-4 md:p-5" method="post" action="{% url 'sessions:session_create_from_template' pk=session.pk %}">
                     {% csrf_token %}
                     <div class="mb-4">
                         <label for="template-select-manual" class="block mb-2 text-sm font-medium text-gray-900">Vorlage auswählen</label>
                         <select id="template-select-manual" name="template" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
                             <option value="">Bitte wählen Sie eine Vorlage</option>
-                            {% for key, name in session_notes_templates.items %}
-                                <option value="{{ key }}">{{ name }}</option>
+                            {% for template in session_notes_templates %}
+                                <option value="{{ template.id }}">{{ template.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -310,7 +277,7 @@
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
-                <form id="audio-upload-form" class="p-4 md:p-5" method="post" enctype="multipart/form-data" action="{% url 'therapy:session_audio_upload' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}">
+                <form id="audio-upload-form" class="p-4 md:p-5" method="post" enctype="multipart/form-data" action="{% url 'sessions:session_audio_upload' pk=session.pk %}">
                     {% csrf_token %}
                     <div class="flex mb-4 gap-2">
                         <button id="tab-record" type="button" class="flex-1 px-3 py-2 rounded-t-lg bg-blue-50 text-blue-700 font-medium">Aufnahme starten</button>
@@ -374,14 +341,14 @@
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
-                <form id="ai-notes-form" class="p-4 md:p-5" method="post" action="{% url 'therapy:session_generate_notes' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}">
+                <form id="ai-notes-form" class="p-4 md:p-5" method="post" action="{% url 'sessions:session_generate_notes' pk=session.pk %}">
                     {% csrf_token %}
                     <div class="mb-4">
                         <label for="template-select" class="block mb-2 text-sm font-medium text-gray-900">Vorlage auswählen</label>
                         <select id="template-select" name="template" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
                             <option value="">Bitte wählen Sie eine Vorlage</option>
-                            {% for key, name in session_notes_templates.items %}
-                                <option value="{{ key }}">{{ name }}</option>
+                            {% for template in session_notes_templates %}
+                                <option value="{{ template.id }}">{{ template.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -416,7 +383,7 @@
                 </button>
             </div>
             <!-- Modal body -->
-            <form class="p-4 md:p-5" method="post" action="{% url 'sessions:session_edit' session_pk=session.pk %}" hx-post="{% url 'sessions:session_edit' session_pk=session.pk %}">
+            <form class="p-4 md:p-5" method="post" action="{% url 'sessions:session_edit' pk=session.pk %}" hx-post="{% url 'sessions:session_edit' pk=session.pk %}">
                 {% csrf_token %}
                 <div class="grid gap-4 mb-4">
                     <div class="col-span-2">
@@ -452,7 +419,7 @@
                 <button data-modal-toggle="delete-modal" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
                     Nein, abbrechen
                 </button>
-                <form method="post" action="{% url 'therapy:session_delete' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}" hx-post="{% url 'therapy:session_delete' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}" hx-target="#delete-modal" hx-swap="outerHTML" class="inline">
+                <form method="post" action="{% url 'sessions:session_delete' pk=session.pk %}" hx-post="{% url 'sessions:session_delete' pk=session.pk %}" hx-target="#delete-modal" hx-swap="outerHTML" class="inline">
                     {% csrf_token %}
                     <button type="submit" class="py-2 px-3 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
                         Ja, löschen
@@ -631,7 +598,7 @@ function deleteRecording(pk) {
 
 // Transcribe audio via AJAX (optional, if you want to keep this button)
 function transcribeAudio(pk) {
-    fetch(`/therapy/audio/${pk}/transcribe/`, {
+    fetch(`/sessions/recordings/${pk}/transcribe/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCsrfToken(),
@@ -650,4 +617,5 @@ function transcribeAudio(pk) {
 
 
 </script>
+</div>
 {% endblock %}

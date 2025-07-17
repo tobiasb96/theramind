@@ -5,8 +5,8 @@ class DocumentTemplate(models.Model):
     """Custom report templates for users"""
 
     class TemplateType(models.TextChoices):
-        REPORT = "report", "Reports"
-        SESSION_NOTES = "session_notes", "Sitzungsnotizen"
+        REPORT = "report", "Bericht"
+        SESSION_NOTES = "session_notes", "Sitzungsnotiz"
 
     # TODO: Add user reference when user model is implemented
     # user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Benutzer")

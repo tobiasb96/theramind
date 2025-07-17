@@ -27,10 +27,10 @@ class SessionViewSet(viewsets.ViewSet):
     def get_queryset(self):
         return Session.objects.order_by("-date")
 
-    def get_object(self, session_pk=None):
+    def get_object(self, pk=None):
         """Get session with nested relationship validation"""
-        if session_pk:
-            return get_object_or_404(Session, pk=session_pk)
+        if pk:
+            return get_object_or_404(Session, pk=pk)
         return None
     
     def list(self, request):
@@ -50,14 +50,19 @@ class SessionViewSet(viewsets.ViewSet):
             },
         )
 
-    def retrieve(self, request, session_pk=None):
+    def retrieve(self, request, pk=None):
         """Retrieve a specific session"""
-        session = self.get_object(session_pk)
+        session = self.get_object(pk)
 
         # Get related data
         recordings = session.audiorecording_set.order_by("-created_at")
         upload_form = AudioUploadForm()
-        session_notes_templates = get_available_templates()
+
+        # Get session notes templates from TemplateService
+        from document_templates.service import TemplateService
+
+        template_service = TemplateService()
+        session_notes_templates = template_service.get_session_templates()
 
         return render(
             request,
@@ -83,7 +88,7 @@ class SessionViewSet(viewsets.ViewSet):
                 session = form.save(commit=False)
                 messages.success(request, "Sitzung wurde erfolgreich angelegt.")
                 return HttpResponseRedirect(
-                    reverse_lazy("sessions:session_detail", kwargs={"session_pk": session.pk})
+                    reverse_lazy("sessions:session_detail", kwargs={"pk": session.pk})
                 )
             return render(request, "sessions/session_form.html", {"form": form})
 
@@ -96,16 +101,16 @@ class SessionViewSet(viewsets.ViewSet):
             )
             response = HttpResponse()
             response["HX-Redirect"] = reverse_lazy(
-                "sessions:session_detail", kwargs={"session_pk": session.pk}
+                "sessions:session_detail", kwargs={"pk": session.pk}
             )
             return response
 
         except ValueError:
             return JsonResponse({"error": "Fehler beim Erstellen der Sitzung"}, status=400)
 
-    def update(self, request, session_pk=None):
+    def update(self, request, pk=None):
         """Update an existing session"""
-        session = self.get_object(session_pk)
+        session = self.get_object(pk)
 
         if request.method == "GET":
             form = SessionForm(instance=session)
@@ -123,7 +128,7 @@ class SessionViewSet(viewsets.ViewSet):
                 return HttpResponseRedirect(
                     reverse_lazy(
                         "sessions:session_detail",
-                        kwargs={"session_pk": session.pk},
+                        kwargs={"pk": session.pk},
                     )
                 )
 
@@ -139,13 +144,13 @@ class SessionViewSet(viewsets.ViewSet):
         response = HttpResponse("")
         response["HX-Redirect"] = reverse_lazy(
             "sessions:session_detail",
-            kwargs={"session_pk": session.pk},
+            kwargs={"pk": session.pk},
         )
         return response
 
-    def destroy(self, request, session_pk=None):
+    def destroy(self, request, pk=None):
         """Delete a session"""
-        session = self.get_object(session_pk)
+        session = self.get_object(pk)
 
         if request.method == "GET":
             return render(request, "sessions/session_confirm_delete.html", {"session": session})
@@ -158,9 +163,9 @@ class SessionViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
-    def save_transcript(self, request, session_pk=None):
+    def save_transcript(self, request, pk=None):
         """Save transcript text to session notes"""
-        session = self.get_object(session_pk)
+        session = self.get_object(pk)
 
         try:
             data = json.loads(request.body)
@@ -175,23 +180,34 @@ class SessionViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
-    def generate_notes(self, request, session_pk=None):
+    def generate_notes(self, request, pk=None):
         """Generate AI session notes from transcriptions"""
-        session = self.get_object(session_pk)
+        session = self.get_object(pk)
 
         try:
-            template_key = request.POST.get("template")
+            template_id = request.POST.get("template")
 
-            if not template_key:
+            if not template_id:
                 messages.error(request, "Template ist erforderlich")
-                return self._redirect_to_session_detail(session_pk)
+                return self._redirect_to_session_detail(pk)
+
+            # Get the template
+            from document_templates.models import DocumentTemplate
+
+            try:
+                template = DocumentTemplate.objects.get(
+                    id=template_id, template_type="session_notes"
+                )
+            except DocumentTemplate.DoesNotExist:
+                messages.error(request, "Template nicht gefunden")
+                return self._redirect_to_session_detail(pk)
 
             # Get all transcriptions for this session
             transcriptions = Transcription.objects.filter(recording__session=session)
 
             if not transcriptions.exists():
                 messages.error(request, "Keine Transkriptionen für diese Sitzung verfügbar")
-                return self._redirect_to_session_detail(session_pk)
+                return self._redirect_to_session_detail(pk)
 
             # Combine all transcriptions
             combined_transcript = "\n\n".join([t.text for t in transcriptions])
@@ -200,13 +216,13 @@ class SessionViewSet(viewsets.ViewSet):
             transcription_service = get_transcription_service()
             if not transcription_service.is_available():
                 messages.error(request, "OpenAI API Key ist nicht konfiguriert")
-                return self._redirect_to_session_detail(session_pk)
+                return self._redirect_to_session_detail(pk)
 
             # Pass existing notes to the AI service
             existing_notes = session.notes if session.notes else None
 
-            session_notes = transcription_service.create_session_notes(
-                combined_transcript, template_key, existing_notes
+            session_notes = transcription_service.create_session_notes_with_template(
+                combined_transcript, template, existing_notes
             )
 
             if session_notes:
@@ -225,13 +241,13 @@ class SessionViewSet(viewsets.ViewSet):
         except Exception as e:
             messages.error(request, f"Fehler bei der Generierung: {str(e)}")
 
-        return self._redirect_to_session_detail(session_pk)
+        return self._redirect_to_session_detail(pk)
     
     @action(detail=True, methods=['post'])
     @method_decorator(csrf_exempt)
-    def save_notes(self, request, session_pk=None):
+    def save_notes(self, request, pk=None):
         """Save session notes with HTML sanitization"""
-        session = self.get_object(session_pk)
+        session = self.get_object(pk)
         
         try:
             session_notes = request.POST.get("session_notes", "")
@@ -243,70 +259,44 @@ class SessionViewSet(viewsets.ViewSet):
         except Exception as e:
             messages.error(request, f"Fehler beim Speichern: {str(e)}")
 
-        return self._redirect_to_session_detail(session_pk)
+        return self._redirect_to_session_detail(pk)
 
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
-    def create_from_template(self, request, session_pk=None):
+    def create_from_template(self, request, pk=None):
         """Create session notes from a template without audio transcriptions"""
-        session = self.get_object(session_pk)
+        session = self.get_object(pk)
 
         try:
-            template_key = request.POST.get("template")
+            template_id = request.POST.get("template")
 
-            if not template_key:
+            if not template_id:
                 messages.error(request, "Template ist erforderlich")
-                return self._redirect_to_session_detail(session_pk)
+                return self._redirect_to_session_detail(pk)
 
-            # Get the template structure from prompts
-            from therapy_sessions.prompts import SESSION_NOTES_TEMPLATES
+            # Get the template
+            from document_templates.models import DocumentTemplate
 
-            if template_key not in SESSION_NOTES_TEMPLATES:
-                messages.error(request, "Unbekanntes Template")
-                return self._redirect_to_session_detail(session_pk)
+            try:
+                template = DocumentTemplate.objects.get(
+                    id=template_id, template_type="session_notes"
+                )
+            except DocumentTemplate.DoesNotExist:
+                messages.error(request, "Template nicht gefunden")
+                return self._redirect_to_session_detail(pk)
 
-            template_data = SESSION_NOTES_TEMPLATES[template_key]
+            # Use the template's user_prompt as the structure for session notes
+            # This is the template structure that will be filled out manually
+            session.notes = template.user_prompt
+            session.save()
 
-            # Extract the structure from the template prompt
-            # Look for the structured part after "Strukturiere die Notizen wie folgt:"
-            prompt = template_data["prompt"]
-            structure_start = prompt.find("Strukturiere die Notizen wie folgt:")
-
-            if structure_start != -1:
-                # Find the end of the structure (before "Transkript der Sitzung:")
-                structure_end = prompt.find("Transkript der Sitzung:")
-                if structure_end != -1:
-                    structure_html = prompt[
-                        structure_start + len("Strukturiere die Notizen wie folgt:") : structure_end
-                    ].strip()
-
-                    # Clean up the structure to remove extra instructions
-                    lines = structure_html.split("\n")
-                    cleaned_lines = []
-                    for line in lines:
-                        line = line.strip()
-                        if line and not line.startswith("Antworte in HTML-Format"):
-                            cleaned_lines.append(line)
-
-                    structure_html = "\n".join(cleaned_lines)
-
-                    # Save the template structure as session notes
-                    session.notes = structure_html
-                    session.save()
-
-                    messages.success(
-                        request, f"Vorlage '{template_data['name']}' wurde erfolgreich angewendet."
-                    )
-                else:
-                    messages.error(request, "Fehler beim Extrahieren der Template-Struktur")
-            else:
-                messages.error(request, "Fehler beim Verarbeiten des Templates")
+            messages.success(request, f"Vorlage '{template.name}' wurde erfolgreich angewendet.")
 
         except Exception as e:
             logger.error(f"Fehler beim Erstellen der Notizen aus Template: {str(e)}")
             messages.error(request, f"Fehler beim Erstellen der Notizen: {str(e)}")
 
-        return self._redirect_to_session_detail(session_pk)
+        return self._redirect_to_session_detail(pk)
 
     def _sanitize_html(self, html_content):
         """Sanitize HTML content to allow only safe tags"""
@@ -324,11 +314,11 @@ class SessionViewSet(viewsets.ViewSet):
         
         return html_content
 
-    def _redirect_to_session_detail(self, session_pk):
+    def _redirect_to_session_detail(self, pk):
         """Helper method to redirect to session detail"""
         return HttpResponseRedirect(
             reverse_lazy(
                 "sessions:session_detail",
-                kwargs={"session_pk": session_pk},
+                kwargs={"pk": pk},
             )
         )

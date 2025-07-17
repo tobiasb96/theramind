@@ -22,15 +22,15 @@ class AudioViewSet(viewsets.ViewSet):
     def get_queryset(self):
         return AudioRecording.objects.all().order_by('-created_at')
 
-    def get_session(self, session_pk):
+    def get_session(self, pk):
         """Get session with nested relationship validation"""
-        return get_object_or_404(Session, pk=session_pk)
+        return get_object_or_404(Session, pk=pk)
     
     @action(detail=False, methods=['post'])
     @method_decorator(csrf_exempt)
-    def upload(self, request, session_pk=None):
+    def upload(self, request, pk=None):
         """Upload audio file to a session"""
-        session = self.get_session(session_pk)
+        session = self.get_session(pk)
         
         if 'audio' not in request.FILES:
             if request.headers.get("HX-Request"):
@@ -39,7 +39,7 @@ class AudioViewSet(viewsets.ViewSet):
                 messages.error(request, "Keine Audio-Datei hochgeladen")
                 return redirect(
                     "sessions:session_detail",
-                    session_pk=session_pk,
+                    pk=session.pk,
                 )
         
         audio_file = request.FILES['audio']
@@ -92,7 +92,7 @@ class AudioViewSet(viewsets.ViewSet):
                         messages.error(request, success_message)
                         return redirect(
                             "sessions:session_detail",
-                            session_pk=session_pk,
+                            pk=session.pk,
                         )
             else:
                 success_message = "Audio wurde hochgeladen."
@@ -113,7 +113,7 @@ class AudioViewSet(viewsets.ViewSet):
         
         return redirect(
             "sessions:session_detail",
-            session_pk=session_pk,
+            pk=session.pk,
         )
     
     @action(detail=True, methods=['post'])
@@ -125,7 +125,7 @@ class AudioViewSet(viewsets.ViewSet):
         if not transcription_service.is_available():
             messages.error(request, 'OpenAI API Key ist nicht konfiguriert.')
             session = recording.session
-            return redirect("sessions:session_detail", session_pk=session.pk)
+            return redirect("sessions:session_detail", pk=session.pk)
         
         try:
             # Check if already transcribed
@@ -133,7 +133,7 @@ class AudioViewSet(viewsets.ViewSet):
                 messages.info(request, 'Audio ist bereits transkribiert.')
                 # Need to get the session to redirect properly
                 session = recording.session
-                return redirect("sessions:session_detail", session_pk=session.pk)
+                return redirect("sessions:session_detail", pk=session.pk)
             
             # Transcribe audio
             file_path = recording.audio.path
@@ -157,7 +157,7 @@ class AudioViewSet(viewsets.ViewSet):
         
         # Need to get the session to redirect properly
         session = recording.session
-        return redirect("sessions:session_detail", session_pk=session.pk)
+        return redirect("sessions:session_detail", pk=session.pk)
     
     @action(detail=True, methods=['get'])
     def download(self, request, pk=None):

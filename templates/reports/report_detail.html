@@ -4,33 +4,6 @@
 
 {% block content %}
 <div class="mx-auto">
-    <!-- Breadcrumb -->
-    <nav class="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-white mb-6" aria-label="Breadcrumb">
-        <ol class="inline-flex items-center space-x-2 md:space-x-2 rtl:space-x-reverse">
-            <li class="inline-flex items-center">
-                <a href="{% url 'patients:patient_list' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                    Patienten
-                </a>
-            </li>
-            <li>
-                <div class="flex items-center">
-                    <svg class="rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                    </svg>
-                    <a href="{% url 'patients:patient_detail' document.patient.pk %}" class="ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2">{{ document.patient.full_name }}</a>
-                </div>
-            </li>
-            <li aria-current="page">
-                <div class="flex items-center">
-                    <svg class="rtl:rotate-180 w-3 h-3 mx-1 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                    </svg>
-                    <span class="ms-1 text-sm font-medium text-gray-500 md:ms-2">{{ document.title }}</span>
-                </div>
-            </li>
-        </ol>
-    </nav>
-
     <!-- Document Information Card -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="flex justify-between items-start">
@@ -136,7 +109,7 @@
                         <p class="text-sm text-gray-600">{{ session.date|date:"d.m.Y H:i" }} Uhr</p>
                         <p class="text-sm text-gray-600">{{ session.duration }} Minuten</p>
                     </div>
-                    <a href="{% url 'therapy:session_detail' patient_pk=session.therapy.patient.pk therapy_pk=session.therapy.pk session_pk=session.pk %}" class="text-blue-600 hover:text-blue-900 text-sm">
+                    <a href="{% url 'sessions:session_detail' pk=session.pk %}" class="text-blue-600 hover:text-blue-900 text-sm">
                         Details anzeigen
                     </a>
                 </div>
