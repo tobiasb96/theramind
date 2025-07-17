@@ -89,7 +89,7 @@ class TemplateTable(tables.Table):
             )
 
     def render_created_at(self, value):
-        return value.strftime("%d.%m.Y")
+        return value.strftime("%d.%m.%Y")
 
     def render_actions(self, record):
         detail_url = reverse("document_templates:template_detail", kwargs={"pk": record.pk})

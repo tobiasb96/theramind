@@ -57,7 +57,9 @@ class ReportViewSet(viewsets.ViewSet):
         report = get_object_or_404(Report, pk=pk)
         
         # Get context files
-        context_files = report.context_files.order_by("-created_at")
+        context_files = report.context_files.filter(extraction_successful=True).order_by(
+            "-created_at"
+        )
         
         # Get available templates for report generation
         template_service = TemplateService()

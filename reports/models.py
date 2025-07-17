@@ -36,7 +36,7 @@ class ReportContextFile(models.Model):
         PDF = 'pdf', 'PDF'
         WORD = 'word', 'Word Document'
         TXT = 'txt', 'Text File'
-        MANUAL = 'manual', 'Manual Text Input'
+        MANUAL = "manual", "Eigener Text"
     
     report = models.ForeignKey(
         Report, 
