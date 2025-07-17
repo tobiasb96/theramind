@@ -7,7 +7,7 @@
 <div class="mx-auto">
     <!-- Greeting -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Hallo {{ user.first_name }}</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Hallo {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.email|truncatechars:20 }}{% endif %}</h1>
         <p class="text-gray-600 mt-2">Willkommen zurück bei Theramind</p>
     </div>
 
