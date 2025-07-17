@@ -2,6 +2,7 @@ import logging
 from typing import Optional
 import re
 import PyPDF2
+import docx
 
 logger = logging.getLogger(__name__)
 
@@ -70,32 +71,23 @@ class TextExtractionService:
                     page_text = page.extract_text()
                     if page_text:
                         text += page_text + "\n"
-                    
+
                 return self._clean_text(text)
-                
-        except ImportError:
-            logger.error("PyPDF2 not installed. Cannot extract PDF text.")
-            raise Exception("PyPDF2 library not available")
         except Exception as e:
             logger.error(f"Error extracting PDF text: {str(e)}")
             raise Exception(f"PDF extraction failed: {str(e)}")
-    
+
     def _extract_from_word(self, file_path: str) -> str:
         """Extract text from Word document"""
         try:
-            import docx
-            
             doc = docx.Document(file_path)
             text = ""
-            
+
             for paragraph in doc.paragraphs:
                 text += paragraph.text + "\n"
-                
+
             return self._clean_text(text)
-            
-        except ImportError:
-            logger.error("python-docx not installed. Cannot extract Word text.")
-            raise Exception("python-docx library not available")
+
         except Exception as e:
             logger.error(f"Error extracting Word text: {str(e)}")
             raise Exception(f"Word extraction failed: {str(e)}")
