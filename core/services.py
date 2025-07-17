@@ -2,7 +2,6 @@ import datetime
 import re
 import logging
 from fpdf import FPDF
-from django.http import HttpResponse
 from django.utils.html import strip_tags
 from html import unescape
 

@@ -1,11 +1,11 @@
 from django.views.generic import TemplateView
 from django.views import View
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect
 from django.contrib import messages
 from django_tables2 import RequestConfig
 from reports.models import Report
 from reports.tables import ReportTable
-from reports.services import TemplateService, ReportService
+from reports.services import TemplateService
 from therapy_sessions.models import Session
 
 
@@ -59,38 +59,7 @@ class QuickDocumentCreateView(View):
     def post(self, request):
         try:
             title = request.POST.get("title")
-            template_id = request.POST.get("template_id")
-
-            # Create the document first without content
-            report = Report.objects.create(
-                title=title,
-                content="",
-            )
-
-            # Generate AI content with selected template
-            try:
-                report_service = ReportService()
-                if report_service.is_available():
-                    template_id_int = int(template_id) if template_id else None
-                    generated_content = report_service.generate(template_id=template_id_int)
-                    report.content = generated_content
-                    report.save()
-                    messages.success(
-                        request,
-                        "Bericht wurde erfolgreich erstellt und mit KI-Inhalt generiert.",
-                    )
-                else:
-                    messages.warning(
-                        request,
-                        "Bericht wurde erstellt, aber KI-Generierung ist nicht verfügbar. Bitte fügen Sie den Inhalt manuell hinzu.",
-                    )
-            except Exception as e:
-                messages.warning(
-                    request,
-                    f"Bericht wurde erstellt, aber KI-Generierung fehlgeschlagen: {str(e)}. Bitte fügen Sie den Inhalt manuell hinzu.",
-                )
-
-            # Redirect to document detail
+            report = Report.objects.create(title=title)
             return redirect("reports:report_detail", pk=report.pk)
 
         except Exception as e:

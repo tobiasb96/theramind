@@ -891,8 +891,51 @@ document.getElementById('copy-notes-btn').addEventListener('click', function() {
     const editorElement = document.getElementById('session-notes-editor');
     
     if (editorElement) {
-        // Get text content without HTML tags
-        const textContent = editorElement.textContent || editorElement.innerText || '';
+        // Get formatted text content preserving line breaks and structure
+        let textContent = '';
+        
+        // Process the content to preserve formatting
+        const processNode = (node) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                return node.textContent;
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                let result = '';
+                const tagName = node.tagName.toLowerCase();
+                
+                // Add line breaks for block elements
+                if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+                    if (result.length > 0) result += '\n';
+                }
+                
+                // Process child nodes
+                for (let child of node.childNodes) {
+                    result += processNode(child);
+                }
+                
+                // Add line breaks after block elements
+                if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+                    result += '\n';
+                } else if (tagName === 'br') {
+                    result += '\n';
+                } else if (tagName === 'li') {
+                    result = '• ' + result + '\n';
+                }
+                
+                return result;
+            }
+            return '';
+        };
+        
+        textContent = processNode(editorElement);
+        
+        // Clean up multiple line breaks and trim
+        textContent = textContent.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+        
+        // Check if there's content to copy
+        if (!textContent.trim()) {
+            alert('Kein Inhalt zum Kopieren verfügbar.');
+            return;
+        }
         
         // Use modern clipboard API if available, fallback to old method
         if (navigator.clipboard && window.isSecureContext) {
