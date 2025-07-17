@@ -1,8 +1,16 @@
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 
 class Session(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="User",
+        null=True,
+        blank=True,
+    )
     date = models.DateTimeField(default=timezone.now, verbose_name="Datum")
     title = models.CharField(max_length=200, verbose_name="Titel", blank=True)
     notes = models.TextField(verbose_name="Notizen", blank=True)

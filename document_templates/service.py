@@ -13,14 +13,13 @@ class TemplateService:
         """Check if the template service is available"""
         return self.connector.is_available()
 
-    def get_available_templates(self, template_type: str, user_id=None) -> List[DocumentTemplate]:
+    def get_available_templates(self, template_type: str, user=None) -> List[DocumentTemplate]:
         """
         Get available templates for a specific type and user
 
         Args:
             template_type: 'document' or 'session_notes'
-            user_id: User ID (TODO: implement when user model is ready)
-
+            user: User object
         Returns:
             List of available templates
         """
@@ -29,58 +28,67 @@ class TemplateService:
             template_type=template_type, is_predefined=True, is_active=True
         )
 
-        # TODO: Add user-specific templates when user model is implemented
-        # if user_id:
-        #     user_templates = DocumentTemplate.objects.filter(
-        #         template_type=template_type,
-        #         user_id=user_id,
-        #         is_active=True
-        #     )
-        #     return list(predefined_templates) + list(user_templates)
+        if user:
+            from django.db.models import Q
+            all_templates = DocumentTemplate.objects.filter(
+                template_type=template_type,
+                is_active=True
+            ).filter(
+                Q(is_predefined=True) | Q(user=user)
+            )
+            return list(all_templates)
 
         return list(predefined_templates)
 
-    def get_document_templates(self, user_id=None) -> List[DocumentTemplate]:
+    def get_document_templates(self, user=None) -> List[DocumentTemplate]:
         """Get document templates"""
-        return self.get_available_templates("document", user_id)
+        return self.get_available_templates("document", user)
 
-    def get_session_templates(self, user_id=None) -> List[DocumentTemplate]:
+    def get_session_templates(self, user=None) -> List[DocumentTemplate]:
         """Get session notes templates"""
-        return self.get_available_templates("session_notes", user_id)
+        return self.get_available_templates("session_notes", user)
 
     def create_custom_template(
-        self, template_data: Dict[str, Any], user_id=None
+        self, template_data: Dict[str, Any], user=None
     ) -> DocumentTemplate:
         """
         Create a custom template
 
         Args:
             template_data: Template data dictionary
-            user_id: User ID (TODO: implement when user model is ready)
+            user: User object
 
         Returns:
             Created template
         """
-        # TODO: Add user validation when user model is implemented
-        # if user_id:
-        #     template_data['user_id'] = user_id
+        if user:
+            template_data['user'] = user
 
         template = DocumentTemplate.objects.create(**template_data)
         return template
 
-    def clone_template(self, template_id: int, new_name: str, user_id=None) -> DocumentTemplate:
+    def clone_template(self, template_id: int, new_name: str, user=None) -> DocumentTemplate:
         """
         Clone an existing template for customization
 
         Args:
             template_id: ID of template to clone
             new_name: Name for the new template
-            user_id: User ID (TODO: implement when user model is ready)
+            user: User object
 
         Returns:
             Cloned template
         """
-        original_template = DocumentTemplate.objects.get(id=template_id)
+        from django.db.models import Q
+        original_template = DocumentTemplate.objects.filter(
+            id=template_id,
+            is_active=True
+        ).filter(
+            Q(is_predefined=True) | Q(user=user)
+        ).first()
+        
+        if not original_template:
+            raise DocumentTemplate.DoesNotExist("Template not found or access denied")
 
         cloned_template = DocumentTemplate.objects.create(
             name=new_name,
@@ -93,37 +101,52 @@ class TemplateService:
             is_predefined=False,
             is_active=True,
             based_on_template=original_template,
-            # TODO: Add user when user model is implemented
-            # user_id=user_id
+            user=user
         )
 
         return cloned_template
 
-    def get_default_template(self, template_type: str, user_id=None) -> DocumentTemplate:
+    def get_default_template(self, template_type: str, user=None) -> DocumentTemplate:
         """
         Get the default template for a specific type
 
         Args:
             template_type: 'document' or 'session_notes'
-            user_id: User ID (TODO: implement when user model is ready)
+            user: User object
 
         Returns:
             Default template
         """
-        # TODO: Check user preferences when user model is implemented
-        # if user_id:
-        #     try:
-        #         preferences = UserTemplatePreference.objects.get(user_id=user_id)
-        #         if template_type == 'document' and document_type:
-        #             template_id = preferences.default_document_templates.get(document_type)
-        #             if template_id:
-        #                 return DocumentTemplate.objects.get(id=template_id)
-        #         elif template_type == 'session_notes':
-        #             template_id = preferences.default_session_templates.get('default')
-        #             if template_id:
-        #                 return DocumentTemplate.objects.get(id=template_id)
-        #     except (UserTemplatePreference.DoesNotExist, DocumentTemplate.DoesNotExist):
-        #         pass
+        if user:
+            try:
+                from .models import UserTemplatePreference
+                preferences = UserTemplatePreference.objects.get(user=user)
+                if template_type == 'document':
+                    template_id = preferences.default_document_templates.get('default')
+                    if template_id:
+                        from django.db.models import Q
+                        template = DocumentTemplate.objects.filter(
+                            id=template_id,
+                            is_active=True
+                        ).filter(
+                            Q(is_predefined=True) | Q(user=user)
+                        ).first()
+                        if template:
+                            return template
+                elif template_type == 'session_notes':
+                    template_id = preferences.default_session_templates.get('default')
+                    if template_id:
+                        from django.db.models import Q
+                        template = DocumentTemplate.objects.filter(
+                            id=template_id,
+                            is_active=True
+                        ).filter(
+                            Q(is_predefined=True) | Q(user=user)
+                        ).first()
+                        if template:
+                            return template
+            except (UserTemplatePreference.DoesNotExist, DocumentTemplate.DoesNotExist):
+                pass
 
         # Fall back to first predefined template
         return DocumentTemplate.objects.filter(

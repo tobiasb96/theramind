@@ -1,8 +1,16 @@
 from django.db import models
 from django.core.files.storage import default_storage
+from django.conf import settings
 
 
 class Report(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="User",
+        null=True,
+        blank=True,
+    )
     title = models.CharField(max_length=200, verbose_name="Titel")
     content = models.TextField(verbose_name="Inhalt", blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")

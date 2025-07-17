@@ -12,6 +12,7 @@ from .models import DocumentTemplate
 from .service import TemplateService
 
 from .table import TemplateTable
+from users.mixins import TemplateOwnershipMixin
 
 
 class TemplateViewSet(viewsets.ViewSet):
@@ -21,14 +22,20 @@ class TemplateViewSet(viewsets.ViewSet):
 
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        # TODO: Filter by user when user model is implemented
-        return DocumentTemplate.objects.filter(is_active=True).order_by("name")
+    def get_queryset(self, request=None):
+        # CRITICAL SECURITY: Show predefined templates and user's own templates only
+        if request is None:
+            raise ValueError("Request is required for get_queryset")
+        return (
+            DocumentTemplate.objects.filter(is_active=True)
+            .filter(Q(is_predefined=True) | Q(user=request.user))
+            .order_by("name")
+        )
 
     def list(self, request):
         """List all templates"""
         template_type = request.GET.get("type", "")  # Default to empty (all types)
-        templates = self.get_queryset()
+        templates = self.get_queryset(request)
 
         # Filter by template type if specified
         if template_type:
@@ -57,7 +64,17 @@ class TemplateViewSet(viewsets.ViewSet):
 
     def retrieve(self, request, pk=None):
         """Retrieve a specific template"""
-        template = get_object_or_404(DocumentTemplate, pk=pk)
+        # CRITICAL SECURITY: Only allow access to predefined templates or user's own templates
+        template = get_object_or_404(
+            DocumentTemplate, 
+            pk=pk, 
+            is_active=True
+        )
+        
+        # Check if user can access this template
+        if not (template.is_predefined or template.user == request.user):
+            from django.http import Http404
+            raise Http404("Template not found")
 
         return render(
             request,
@@ -93,8 +110,8 @@ class TemplateViewSet(viewsets.ViewSet):
                 }
 
                 template_service = TemplateService()
-                # TODO: Pass user_id when user model is implemented
-                template = template_service.create_custom_template(template_data)
+                # CRITICAL SECURITY: Pass user when creating template
+                template = template_service.create_custom_template(template_data, user=request.user)
 
                 messages.success(request, "Template wurde erfolgreich erstellt.")
 
@@ -127,7 +144,13 @@ class TemplateViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         """Update an existing template"""
-        template = get_object_or_404(DocumentTemplate, pk=pk)
+        # CRITICAL SECURITY: Only allow editing of user's own templates (not predefined ones)
+        template = get_object_or_404(
+            DocumentTemplate, 
+            pk=pk, 
+            user=request.user,
+            is_predefined=False  # Cannot edit predefined templates
+        )
 
         if request.method == "GET":
             return render(
@@ -179,7 +202,13 @@ class TemplateViewSet(viewsets.ViewSet):
 
     def destroy(self, request, pk=None):
         """Delete a template"""
-        template = get_object_or_404(DocumentTemplate, pk=pk)
+        # CRITICAL SECURITY: Only allow deletion of user's own templates (not predefined ones)
+        template = get_object_or_404(
+            DocumentTemplate, 
+            pk=pk, 
+            user=request.user,
+            is_predefined=False  # Cannot delete predefined templates
+        )
 
         if request.method == "GET":
             return render(request, "documents/template_confirm_delete.html", {"template": template})
@@ -201,7 +230,17 @@ class TemplateViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["get", "post"])
     def clone(self, request, pk=None):
         """Clone a template"""
-        template = get_object_or_404(DocumentTemplate, pk=pk)
+        # CRITICAL SECURITY: Only allow cloning of predefined templates or user's own templates
+        template = get_object_or_404(
+            DocumentTemplate, 
+            pk=pk, 
+            is_active=True
+        )
+        
+        # Check if user can access this template
+        if not (template.is_predefined or template.user == request.user):
+            from django.http import Http404
+            raise Http404("Template not found")
 
         try:
             # Handle both GET and POST requests
@@ -211,8 +250,8 @@ class TemplateViewSet(viewsets.ViewSet):
                 new_name = request.POST.get("name", f"{template.name} (Kopie)")
 
             template_service = TemplateService()
-            # TODO: Pass user_id when user model is implemented
-            cloned_template = template_service.clone_template(template.id, new_name)
+            # CRITICAL SECURITY: Pass user when cloning template
+            cloned_template = template_service.clone_template(template.id, new_name, user=request.user)
 
             messages.success(request, f"Template '{new_name}' wurde erfolgreich erstellt.")
 

@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class DocumentTemplate(models.Model):
@@ -8,8 +9,13 @@ class DocumentTemplate(models.Model):
         REPORT = "report", "Bericht"
         SESSION_NOTES = "session_notes", "Sitzungsnotiz"
 
-    # TODO: Add user reference when user model is implemented
-    # user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Benutzer")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="User",
+        null=True,
+        blank=True,
+    )
 
     name = models.CharField(max_length=200, verbose_name="Template Name")
     description = models.TextField(verbose_name="Beschreibung", blank=True)
@@ -54,8 +60,8 @@ class DocumentTemplate(models.Model):
         verbose_name = "Dokument Template"
         verbose_name_plural = "Dokument Templates"
         ordering = ["name"]
-        # TODO: Add unique constraint with user when user model is implemented
-        # unique_together = [['user', 'name', 'template_type']]
+        # Ensure unique template names per user (predefined templates have user=None)
+        unique_together = [['user', 'name', 'template_type']]
 
     def __str__(self):
         return f"{self.name} ({self.get_template_type_display()})"
@@ -68,8 +74,13 @@ class DocumentTemplate(models.Model):
 class UserTemplatePreference(models.Model):
     """User preferences for default templates"""
 
-    # TODO: Add user reference when user model is implemented
-    # user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name="Benutzer")
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="User",
+        null=True,
+        blank=True,
+    )
 
     # Default templates for document types
     default_document_templates = models.JSONField(
@@ -89,9 +100,8 @@ class UserTemplatePreference(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Benutzer Template Einstellungen"
-        verbose_name_plural = "Benutzer Template Einstellungen"
+        verbose_name = "User Vorlagen Einstellung"
+        verbose_name_plural = "User Vorlagen Einstellungen"
 
     def __str__(self):
-        # TODO: Update when user model is implemented
-        return "Template Einstellungen für Benutzer"
+        return f"Template Einstellungen für {self.user}"

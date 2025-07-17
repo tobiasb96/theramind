@@ -8,7 +8,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 import os
 import logging
-
 from therapy_sessions.models import Session, AudioRecording, Transcription
 from therapy_sessions.services import get_transcription_service
 
@@ -21,19 +20,23 @@ class AudioViewSet(viewsets.ViewSet):
     """
 
     permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return AudioRecording.objects.all().order_by('-created_at')
 
-    def get_session(self, pk):
+    def get_queryset(self, request=None):
+        if request is None:
+            raise ValueError("Request is required for get_queryset")
+        return AudioRecording.objects.filter(session__user=request.user).order_by("-created_at")
+
+    def get_session(self, pk, request=None):
         """Get session with nested relationship validation"""
-        return get_object_or_404(Session, pk=pk)
+        if request is None:
+            raise ValueError("Request is required for get_session")
+        return get_object_or_404(Session, pk=pk, user=request.user)
     
     @action(detail=False, methods=['post'])
     @method_decorator(csrf_exempt)
     def upload(self, request, pk=None):
         """Upload audio file to a session"""
-        session = self.get_session(pk)
+        session = self.get_session(pk, request)
         
         if 'audio' not in request.FILES:
             if request.headers.get("HX-Request"):
@@ -119,7 +122,7 @@ class AudioViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'])
     def transcribe(self, request, pk=None):
         """Manually transcribe an audio recording"""
-        recording = get_object_or_404(AudioRecording, pk=pk)
+        recording = get_object_or_404(AudioRecording, pk=pk, session__user=request.user)
         
         transcription_service = get_transcription_service()
         if not transcription_service.is_available():
@@ -162,7 +165,7 @@ class AudioViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['get'])
     def download(self, request, pk=None):
         """Download an audio recording"""
-        recording = get_object_or_404(AudioRecording, pk=pk)
+        recording = get_object_or_404(AudioRecording, pk=pk, session__user=request.user)
         
         if not recording.audio or not os.path.exists(recording.audio.path):
             raise Http404("Audio-Datei nicht gefunden")
@@ -178,7 +181,7 @@ class AudioViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     def delete(self, request, pk=None):
         """Delete an audio recording"""
-        recording = get_object_or_404(AudioRecording, pk=pk)
+        recording = get_object_or_404(AudioRecording, pk=pk, session__user=request.user)
         
         try:
             # Delete the audio file from disk
