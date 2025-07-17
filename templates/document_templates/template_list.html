@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+
+{% block title %}Vorlagen {% endblock %}
+
+{% block content %}
+<div class="mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Vorlagen</h1>
+                <p class="text-gray-600 mt-1">Verwalten Sie Ihre Berichts- und Sitzungsnotizen-Vorlagen</p>
+            </div>
+            <div class="flex space-x-3">
+                <button data-modal-target="create-template-modal" data-modal-toggle="create-template-modal" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 inline-flex items-center">
+                    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    Neue Vorlage
+                </button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <form method="get" class="flex flex-wrap gap-4">
+            <!-- Template Type Filter -->
+            <div class="flex-1 min-w-48">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Vorlagentyp</label>
+                <select name="type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
+                    <option value="" {% if template_type == '' %}selected{% endif %}>Alle Typen</option>
+                    <option value="document" {% if template_type == 'document' %}selected{% endif %}>Dokumente</option>
+                    <option value="session_notes" {% if template_type == 'session_notes' %}selected{% endif %}>Sitzungsnotizen</option>
+                </select>
+            </div>
+
+            <!-- Search -->
+            <div class="flex-1 min-w-64">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Suche</label>
+                <input type="text" name="search" value="{{ search_query }}" 
+                       placeholder="Vorlagenname oder Beschreibung..." 
+                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+
+            <!-- Filter Button -->
+            <div class="flex items-end gap-2">
+                <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                    Filtern
+                </button>
+                {% if search_query or template_type %}
+                    <a href="{% url 'document_templates:template_list' %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300">
+                        Zurücksetzen
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+
+        <div class="bg-white py-4 rounded-lg">
+            {% render_table templates_table %}
+        </div>
+    </div>
+</div>
+
+<!-- Create Template Modal -->
+<div id="create-template-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-6xl max-h-full">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-lg shadow">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Neue Vorlage erstellen
+                </h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="create-template-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            <!-- Modal body -->
+            <form class="p-4 md:p-5" method="post" action="{% url 'document_templates:template_create' %}" hx-post="{% url 'document_templates:template_create' %}" hx-target="#create-template-modal" hx-swap="outerHTML">
+                {% csrf_token %}
+                <div class="grid gap-4 mb-4">
+                    <div class="col-span-2">
+                        <label for="create-name" class="block mb-2 text-sm font-medium text-gray-900">Name</label>
+                        <input type="text" name="name" id="create-name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="Name der Vorlage" required>
+                    </div>
+                    <div class="col-span-2">
+                        <label for="create-description" class="block mb-2 text-sm font-medium text-gray-900">Beschreibung</label>
+                        <textarea name="description" id="create-description" rows="3" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-600 focus:border-primary-600" placeholder="Beschreibung der Vorlage (optional)"></textarea>
+                    </div>
+                    <div class="col-span-2">
+                        <label for="create-template-type" class="block mb-2 text-sm font-medium text-gray-900">Vorlagentyp</label>
+                        <select name="template_type" id="create-template-type" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" required>
+                            <option value="">Typ auswählen</option>
+                            <option value="document">Dokumente</option>
+                            <option value="session_notes">Sitzungsnotizen</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        {% include 'partials/wysiwyg_editor.html' with editor_id='create-user-prompt-editor' input_name='user_prompt' content='' label='Vorlagen Inhalt' placeholder='Vorlagen Inhalt für die Strukturierung des Dokuments' min_height='400px' %}
+                        <p class="mt-1 text-xs text-gray-500">Verwenden Sie den Editor um Struktur, Überschriften und Formatierung zu definieren.</p>
+                    </div>
+                </div>
+                <button type="submit" class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                    Vorlage erstellen
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

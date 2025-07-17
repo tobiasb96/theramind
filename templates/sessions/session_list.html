@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Sitzungen - Theramind{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Sitzungen</h1>
+    <a href="{% url 'therapy:session_create' %}" 
+       class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center">
+        <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
+        </svg>
+        Neue Sitzung anlegen
+    </a>
+</div>
+
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Titel</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aufnahmen</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for session in sessions %}
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ session.date|date:"d.m.Y H:i" }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ session.title|default:"-" }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ session.audiorecording_set.count }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex space-x-2">
+                        <a href="{% url 'therapy:session_detail' session.pk %}" 
+                           class="text-blue-700 hover:text-blue-800 font-medium text-sm">
+                            Anzeigen
+                        </a>
+                        <a href="{% url 'therapy:session_edit' session.pk %}" 
+                           class="text-blue-700 hover:text-blue-800 font-medium text-sm">
+                            Bearbeiten
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                    Keine Sitzungen vorhanden.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if is_paginated %}
+<div class="flex justify-center mt-6">
+    <nav class="flex space-x-2">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 bg-white border rounded text-gray-500 hover:bg-gray-50">
+                Zurück
+            </a>
+        {% endif %}
+        
+        <span class="px-3 py-2 bg-blue-600 text-white rounded">
+            Seite {{ page_obj.number }} von {{ page_obj.paginator.num_pages }}
+        </span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 bg-white border rounded text-gray-500 hover:bg-gray-50">
+                Weiter
+            </a>
+        {% endif %}
+    </nav>
+</div>
+{% endif %}
+{% endblock %}

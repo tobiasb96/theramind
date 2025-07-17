@@ -17,7 +17,7 @@ from .forms import ReportForm
 from .services import ReportService, TemplateService
 
 from .tables import ReportTable
-from sessions.models import Session
+from therapy_sessions.models import Session
 
 
 class ReportViewSet(viewsets.ViewSet):
@@ -42,7 +42,7 @@ class ReportViewSet(viewsets.ViewSet):
 
         return render(
             request,
-            "reports/report_list.html",
+            "reports/reports_list.html",
             {
                 "reports_table": table,
                 "search_query": search_query,
@@ -55,7 +55,7 @@ class ReportViewSet(viewsets.ViewSet):
 
         # Get available templates for report editing
         template_service = TemplateService()
-        report_templates = template_service.get_report_templates()
+        report_templates = template_service.get_document_templates()
 
         return render(
             request,
@@ -73,7 +73,7 @@ class ReportViewSet(viewsets.ViewSet):
 
             # Get available templates for report creation
             template_service = TemplateService()
-            report_templates = template_service.get_report_templates()
+            report_templates = template_service.get_document_templates()
 
             return render(
                 request,
@@ -129,14 +129,14 @@ class ReportViewSet(viewsets.ViewSet):
 
             # If form is invalid, get templates again
             template_service = TemplateService()
-            templates = template_service.get_report_templates()
+            templates = template_service.get_document_templates()
 
             return render(
                 request,
                 "reports/report_form.html",
                 {
                     "form": form,
-                    "report_templates": report_templates,
+                    "report_templates": templates,
                 },
             )
 
@@ -239,11 +239,11 @@ class ReportViewSet(viewsets.ViewSet):
             # Handle HTMX requests
             if request.headers.get("HX-Request"):
                 response = HttpResponse()
-                response["HX-Redirect"] = reverse_lazy("reports:report_list")
+                response["HX-Redirect"] = reverse_lazy("reports:reports_list")
                 return response
 
             return HttpResponse(
-                status=302, headers={"Location": reverse_lazy("reports:report_list")}
+                status=302, headers={"Location": reverse_lazy("reports:reports_list")}
             )
 
     @action(detail=True, methods=["get"])

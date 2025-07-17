@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DocumentTemplate
+from .models import DocumentTemplate, UserTemplatePreference
 
 
 @admin.register(DocumentTemplate)
@@ -38,7 +38,7 @@ class DocumentTemplateAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(UserReportPreference)
-class UserReportPreferenceAdmin(admin.ModelAdmin):
+@admin.register(UserTemplatePreference)
+class UserTemplatePreferenceAdmin(admin.ModelAdmin):
     list_display = ["__str__", "created_at"]
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ["created_at", "updated_at"]

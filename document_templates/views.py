@@ -44,7 +44,7 @@ class TemplateViewSet(viewsets.ViewSet):
 
         return render(
             request,
-            "documents/template_list.html",
+            "document_templates/template_list.html",
             {
                 "templates_table": table,
                 "template_type": template_type,
@@ -58,7 +58,7 @@ class TemplateViewSet(viewsets.ViewSet):
 
         return render(
             request,
-            "documents/template_detail.html",
+            "document_templates/template_detail.html",
             {"template": template},
         )
 
@@ -68,7 +68,7 @@ class TemplateViewSet(viewsets.ViewSet):
             # Show template creation form
             return render(
                 request,
-                "documents/template_form.html",
+                "document_templates/template_form.html",
                 {
                     "template_types": DocumentTemplate.TEMPLATE_TYPES,
                 },
@@ -99,7 +99,7 @@ class TemplateViewSet(viewsets.ViewSet):
                 if request.headers.get("HX-Request"):
                     response = HttpResponse()
                     response["HX-Redirect"] = reverse_lazy(
-                        "documents:template_detail", kwargs={"pk": template.pk}
+                        "document_templates:template_detail", kwargs={"pk": template.pk}
                     )
                     return response
 
@@ -107,7 +107,7 @@ class TemplateViewSet(viewsets.ViewSet):
                     status=302,
                     headers={
                         "Location": reverse_lazy(
-                            "documents:template_detail", kwargs={"pk": template.pk}
+                            "document_templates:template_detail", kwargs={"pk": template.pk}
                         )
                     },
                 )
@@ -116,7 +116,7 @@ class TemplateViewSet(viewsets.ViewSet):
                 messages.error(request, f"Fehler beim Erstellen des Templates: {str(e)}")
                 return render(
                     request,
-                    "documents/template_form.html",
+                    "document_templates/template_form.html",
                     {
                         "template_types": DocumentTemplate.TEMPLATE_TYPES,
                     },
@@ -150,7 +150,7 @@ class TemplateViewSet(viewsets.ViewSet):
                 if request.headers.get("HX-Request"):
                     response = HttpResponse()
                     response["HX-Redirect"] = reverse_lazy(
-                        "documents:template_detail", kwargs={"pk": template.pk}
+                        "document_templates:template_detail", kwargs={"pk": template.pk}
                     )
                     return response
 
@@ -158,7 +158,7 @@ class TemplateViewSet(viewsets.ViewSet):
                     status=302,
                     headers={
                         "Location": reverse_lazy(
-                            "documents:template_detail", kwargs={"pk": template.pk}
+                            "document_templates:template_detail", kwargs={"pk": template.pk}
                         )
                     },
                 )
@@ -188,11 +188,11 @@ class TemplateViewSet(viewsets.ViewSet):
             # Handle HTMX requests
             if request.headers.get("HX-Request"):
                 response = HttpResponse()
-                response["HX-Redirect"] = reverse_lazy("documents:template_list")
+                response["HX-Redirect"] = reverse_lazy("document_templates:template_list")
                 return response
 
             return HttpResponse(
-                status=302, headers={"Location": reverse_lazy("documents:template_list")}
+                status=302, headers={"Location": reverse_lazy("document_templates:template_list")}
             )
 
     @action(detail=True, methods=["get", "post"])
@@ -217,7 +217,7 @@ class TemplateViewSet(viewsets.ViewSet):
             if request.headers.get("HX-Request"):
                 response = HttpResponse()
                 response["HX-Redirect"] = reverse_lazy(
-                    "documents:template_detail", kwargs={"pk": cloned_template.pk}
+                    "document_templates:template_detail", kwargs={"pk": cloned_template.pk}
                 )
                 return response
 
@@ -225,7 +225,7 @@ class TemplateViewSet(viewsets.ViewSet):
                 status=302,
                 headers={
                     "Location": reverse_lazy(
-                        "documents:template_detail", kwargs={"pk": cloned_template.pk}
+                        "document_templates:template_detail", kwargs={"pk": cloned_template.pk}
                     )
                 },
             )
@@ -236,7 +236,7 @@ class TemplateViewSet(viewsets.ViewSet):
                 status=302,
                 headers={
                     "Location": reverse_lazy(
-                        "documents:template_detail", kwargs={"pk": template.pk}
+                        "document_templates:template_detail", kwargs={"pk": template.pk}
                     )
                 },
             )

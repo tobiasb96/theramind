@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Bericht löschen - Theramind{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-center">
+            <svg class="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">Bericht löschen</h3>
+            <p class="mt-2 text-sm text-gray-500">
+                Sind Sie sicher, dass Sie den Bericht "{{ object.title }}" löschen möchten? 
+                Diese Aktion kann nicht rückgängig gemacht werden.
+            </p>
+        </div>
+        
+        <form method="post" class="mt-6">
+            {% csrf_token %}
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'reports:report_detail' object.pk %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    Abbrechen
+                </a>
+                <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700">
+                    Löschen
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

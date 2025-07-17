@@ -1,5 +1,5 @@
 from django.db import models
-from sessions.models import Session
+from therapy_sessions.models import Session
 
 
 class Report(models.Model):

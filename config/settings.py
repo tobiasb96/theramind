@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     "dashboard",
     "document_templates",
     "reports",
-    "sessions",
+    "therapy_sessions",
 ]
 
 MIDDLEWARE = [

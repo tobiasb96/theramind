@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ template.name }} - Vorlagen {% endblock %}
+
+{% block content %}
+<div class="mx-auto">
+
+    <nav class="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-white mb-6" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-2 md:space-x-2 rtl:space-x-reverse">
+            <li class="inline-flex items-center">
+                <a href="{% url 'document_templates:template_list' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                    Vorlagen
+                </a>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <svg class="rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                    </svg>
+                    <span class="ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2">{{ template.name }}</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+        <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ template.name }}</h1>
+                <div class="flex flex-wrap gap-2 py-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                        {% if template.template_type == 'document' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+                        {{ template.get_template_type_display }}
+                    </span>
+                    {% if template.is_predefined %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-purple-800">
+                            Vordefiniert
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-800">
+                            Benutzerdefiniert
+                        </span>
+                    {% endif %}
+                </div>                <p class="text-gray-600">Erstellt: {{ template.created_at|date:"d.m.Y H:i" }}</p>
+                {% if template.updated_at != template.created_at %}
+                    <p class="text-gray-600">Aktualisiert: {{ template.updated_at|date:"d.m.Y H:i" }}</p>
+                {% endif %}
+            </div>
+            <div class="text-right">
+                <button id="template-actions-dropdown" data-dropdown-toggle="template-actions-menu"
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center"
+                        type="button">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                         stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/>
+                    </svg>
+                </button>
+
+                <!-- Dropdown menu -->
+                <div id="template-actions-menu"
+                     class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44">
+                    <ul class="py-2 text-sm text-gray-700" aria-labelledby="template-actions-dropdown">
+                        {% if not template.is_predefined %}
+                        <li>
+                            <button data-modal-target="edit-template-modal" data-modal-toggle="edit-template-modal"
+                               class="flex items-center text-blue-700 px-4 py-2 hover:bg-gray-100 w-full text-left cursor-pointer">
+                                <svg class="mr-2 w-4 h-4" aria-hidden="true"
+                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                     viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linejoin="round" stroke-width="2"
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Bearbeiten
+                            </button>
+                        </li>
+                        {% endif %}
+                        <li>
+                            <button data-modal-target="clone-template-modal" data-modal-toggle="clone-template-modal"
+                                    class="flex items-center text-green-700 px-4 py-2 hover:bg-gray-100 w-full text-left cursor-pointer">
+                                <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z"></path>
+                                    <path d="M3 5a2 2 0 012-2 3 3 0 003 3h6a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2V5h-2v6z"></path>
+                                </svg>
+                                Duplizieren
+                            </button>
+                        </li>
+                        {% if not template.is_predefined %}
+                        <li>
+                            <button data-modal-target="delete-template-modal" data-modal-toggle="delete-template-modal"
+                               class="flex items-center text-red-700 px-4 py-2 hover:bg-gray-100 w-full text-left cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     stroke-width="2" stroke="currentColor" class="mr-2 w-4 h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                                </svg>
+                                Löschen
+                            </button>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Info -->
+    {% if template.description %}
+    <div class="bg-white rounded-lg shadow p-6 mb-6">        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">  
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Beschreibung</label>
+                    <p class="mt-1 text-sm text-gray-900">{{ template.description }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Template Content -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Vorlage Inhalt</h2>
+        
+        <div class="bg-gray-50 rounded-lg p-4">
+            <div class="prose max-w-none">
+                {{ template.user_prompt|safe }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Template Modal -->
+{% if not template.is_predefined %}
+<div id="edit-template-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-6xl max-h-full">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-lg shadow">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Vorlage bearbeiten
+                </h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="edit-template-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            <!-- Modal body -->
+            <form class="p-4 md:p-5" method="post" action="{% url 'document_templates:template_edit' template.pk %}" hx-post="{% url 'document_templates:template_edit' template.pk %}" hx-target="#edit-template-modal" hx-swap="outerHTML">
+                {% csrf_token %}
+                <div class="grid gap-4 mb-4">
+                    <div class="col-span-2">
+                        <label for="edit-name" class="block mb-2 text-sm font-medium text-gray-900">Name</label>
+                        <input type="text" name="name" id="edit-name" value="{{ template.name }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="Name der Vorlage" required>
+                    </div>
+                    <div class="col-span-2">
+                        <label for="edit-description" class="block mb-2 text-sm font-medium text-gray-900">Beschreibung</label>
+                        <textarea name="description" id="edit-description" rows="3" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-600 focus:border-primary-600" placeholder="Beschreibung der Vorlage">{{ template.description }}</textarea>
+                    </div>
+                    <div class="col-span-2">
+                        <label for="edit-template-type" class="block mb-2 text-sm font-medium text-gray-900">Vorlagentyp</label>
+                        <select name="template_type" id="edit-template-type" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" required>
+                            <option value="report" {% if template.template_type == DocumentTemplate.TemplateType.REPORT %}selected{% endif %}>Berichte</option>
+                            <option value="session_notes" {% if template.template_type == 'session_notes' %}selected{% endif %}>Sitzungsnotizen</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        {% include 'partials/wysiwyg_editor.html' with editor_id='edit-user-prompt-editor' input_name='user_prompt' content=template.user_prompt label='Vorlagen Inhalt' placeholder='Vorlagen Inhalt für die Strukturierung des Dokuments' min_height='400px' %}
+                    </div>
+                </div>
+                <button type="submit" class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg>
+                    Vorlage aktualisieren
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Clone Template Modal -->
+<div id="clone-template-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-lg max-h-full">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-lg shadow">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Vorlage duplizieren
+                </h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="clone-template-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            <!-- Modal body -->
+            <div class="p-4 md:p-5">
+                <div class="text-center">
+                    <svg class="mx-auto mb-4 text-gray-400 w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z"></path>
+                        <path d="M3 5a2 2 0 012-2 3 3 0 003 3h6a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2V5h-2v6z"></path>
+                    </svg>
+                    <h3 class="mb-5 text-lg font-normal text-gray-500">
+                        Möchten Sie eine Kopie der Vorlage "{{ template.name }}" erstellen?
+                    </h3>
+                    <p class="mb-5 text-sm text-gray-400">
+                        Die Kopie wird als benutzerdefinierte Vorlage erstellt und kann bearbeitet werden.
+                    </p>
+                </div>
+                <form method="post" action="{% url 'document_templates:template_clone' template.pk %}" hx-post="{% url 'document_templates:template_clone' template.pk %}" hx-target="#clone-template-modal" hx-swap="outerHTML">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="clone-name" class="block mb-2 text-sm font-medium text-gray-900">Name der Kopie</label>
+                        <input type="text" name="name" id="clone-name" value="{{ template.name }} (Kopie)" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" required>
+                    </div>
+                    <div class="flex justify-center items-center space-x-4">
+                        <button data-modal-toggle="clone-template-modal" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
+                            Abbrechen
+                        </button>
+                        <button type="submit" class="py-2 px-3 text-sm font-medium text-center text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300">
+                            Ja, duplizieren
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Template Modal -->
+{% if not template.is_predefined %}
+<div id="delete-template-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-lg max-h-full">
+        <!-- Modal content -->
+        <div class="relative p-4 text-center bg-white rounded-lg shadow sm:p-5">
+            <button type="button" class="text-gray-400 absolute top-2.5 right-2.5 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-toggle="delete-template-modal">
+                <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                <span class="sr-only">Close modal</span>
+            </button>
+            <svg class="text-gray-400 w-11 h-11 mb-3.5 mx-auto" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+            <p class="mb-4 text-gray-500">Sind Sie sicher, dass Sie die Vorlage "{{ template.name }}" löschen möchten?</p>
+            <p class="mb-4 text-sm text-gray-400">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+            <div class="flex justify-center items-center space-x-4">
+                <button data-modal-toggle="delete-template-modal" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
+                    Nein, abbrechen
+                </button>
+                <form method="post" action="{% url 'document_templates:template_delete' template.pk %}" hx-post="{% url 'document_templates:template_delete' template.pk %}" hx-target="#delete-template-modal" hx-swap="outerHTML" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="py-2 px-3 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
+                        Ja, löschen
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

@@ -8,7 +8,7 @@ report_viewset = ReportViewSet()
 
 urlpatterns = [
     # Report URLs (now standalone)
-    path("", report_viewset.list, name="report_list"),
+    path("", report_viewset.list, name="reports_list"),
     path("create/", report_viewset.create, name="report_create"),
     path("<int:pk>/", report_viewset.retrieve, name="report_detail"),
     path("<int:pk>/edit/", report_viewset.update, name="report_edit"),

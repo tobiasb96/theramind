@@ -1,7 +1,7 @@
 from typing import Dict, Any, List
 from core.connector import get_llm_connector
+from document_templates.models import DocumentTemplate
 from document_templates.service import TemplateService
-from .models import DocumentTemplate
 from .prompts import REPORT_SYSTEM_PROMPT
 
 
@@ -27,7 +27,7 @@ class ReportService:
         context_data = self._prepare_context_data()
 
         # Build the context prefix
-        context_prefix = f"""Erstelle ein professionelles Dokument für eine Psychotherapie.
+        context_prefix = f"""Erstelle einen professionellen Bericht für eine Psychotherapie.
 
             Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
@@ -94,7 +94,9 @@ class ReportService:
             template = DocumentTemplate.objects.get(id=template_id)
         else:
             # TODO: Pass user_id when user model is implemented
-            template = self.template_service.get_default_template("document")
+            template = self.template_service.get_default_template(
+                DocumentTemplate.TemplateType.REPORT
+            )
 
         if not template:
             raise ValueError("Kein Template gefunden")

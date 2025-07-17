@@ -23,7 +23,7 @@ urlpatterns = [
     path("", include("dashboard.urls")),
     path("admin/", admin.site.urls),
     path("document-templates/", include("document_templates.urls")),
-    path("sessions/", include("sessions.urls")),
+    path("sessions/", include("therapy_sessions.urls")),
     path("reports/", include("reports.urls")),
 ]
 

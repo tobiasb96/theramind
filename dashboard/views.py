@@ -3,28 +3,28 @@ from django.views import View
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django_tables2 import RequestConfig
-from reports.models import Document
-from reports.tables import DocumentTable
+from reports.models import Report
+from reports.tables import ReportTable
 from reports.services import TemplateService, ReportService
-from sessions.models import Session
+from therapy_sessions.models import Session
 
 
 class DashboardView(TemplateView):
-    template_name = 'core/dashboard.html'
+    template_name = "dashboard/dashboard.html"
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Get recent documents for table display
-        recent_documents = Document.objects.order_by("-created_at")[:10]
+        recent_reports = Report.objects.order_by("-created_at")[:10]
 
         # Create table for recent documents (convert to list to avoid queryset ordering issues)
-        table = DocumentTable(list(recent_documents))
+        table = ReportTable(list(recent_reports))
         RequestConfig(self.request, paginate=False).configure(table)
-        context["recent_documents_table"] = table
+        context["recent_reports_table"] = table
 
         # Get document templates for quick document creation
         template_service = TemplateService()
-        context["document_templates"] = template_service.get_document_templates()
+        context["report_templates"] = template_service.get_document_templates()
 
         return context
 
@@ -36,12 +36,10 @@ class QuickSessionCreateView(View):
         try:
             title = request.POST.get("title", "")
             date = request.POST.get("date")
-            duration = int(request.POST.get("duration", 50))
 
             # Create the session
             session = Session.objects.create(
                 date=date,
-                duration=duration,
                 title=title,
             )
 
@@ -64,7 +62,7 @@ class QuickDocumentCreateView(View):
             template_id = request.POST.get("template_id")
 
             # Create the document first without content
-            document = Document.objects.create(
+            document = Report.objects.create(
                 title=title,
                 content="",
             )
@@ -79,22 +77,22 @@ class QuickDocumentCreateView(View):
                     document.save()
                     messages.success(
                         request,
-                        "Dokument wurde erfolgreich erstellt und mit KI-Inhalt generiert.",
+                        "Bericht wurde erfolgreich erstellt und mit KI-Inhalt generiert.",
                     )
                 else:
                     messages.warning(
                         request,
-                        "Dokument wurde erstellt, aber KI-Generierung ist nicht verfügbar. Bitte fügen Sie den Inhalt manuell hinzu.",
+                        "Bericht wurde erstellt, aber KI-Generierung ist nicht verfügbar. Bitte fügen Sie den Inhalt manuell hinzu.",
                     )
             except Exception as e:
                 messages.warning(
                     request,
-                    f"Dokument wurde erstellt, aber KI-Generierung fehlgeschlagen: {str(e)}. Bitte fügen Sie den Inhalt manuell hinzu.",
+                    f"Bericht wurde erstellt, aber KI-Generierung fehlgeschlagen: {str(e)}. Bitte fügen Sie den Inhalt manuell hinzu.",
                 )
 
             # Redirect to document detail
-            return redirect("documents:document_detail", pk=document.pk)
+            return redirect("reports:report_detail", pk=document.pk)
 
         except Exception as e:
-            messages.error(request, f"Fehler beim Erstellen des Dokuments: {str(e)}")
+            messages.error(request, f"Fehler beim Erstellen des Berichts: {str(e)}")
             return redirect("core:dashboard")

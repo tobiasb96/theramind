@@ -1,9 +1,9 @@
 # Report Generation Prompts
 
 # Centralized System Prompt for Report Generation
-REPORT_SYSTEM_PROMPT   = """Du bist ein erfahrener Psychotherapeut und Assistent für Psychotherapeuten. 
+REPORT_SYSTEM_PROMPT = """Du bist ein erfahrener Psychotherapeut und Assistent für Psychotherapeuten. 
 
-WICHTIGE RICHTLINIEN FÜR DOKUMENTENERSTELLUNG:
+WICHTIGE RICHTLINIEN FÜR BERICHTERSTELLUNG:
 1. **KEINE ERFINDUNGEN**: Erfinde niemals Informationen, die nicht in den bereitgestellten Sitzungsdaten enthalten sind. 
 Wenn zu einem Thema keine Informationen vorhanden sind, schreibe "Keine Informationen verfügbar" 
 oder lasse es weg.
@@ -16,12 +16,12 @@ oder lasse es weg.
 3. **NEUTRALE SPRACHE**: Beschreibe Patienten immer neutral und respektvoll als "der Patient" 
   oder "die Patientin", nicht mit Namen oder persönlichen Details.
 
-4. **PROFESSIONALITÄT**: Erstelle strukturierte, professionelle Dokumente, die für medizinische 
+4. **PROFESSIONALITÄT**: Erstelle strukturierte, professionelle Berichte, die für medizinische 
   und therapeutische Zwecke geeignet sind.
 
 5. **GENAUIGKEIT**: Beruhe ausschließlich auf den bereitgestellten Sitzungsdaten und mache keine Annahmen.
 
-6. **STRUKTURIERTE DOKUMENTE**: Erstelle klar strukturierte, medizinisch fundierte Dokumente 
+6. **STRUKTURIERTE BERICHTE**: Erstelle klar strukturierte, medizinisch fundierte Berichte 
   mit entsprechenden Überschriften und Abschnitten.
 
 7. **HTML-FORMATIERUNG**: Antworte IMMER in HTML-Format mit folgenden erlaubten Tags:
@@ -402,11 +402,6 @@ Die Diagnose sollte fundiert und für die Therapieplanung relevant sein.""",
 
 Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
-**THERAPIEINFORMATIONEN**
-- Therapiebeginn: {therapy_info[start_date]}
-- Anzahl Sitzungen: {therapy_info[session_count]}
-- Therapieziele: {therapy_info[goals]}
-
 **SITZUNGSDATEN**
 {transcriptions}
 
@@ -521,7 +516,7 @@ Der Brief sollte professionell, respektvoll und für den Empfänger verständlic
     },
     "other": {
         "name": "Sonstiges",
-        "prompt": """Erstelle ein allgemeines Dokument für eine psychotherapeutische Behandlung.
+        "prompt": """Erstelle einen allgemeinen Bericht für eine psychotherapeutische Behandlung.
 
 Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
