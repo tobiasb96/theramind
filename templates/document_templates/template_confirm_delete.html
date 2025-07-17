@@ -8,8 +8,8 @@
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Template löschen</h1>
-                <p class="text-gray-600 mt-1">Bestätigen Sie die Löschung des Templates</p>
+                <h1 class="text-2xl font-bold text-gray-900">Vorlage löschen</h1>
+                <p class="text-gray-600 mt-1">Bestätige die Löschung der Vorlage</p>
             </div>
             <a href="{% url 'document_templates:template_detail' template.pk %}" class="text-gray-600 hover:text-gray-900">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,7 +28,7 @@
                 </svg>
             </div>
             <div class="ml-4">
-                <h2 class="text-lg font-medium text-gray-900">Template wirklich löschen?</h2>
+                <h2 class="text-lg font-medium text-gray-900">Vorlage wirklich löschen?</h2>
                 <p class="text-sm text-gray-500 mt-1">
                     Diese Aktion kann nicht rückgängig gemacht werden.
                 </p>
@@ -65,7 +65,7 @@
                 {% csrf_token %}
                 <button type="submit" 
                         class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700">
-                    Template löschen
+                    Vorlage löschen
                 </button>
             </form>
         </div>

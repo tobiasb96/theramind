@@ -50,13 +50,15 @@ class ReportContextTextForm(forms.ModelForm):
     """Form for manual text input as context"""
     
     text_input = forms.CharField(
-        widget=forms.Textarea(attrs={
-            "class": "form-control",
-            "rows": 10,
-            "placeholder": "Geben Sie hier den Text ein, der als Kontext für den Bericht verwendet werden soll..."
-        }),
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 10,
+                "placeholder": "Gib hier den Text ein, der als Kontext für den Bericht verwendet werden soll...",
+            }
+        ),
         label="Text eingeben",
-        help_text="Geben Sie den Text direkt ein, der als Kontext für die Berichtgenerierung verwendet werden soll."
+        help_text="Gib den Text direkt ein, der als Kontext für die Berichtgenerierung verwendet werden soll.",
     )
     
     class Meta:
@@ -72,7 +74,9 @@ class ReportContextTextForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["file_name"].label = "Bezeichnung"
-        self.fields["file_name"].help_text = "Geben Sie eine aussagekräftige Bezeichnung für diesen Text ein"
+        self.fields[
+            "file_name"
+        ].help_text = "Gib eine aussagekräftige Bezeichnung für diesen Text ein"
         
         # Set default file name if not provided
         if not self.instance.pk and not self.initial.get("file_name"):

@@ -70,7 +70,7 @@ class ChangePasswordView(View):
                     elif error.code == "password_too_similar":
                         messages.error(
                             request,
-                            "Das neue Passwort ist zu ähnlich zu Ihren persönlichen Informationen.",
+                            "Das neue Passwort ist zu ähnlich zu Deinen persönlichen Informationen.",
                         )
                     elif error.code == "password_too_common":
                         messages.error(request, "Das neue Passwort ist zu häufig verwendet.")
@@ -92,5 +92,5 @@ class ChangePasswordView(View):
         # Update session to prevent logout after password change
         update_session_auth_hash(request, request.user)
 
-        messages.success(request, 'Ihr Passwort wurde erfolgreich geändert.')
+        messages.success(request, "Dein Passwort wurde erfolgreich geändert.")
         return redirect('users:profile')

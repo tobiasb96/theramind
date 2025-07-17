@@ -202,7 +202,7 @@ class ReportViewSet(viewsets.ViewSet):
                 logger.error(f"Error adding context text: {str(e)}")
                 messages.error(request, f"Fehler beim Hinzufügen des Texts: {str(e)}")
         else:
-            messages.error(request, "Ungültige Eingabe. Bitte prüfen Sie die Eingaben.")
+            messages.error(request, "Ungültige Eingabe. Bitte prüfe die Eingaben.")
         
         return redirect("reports:report_detail", pk=report.pk)
 

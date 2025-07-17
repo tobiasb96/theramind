@@ -19,9 +19,9 @@
                 </h1>
                 <p class="text-gray-600 mt-1">
                     {% if form.instance.pk %}
-                        Bearbeiten Sie die Berichtdetails
+                        Bearbeite die Berichtdetails
                     {% else %}
-                        Erstellen Sie einen neuen Bericht. Sie können dann Kontext hinzufügen und den Inhalt generieren.
+                        Erstelle einen neuen Bericht. Du kannst dann Kontext hinzufügen und den Inhalt generieren.
                     {% endif %}
                 </p>
             </div>
@@ -64,13 +64,13 @@
                     {% if form.template.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.template.errors.0 }}</p>
                     {% endif %}
-                    <p class="mt-1 text-sm text-gray-500">Wählen Sie eine Vorlage für die Berichtgenerierung oder verwenden Sie die Standard-Vorlage</p>
+                    <p class="mt-1 text-sm text-gray-500">Wähle eine Vorlage für die Berichtgenerierung oder verwende die Standard-Vorlage</p>
                 </div>
                 
                 <div id="tooltip-template-selection" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
                     Die Vorlage bestimmt die Struktur und das Format des generierten Berichts.<br>
                     <strong>Standard:</strong> Verwendet die vordefinierte Vorlage für diesen Berichttyp<br>
-                    <strong>Benutzerdefiniert:</strong> Verwendet Ihre eigene Vorlage
+                    <strong>Benutzerdefiniert:</strong> Verwendet Deine eigene Vorlage
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
             </div>
