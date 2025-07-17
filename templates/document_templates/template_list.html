@@ -48,8 +48,8 @@
 
             <!-- Filter Button -->
             <div class="flex items-end gap-2">
-                <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
-                    Filtern
+                <button type="submit" class="ml-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300">
+                    Suchen
                 </button>
                 {% if search_query or template_type %}
                     <a href="{% url 'document_templates:template_list' %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300">

@@ -78,7 +78,7 @@
                         {% endif %}
                         <li>
                             <button data-modal-target="clone-template-modal" data-modal-toggle="clone-template-modal"
-                                    class="flex items-center text-green-700 px-4 py-2 hover:bg-gray-100 w-full text-left cursor-pointer">
+                                    class="flex items-center text-blue-700 px-4 py-2 hover:bg-gray-100 w-full text-left cursor-pointer">
                                 <svg class="mr-2 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z"></path>
                                     <path d="M3 5a2 2 0 012-2 3 3 0 003 3h6a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2V5h-2v6z"></path>
@@ -202,10 +202,11 @@
             <!-- Modal body -->
             <div class="p-4 md:p-5">
                 <div class="text-center">
-                    <svg class="mx-auto mb-4 text-gray-400 w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z"></path>
-                        <path d="M3 5a2 2 0 012-2 3 3 0 003 3h6a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2V5h-2v6z"></path>
-                    </svg>
+                    <svg class="mx-auto mb-4 text-gray-400 w-12 h-12" fill="currentColor" stroke="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8 12.732A1.99 1.99 0 0 1 7 13H3v6a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2h-2a4 4 0 0 1-4-4v-2.268ZM7 11V7.054a2 2 0 0 0-1.059.644l-2.46 2.87A2 2 0 0 0 3.2 11H7Z" clip-rule="evenodd"/>
+                        <path fill-rule="evenodd" d="M14 3.054V7h-3.8c.074-.154.168-.3.282-.432l2.46-2.87A2 2 0 0 1 14 3.054ZM16 3v4a2 2 0 0 1-2 2h-4v6a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-3Z" clip-rule="evenodd"/>
+                      </svg>
+                      
                     <h3 class="mb-5 text-lg font-normal text-gray-500">
                         Möchten Sie eine Kopie der Vorlage "{{ template.name }}" erstellen?
                     </h3>
@@ -223,7 +224,7 @@
                         <button data-modal-toggle="clone-template-modal" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
                             Abbrechen
                         </button>
-                        <button type="submit" class="py-2 px-3 text-sm font-medium text-center text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300">
+                        <button type="submit" class="py-2 px-3 text-sm font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300">
                             Ja, duplizieren
                         </button>
                     </div>
