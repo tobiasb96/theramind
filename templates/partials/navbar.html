@@ -23,7 +23,17 @@
         <!-- Dropdown menu -->
         <div class="hidden z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow" id="dropdown-user">
           <div class="py-3 px-4">
-            <span class="block text-sm font-semibold text-gray-900">{{ user.first_name }} {{ user.last_name }}</span>
+            <span class="block text-sm font-semibold text-gray-900">
+              {% if user.first_name and user.last_name %}
+                {{ user.first_name }} {{ user.last_name }}
+              {% elif user.first_name %}
+                {{ user.first_name }}
+              {% elif user.last_name %}
+                {{ user.last_name }}
+              {% else %}
+                {{ user.email|truncatechars:20 }}
+              {% endif %}
+            </span>
             <span class="block text-sm text-gray-500 truncate">{{ user.email }}</span>
           </div>
           <ul class="py-1 text-gray-500" aria-labelledby="dropdown-user">
