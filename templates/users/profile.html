@@ -7,12 +7,7 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h1 class="text-2xl font-bold text-gray-900 mb-6">Benutzerprofil</h1>
         
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Benutzername</label>
-                <p class="text-gray-900">{{ user.username }}</p>
-            </div>
-            
+        <div class="space-y-4">            
             {% if user.first_name or user.last_name %}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
@@ -29,12 +24,7 @@
             
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Mitglied seit</label>
-                <p class="text-gray-900">{{ user.date_joined|date:"d.m.Y" }}</p>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Zuletzt aktiv</label>
-                <p class="text-gray-900">{{ user.last_login|date:"d.m.Y H:i" }}</p>
+                <p class="text-gray-900">{{ user.created_at|date:"d.m.Y" }}</p>
             </div>
         </div>
         
