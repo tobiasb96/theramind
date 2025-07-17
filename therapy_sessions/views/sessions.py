@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 import json
 import re
 import logging
@@ -22,6 +23,8 @@ class SessionViewSet(viewsets.ViewSet):
     """
     A ViewSet for managing session CRUD operations and custom actions.
     """
+
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         return Session.objects.order_by("-date")
