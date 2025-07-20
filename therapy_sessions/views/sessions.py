@@ -64,6 +64,13 @@ class SessionViewSet(viewsets.ViewSet):
         recordings = session.audiorecording_set.order_by("-created_at")
         upload_form = AudioUploadForm()
 
+        # Check if any recording has a transcription
+        has_transcribed_recordings = any(
+            getattr(recording, "transcription", None)
+            and getattr(recording, "transcription", None).text
+            for recording in recordings
+        )
+
         # Get session notes templates from TemplateService
         from document_templates.service import TemplateService
 
@@ -78,6 +85,7 @@ class SessionViewSet(viewsets.ViewSet):
                 "recordings": recordings,
                 "upload_form": upload_form,
                 "session_notes_templates": session_notes_templates,
+                "has_transcribed_recordings": has_transcribed_recordings,
             },
         )
 

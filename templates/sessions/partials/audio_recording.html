@@ -1,0 +1,910 @@
+<!-- Audio Workflow Modal -->
+<div id="audio-workflow-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-lg max-h-full">
+        <div class="relative bg-white rounded-lg shadow-sm">
+            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Audio hinzufügen
+                </h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="audio-workflow-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            
+            <form id="audio-upload-form" class="p-4 md:p-5" method="post" enctype="multipart/form-data" action="{% url 'sessions:session_audio_upload' pk=session.pk %}">
+                {% csrf_token %}
+                
+                <!-- Info Banner -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="text-sm">
+                            <p class="font-medium text-blue-900">Automatische Transkription</p>
+                            <p class="text-blue-700 mt-1">Audio wird transkribiert und KI-Notizen können generiert werden.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Recording Warning -->
+                <div id="active-recording-warning" class="hidden bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-amber-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="text-sm">
+                            <p class="font-medium text-amber-900">Aufnahme läuft im Hintergrund</p>
+                            <p class="text-amber-700 mt-1">Eine Aufnahme wurde fortgesetzt. Sie können diese beenden oder fortfahren.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flowbite Tabs -->
+                <div class="mb-4">
+                    <ul class="flex text-sm font-medium text-center text-gray-500 rounded-lg shadow-sm border border-gray-200">
+                        <li class="w-full focus-within:z-10">
+                            <button type="button" id="tab-record" class="inline-block w-full p-3 text-gray-900 bg-gray-100 border-r border-gray-200 rounded-s-lg focus:ring-4 focus:ring-blue-300 active focus:outline-none" aria-current="page">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>
+                                </svg>
+                                Aufnehmen
+                            </button>
+                        </li>
+                        <li class="w-full focus-within:z-10">
+                            <button type="button" id="tab-upload" class="inline-block w-full p-3 bg-white border-gray-200 rounded-e-lg hover:text-gray-700 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v9m-5 0H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1h-2M8 9l4-5 4 5m1 8h.01"/>
+                                </svg>
+                                Hochladen
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Recording Section -->
+                <div id="record-section">
+                    <div class="flex flex-col items-center space-y-4">
+                        <!-- Recording Button -->
+                        <button id="record-toggle" type="button" class="relative w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-all duration-200 flex items-center justify-center group">
+                            <svg id="record-icon" class="w-8 h-8 text-white transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path id="record-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>
+                            </svg>
+                            <div id="recording-pulse" class="absolute inset-0 rounded-full bg-red-500 opacity-0 animate-ping"></div>
+                        </button>
+
+                        <!-- Recording Status -->
+                        <div id="recording-status" class="text-center">
+                            <div id="recording-indicator" class="hidden flex items-center justify-center space-x-2">
+                                <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                                <span id="recording-time" class="text-lg font-mono text-red-600">00:00</span>
+                            </div>
+                            <p id="record-instruction" class="text-sm text-gray-600 mt-2">Klicken zum Starten</p>
+                        </div>
+
+                        <!-- Audio Visualizer -->
+                        <div id="audio-visualizer" class="hidden w-full max-w-sm">
+                            <canvas id="visualizer-canvas" width="300" height="60" class="w-full h-15 bg-gray-50 rounded-lg border"></canvas>
+                        </div>
+
+                        <!-- Audio Preview -->
+                        <div id="audio-preview" class="hidden w-full">
+                            <div class="bg-gray-50 rounded-lg p-4 border">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-sm font-medium text-gray-900">Aufnahme</h4>
+                                    <button type="button" id="delete-recording" class="text-red-600 hover:text-red-800 text-sm">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414L7.586 12l-1.293 1.293a1 1 0 101.414 1.414L9 13.414l2.293 2.293a1 1 0 001.414-1.414L11.414 12l1.293-1.293z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <audio id="recorded-audio" controls class="w-full"></audio>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="audio_recorded" id="audio-recorded-input">
+                </div>
+
+                <!-- Upload Section -->
+                <div id="upload-section" class="hidden">
+                    <div class="flex items-center justify-center w-full">
+                        <label for="modal-audio-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                </svg>
+                                <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Klicken zum Hochladen</span> oder Datei hierher ziehen</p>
+                                <p class="text-xs text-gray-500">MP3, WAV, M4A oder FLAC (max. 25MB)</p>
+                            </div>
+                            <input id="modal-audio-upload" name="audio" type="file" accept="audio/*" class="hidden" />
+                        </label>
+                    </div>
+                    <div id="upload-preview" class="hidden mt-4">
+                        <div class="bg-gray-50 rounded-lg p-4 border">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <p id="upload-filename" class="text-sm font-medium text-gray-900"></p>
+                                    <p id="upload-filesize" class="text-xs text-gray-500"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" id="submit-button" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Hinzufügen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced Audio Recording Modal with Persistence and Data Loss Prevention
+(function() {
+    // Global state key for persistence
+    const STORAGE_KEY = 'theramind_audio_recording_state';
+    
+    // Scoped variables
+    let modalMediaRecorder;
+    let modalRecordedChunks = [];
+    let recordingTimer;
+    let recordingSeconds = 0;
+    let isRecording = false;
+    let audioContext;
+    let analyser;
+    let dataArray;
+    let animationId;
+    let hasUnsavedData = false;
+    let recordingStartTime = null;
+    let isInitialized = false;
+
+    // DOM Elements (will be initialized when modal opens)
+    let recordSection;
+    let uploadSection;
+    let tabRecord;
+    let tabUpload;
+    let recordToggle;
+    let recordIcon;
+    let recordIconPath;
+    let recordingPulse;
+    let recordingIndicator;
+    let recordingTime;
+    let recordInstruction;
+    let audioVisualizer;
+    let visualizerCanvas;
+    let audioPreview;
+    let recordedAudio;
+    let deleteRecording;
+    let audioUploadForm;
+    let modalAudioUpload;
+    let uploadPreview;
+    let uploadFilename;
+    let uploadFilesize;
+    let submitButton;
+    let activeRecordingWarning;
+    let modal;
+
+    // Initialize DOM elements when modal opens
+    function initializeDOMElements() {
+        recordSection = document.getElementById('record-section');
+        uploadSection = document.getElementById('upload-section');
+        tabRecord = document.getElementById('tab-record');
+        tabUpload = document.getElementById('tab-upload');
+        recordToggle = document.getElementById('record-toggle');
+        recordIcon = document.getElementById('record-icon');
+        recordIconPath = document.getElementById('record-icon-path');
+        recordingPulse = document.getElementById('recording-pulse');
+        recordingIndicator = document.getElementById('recording-indicator');
+        recordingTime = document.getElementById('recording-time');
+        recordInstruction = document.getElementById('record-instruction');
+        audioVisualizer = document.getElementById('audio-visualizer');
+        visualizerCanvas = document.getElementById('visualizer-canvas');
+        audioPreview = document.getElementById('audio-preview');
+        recordedAudio = document.getElementById('recorded-audio');
+        deleteRecording = document.getElementById('delete-recording');
+        audioUploadForm = document.getElementById('audio-upload-form');
+        modalAudioUpload = document.getElementById('modal-audio-upload');
+        uploadPreview = document.getElementById('upload-preview');
+        uploadFilename = document.getElementById('upload-filename');
+        uploadFilesize = document.getElementById('upload-filesize');
+        submitButton = document.getElementById('submit-button');
+        activeRecordingWarning = document.getElementById('active-recording-warning');
+        modal = document.getElementById('audio-workflow-modal');
+    }
+
+    // Persistence functions
+    function saveState() {
+        const state = {
+            isRecording: isRecording,
+            recordingSeconds: recordingSeconds,
+            recordingStartTime: recordingStartTime,
+            hasRecordedData: modalRecordedChunks.length > 0,
+            currentTab: recordSection && recordSection.classList.contains('hidden') ? 'upload' : 'record',
+            timestamp: Date.now()
+        };
+        
+        // Save recorded chunks as base64 for persistence
+        if (modalRecordedChunks.length > 0) {
+            try {
+                const blob = new Blob(modalRecordedChunks, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.onload = function() {
+                    state.recordedDataURL = reader.result;
+                    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                };
+                reader.readAsDataURL(blob);
+                return;
+            } catch (e) {
+                console.warn('Failed to save recorded chunks:', e);
+            }
+        }
+        
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const state = JSON.parse(saved);
+                // Only restore if less than 30 minutes old (improved security)
+                const MAX_STATE_AGE = 1800000; // 30 minutes instead of 1 hour
+                if (Date.now() - state.timestamp < MAX_STATE_AGE) {
+                    return state;
+                }
+                // Clean up expired state
+                sessionStorage.removeItem(STORAGE_KEY);
+            }
+        } catch (e) {
+            console.warn('Failed to load audio recording state:', e);
+            // Clean up corrupted state
+            sessionStorage.removeItem(STORAGE_KEY);
+        }
+        return null;
+    }
+
+    async function restoreRecordedChunks(dataURL) {
+        if (!dataURL) return;
+        
+        try {
+            const response = await fetch(dataURL);
+            const blob = await response.blob();
+            modalRecordedChunks = [blob];
+        } catch (e) {
+            console.warn('Failed to restore recorded chunks:', e);
+            modalRecordedChunks = [];
+        }
+    }
+
+    function clearState() {
+        sessionStorage.removeItem(STORAGE_KEY);
+        hasUnsavedData = false;
+    }
+
+    function secureCleanup() {
+        // Clear sensitive data from memory
+        if (modalRecordedChunks.length > 0 && !isRecording) {
+            modalRecordedChunks = [];
+        }
+        
+        // Clear any object URLs to prevent memory leaks
+        if (recordedAudio && recordedAudio.src && recordedAudio.src.startsWith('blob:')) {
+            URL.revokeObjectURL(recordedAudio.src);
+            recordedAudio.src = '';
+        }
+        
+        // Clear state if no active recording
+        if (!isRecording) {
+            clearState();
+        }
+    }
+
+    // Navigation warning functions
+    function enableNavigationWarning() {
+        hasUnsavedData = true;
+        window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    function disableNavigationWarning() {
+        hasUnsavedData = false;
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    function handleBeforeUnload(e) {
+        if (hasUnsavedData) {
+            const message = 'Sie haben eine ungespeicherte Audioaufnahme. Möchten Sie die Seite wirklich verlassen?';
+            e.preventDefault();
+            e.returnValue = message;
+            return message;
+        }
+    }
+
+    // Audio Visualizer
+    function setupAudioVisualizer(stream) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+        
+        audioVisualizer.classList.remove('hidden');
+        drawVisualizer();
+    }
+
+    function drawVisualizer() {
+        if (!isRecording) return;
+        
+        const canvas = visualizerCanvas;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        analyser.getByteFrequencyData(dataArray);
+
+        ctx.clearRect(0, 0, width, height);
+        
+        const barWidth = width / dataArray.length * 2.5;
+        let barHeight;
+        let x = 0;
+
+        for (let i = 0; i < dataArray.length; i++) {
+            barHeight = (dataArray[i] / 255) * height * 0.8;
+            
+            const hue = (i / dataArray.length) * 360;
+            ctx.fillStyle = `hsl(${hue}, 70%, 60%)`;
+            ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+            
+            x += barWidth + 1;
+        }
+
+        animationId = requestAnimationFrame(drawVisualizer);
+    }
+
+    function stopVisualizer() {
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+        }
+        if (audioContext && audioContext.state !== 'closed') {
+            audioContext.close();
+        }
+        audioVisualizer.classList.add('hidden');
+    }
+
+    function resetRecordingUI() {
+        // Reset to microphone icon
+        updateRecordIcon(false);
+        if (recordToggle) {
+            recordToggle.className = 'relative w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-all duration-200 flex items-center justify-center group';
+        }
+        if (recordingPulse) recordingPulse.classList.add('opacity-0');
+        if (recordingIndicator) recordingIndicator.classList.add('hidden');
+        if (recordInstruction) recordInstruction.textContent = 'Klicken zum Starten';
+        if (recordingTime) {
+            recordingTime.textContent = '00:00';
+            console.log('Timer reset to 00:00'); // Debug log
+        }
+        if (audioPreview) audioPreview.classList.add('hidden');
+        if (recordedAudio) recordedAudio.src = '';
+        if (activeRecordingWarning) activeRecordingWarning.classList.add('hidden');
+        
+        modalRecordedChunks = [];
+        recordingSeconds = 0;
+        recordingStartTime = null;
+        isRecording = false;
+        
+        stopVisualizer();
+        
+        if (modalMediaRecorder && modalMediaRecorder.state !== 'inactive') {
+            modalMediaRecorder.stop();
+            modalMediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+        if (recordingTimer) clearInterval(recordingTimer);
+        
+        clearState();
+        disableNavigationWarning();
+    }
+
+    // Secure DOM manipulation functions
+    function updateRecordIcon(isRecording) {
+        if (!recordIcon) return;
+        
+        // Clear existing content safely
+        while (recordIcon.firstChild) {
+            recordIcon.removeChild(recordIcon.firstChild);
+        }
+        
+        if (isRecording) {
+            // Create stop icon (rectangle)
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('width', '12');
+            rect.setAttribute('height', '12');
+            rect.setAttribute('x', '6');
+            rect.setAttribute('y', '6');
+            rect.setAttribute('stroke', 'currentColor');
+            rect.setAttribute('stroke-linejoin', 'round');
+            rect.setAttribute('stroke-width', '2');
+            rect.setAttribute('rx', '1');
+            recordIcon.appendChild(rect);
+        } else {
+            // Create microphone icon (path)
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('d', 'M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z');
+            recordIcon.appendChild(path);
+        }
+    }
+
+    function sanitizeFileName(filename) {
+        if (!filename) return '';
+        // Remove potentially dangerous characters and limit length
+        return filename.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').substring(0, 255);
+    }
+
+    function updateTimerDisplay() {
+        if (recordingTime) {
+            const minutes = Math.floor(recordingSeconds / 60);
+            const seconds = recordingSeconds % 60;
+            recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            console.log('Timer updated:', recordingTime.textContent, 'recordingSeconds:', recordingSeconds); // Debug log
+        } else {
+            console.log('recordingTime element not found'); // Debug log
+        }
+    }
+
+    function updateRecordingUI() {
+        if (!recordIcon || !recordToggle || !recordingPulse || !recordingIndicator || !recordInstruction || !activeRecordingWarning) return;
+        
+        if (isRecording) {
+            // Show recording state
+            updateRecordIcon(true);
+            recordToggle.className = 'relative w-20 h-20 rounded-full bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 transition-all duration-200 flex items-center justify-center group';
+            recordingPulse.classList.remove('opacity-0');
+            recordingIndicator.classList.remove('hidden');
+            recordInstruction.textContent = 'Aufnahme läuft...';
+            activeRecordingWarning.classList.remove('hidden');
+        } else {
+            // Show stopped state
+            updateRecordIcon(false);
+            recordToggle.className = 'relative w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-all duration-200 flex items-center justify-center group';
+            recordingPulse.classList.add('opacity-0');
+            recordingIndicator.classList.add('hidden');
+            activeRecordingWarning.classList.add('hidden');
+            
+            if (modalRecordedChunks.length > 0) {
+                recordInstruction.textContent = 'Aufnahme bereit - Klicken zum Fortsetzen';
+                if (audioPreview && recordedAudio) {
+                    const blob = new Blob(modalRecordedChunks, { type: 'audio/webm' });
+                    recordedAudio.src = URL.createObjectURL(blob);
+                    audioPreview.classList.remove('hidden');
+                }
+            } else {
+                recordInstruction.textContent = 'Klicken zum Starten';
+                if (audioPreview) audioPreview.classList.add('hidden');
+            }
+        }
+        
+        // Update timer display
+        updateTimerDisplay();
+    }
+
+    async function restoreFromState(state) {
+        // Restore recorded chunks first if available
+        if (state.recordedDataURL) {
+            await restoreRecordedChunks(state.recordedDataURL);
+        }
+        
+        // Restore recording state
+        recordingSeconds = state.recordingSeconds || 0;
+        recordingStartTime = state.recordingStartTime;
+        
+        if (state.currentTab === 'upload') {
+            if (tabUpload) tabUpload.click();
+        } else {
+            if (tabRecord) tabRecord.click();
+        }
+
+        if (state.isRecording) {
+            // Try to restart recording
+            await restartRecording(state);
+        } else if (state.hasRecordedData) {
+            // Just restore the UI for existing recording
+            enableNavigationWarning();
+            updateRecordingUI();
+        }
+    }
+
+    async function restartRecording(state) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            modalMediaRecorder = new MediaRecorder(stream);
+            isRecording = true;
+            recordingStartTime = Date.now() - (state.recordingSeconds * 1000);
+            
+            // Setup visualizer
+            setupAudioVisualizer(stream);
+            
+            // Resume timer from saved state
+            recordingTimer = setInterval(() => {
+                recordingSeconds++;
+                console.log('Restart timer interval fired, recordingSeconds:', recordingSeconds); // Debug log
+                updateTimerDisplay();
+                saveState();
+            }, 1000);
+            
+            modalMediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) modalRecordedChunks.push(event.data);
+            };
+            
+            modalMediaRecorder.onstop = () => {
+                enableNavigationWarning();
+                updateRecordingUI();
+                saveState();
+            };
+            
+            modalMediaRecorder.start();
+            enableNavigationWarning();
+            updateRecordingUI();
+            
+        } catch (error) {
+            console.error('Failed to restart recording:', error);
+            isRecording = false;
+            updateRecordingUI();
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Tab switching with persistence
+    function setupTabSwitching() {
+        if (!tabRecord || !tabUpload) return;
+        
+        // Remove any existing event listeners to prevent duplicates
+        const recordClickHandler = function() {
+            // Don't switch if recording and user hasn't confirmed
+            if (isRecording && !recordSection.classList.contains('hidden')) {
+                return; // Already on record tab
+            }
+            
+            recordSection.classList.remove('hidden');
+            uploadSection.classList.add('hidden');
+            
+            // Update tab styles
+            this.classList.add('text-gray-900', 'bg-gray-100');
+            this.classList.remove('bg-white', 'hover:text-gray-700', 'hover:bg-gray-50');
+            this.setAttribute('aria-current', 'page');
+            
+            tabUpload.classList.remove('text-gray-900', 'bg-gray-100');
+            tabUpload.classList.add('bg-white', 'hover:text-gray-700', 'hover:bg-gray-50');
+            tabUpload.removeAttribute('aria-current');
+            
+            submitButton.textContent = 'Hinzufügen';
+            saveState();
+        };
+
+        const uploadClickHandler = function() {
+            // Warn if recording is active
+            if (isRecording) {
+                if (!confirm('Eine Aufnahme läuft gerade. Möchten Sie wirklich zum Upload-Tab wechseln? Die Aufnahme läuft weiter.')) {
+                    return;
+                }
+            }
+            
+            recordSection.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            
+            // Update tab styles
+            this.classList.add('text-gray-900', 'bg-gray-100');
+            this.classList.remove('bg-white', 'hover:text-gray-700', 'hover:bg-gray-50');
+            this.setAttribute('aria-current', 'page');
+            
+            tabRecord.classList.remove('text-gray-900', 'bg-gray-100');
+            tabRecord.classList.add('bg-white', 'hover:text-gray-700', 'hover:bg-gray-50');
+            tabRecord.removeAttribute('aria-current');
+            
+            submitButton.textContent = 'Hochladen';
+            saveState();
+        };
+
+        // Use addEventListener for CSP compatibility
+        tabRecord.removeEventListener('click', recordClickHandler);
+        tabRecord.addEventListener('click', recordClickHandler);
+        
+        tabUpload.removeEventListener('click', uploadClickHandler);
+        tabUpload.addEventListener('click', uploadClickHandler);
+    }
+
+    // Recording functionality with persistence
+    function setupRecordingFunctionality() {
+        if (!recordToggle) return;
+        
+        const recordToggleHandler = async function() {
+        if (!isRecording) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                modalMediaRecorder = new MediaRecorder(stream);
+                
+                // Don't reset chunks - append to existing recording
+                if (modalRecordedChunks.length === 0) {
+                    recordingSeconds = 0;
+                    recordingStartTime = Date.now();
+                } else {
+                    // Continue from where we left off
+                    recordingStartTime = Date.now() - (recordingSeconds * 1000);
+                }
+                
+                isRecording = true;
+                
+                // Setup visualizer
+                setupAudioVisualizer(stream);
+                
+                // Timer (continue from existing time)
+                recordingTimer = setInterval(() => {
+                    recordingSeconds++;
+                    console.log('Timer interval fired, recordingSeconds:', recordingSeconds); // Debug log
+                    updateTimerDisplay();
+                    saveState();
+                }, 1000);
+                
+                modalMediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) modalRecordedChunks.push(event.data);
+                };
+                
+                modalMediaRecorder.onstop = () => {
+                    enableNavigationWarning();
+                    updateRecordingUI();
+                    saveState();
+                };
+                
+                modalMediaRecorder.start();
+                enableNavigationWarning();
+                updateRecordingUI();
+                updateTimerDisplay(); // Ensure timer shows immediately
+                saveState();
+                
+            } catch (error) {
+                alert('Fehler beim Zugriff auf das Mikrofon: ' + error.message);
+                isRecording = false;
+                updateRecordingUI();
+            }
+        } else {
+            // Stop recording (but keep the data)
+            if (modalMediaRecorder && modalMediaRecorder.state !== 'inactive') {
+                modalMediaRecorder.stop();
+                modalMediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+            isRecording = false;
+            
+            stopVisualizer();
+            
+            if (recordingTimer) clearInterval(recordingTimer);
+            
+            updateRecordingUI();
+            saveState();
+        }
+        };
+
+        // Use addEventListener for CSP compatibility
+        recordToggle.removeEventListener('click', recordToggleHandler);
+        recordToggle.addEventListener('click', recordToggleHandler);
+    }
+
+    // Delete recording with confirmation
+    function setupDeleteRecording() {
+        if (!deleteRecording) return;
+        
+        const deleteHandler = function() {
+            if (confirm('Möchten Sie die Aufnahme wirklich löschen?')) {
+                resetRecordingUI();
+            }
+        };
+
+        // Use addEventListener for CSP compatibility
+        deleteRecording.removeEventListener('click', deleteHandler);
+        deleteRecording.addEventListener('click', deleteHandler);
+    }
+
+    // File upload handling
+    function setupFileUpload() {
+        if (!modalAudioUpload) return;
+        
+        const fileChangeHandler = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Sanitize filename for display
+                uploadFilename.textContent = sanitizeFileName(file.name);
+                uploadFilesize.textContent = formatFileSize(file.size);
+                uploadPreview.classList.remove('hidden');
+                enableNavigationWarning();
+            } else {
+                uploadPreview.classList.add('hidden');
+                disableNavigationWarning();
+            }
+        };
+
+        // Use addEventListener for CSP compatibility
+        modalAudioUpload.removeEventListener('change', fileChangeHandler);
+        modalAudioUpload.addEventListener('change', fileChangeHandler);
+    }
+
+    // Form submission
+    function setupFormSubmission() {
+        if (!audioUploadForm) return;
+        
+        const formSubmitHandler = function(e) {
+        if (!recordSection.classList.contains('hidden')) {
+            // Recording mode
+            if (modalRecordedChunks.length === 0) {
+                e.preventDefault();
+                alert('Bitte nimm zuerst etwas auf.');
+                return;
+            }
+            
+            const blob = new Blob(modalRecordedChunks, { type: 'audio/webm' });
+            const file = new File([blob], 'aufnahme.webm', { type: 'audio/webm' });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            modalAudioUpload.files = dataTransfer.files;
+        } else {
+            // Upload mode
+            if (!modalAudioUpload.files[0]) {
+                e.preventDefault();
+                alert('Bitte wähle eine Datei aus.');
+                return;
+            }
+        }
+        
+        submitButton.disabled = true;
+        submitButton.textContent = 'Wird verarbeitet...';
+        disableNavigationWarning();
+        clearState();
+        };
+
+        // Use addEventListener for CSP compatibility
+        audioUploadForm.removeEventListener('submit', formSubmitHandler);
+        audioUploadForm.addEventListener('submit', formSubmitHandler);
+    }
+
+    // Enhanced modal close handling
+    function handleModalClose() {
+        // Only confirm if there's unsaved uploaded file data, not for recordings
+        if (!isRecording && modalAudioUpload && modalAudioUpload.files && modalAudioUpload.files[0]) {
+            if (!confirm('Sie haben eine ungespeicherte Datei ausgewählt. Möchten Sie das Fenster wirklich schließen?')) {
+                return false;
+            }
+        }
+        
+        // Always allow closing - recording continues in background if active
+        // Only reset UI elements for upload section
+        if (uploadPreview) uploadPreview.classList.add('hidden');
+        if (modalAudioUpload) modalAudioUpload.value = '';
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Hinzufügen';
+        }
+        
+        // Save state but don't reset recording
+        saveState();
+        return true;
+    }
+
+    // Initialize modal functionality
+    function initializeModal() {
+        if (isInitialized) return;
+        
+        // Security: Validate secure context (HTTPS required for MediaRecorder)
+        if (!window.isSecureContext) {
+            console.error('Audio recording requires HTTPS. MediaRecorder API is not available in insecure contexts.');
+            if (recordInstruction) {
+                recordInstruction.textContent = 'HTTPS erforderlich für Audioaufnahme';
+                recordInstruction.classList.add('text-red-600');
+            }
+            if (recordToggle) {
+                recordToggle.disabled = true;
+                recordToggle.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            return;
+        }
+
+        initializeDOMElements();
+        
+        // Check if all required elements are available
+        if (!recordSection || !tabRecord || !recordToggle) {
+            console.warn('Audio modal elements not found, retrying...');
+            return;
+        }
+        
+        setupTabSwitching();
+        setupRecordingFunctionality();
+        setupDeleteRecording();
+        setupFileUpload();
+        setupFormSubmission();
+        
+        // Initialize default tab state
+        if (tabRecord) {
+            tabRecord.click();
+        }
+        
+        // Check for saved state when modal opens
+        const savedState = loadState();
+        if (savedState) {
+            setTimeout(async () => {
+                await restoreFromState(savedState);
+            }, 100);
+        }
+        
+        isInitialized = true;
+    }
+
+    // Modal event handling - let Flowbite handle opening/closing naturally
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-modal-target="audio-workflow-modal"]')) {
+            // Don't prevent default - let Flowbite handle the modal opening
+            setTimeout(() => {
+                initializeModal();
+            }, 200); // Slightly longer delay to ensure modal is fully rendered
+        }
+        
+        if (e.target.matches('[data-modal-toggle="audio-workflow-modal"]')) {
+            // Handle modal close - but don't prevent default
+            handleModalClose();
+        }
+    });
+
+    // Page visibility change - save state when tab becomes hidden
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden && (isRecording || modalRecordedChunks.length > 0)) {
+            saveState();
+        } else if (!document.hidden) {
+            // Clean up expired state when page becomes visible
+            const savedState = loadState();
+            if (!savedState) {
+                secureCleanup();
+            }
+        }
+    });
+
+    // Secure cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        // Only clean up if not actively recording
+        if (!isRecording) {
+            secureCleanup();
+        }
+    });
+
+    // Clean up on navigation
+    window.addEventListener('pagehide', function() {
+        if (!isRecording) {
+            secureCleanup();
+        }
+    });
+
+    // Check for saved state on page load
+    const savedState = loadState();
+    if (savedState && (savedState.isRecording || savedState.hasRecordedData)) {
+        // Show a subtle indication that there's a saved recording
+        console.log('Found saved audio recording state');
+    }
+})();
+</script>
