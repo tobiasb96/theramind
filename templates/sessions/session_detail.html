@@ -150,9 +150,9 @@
             {% else %}
                 <!-- State 2: Has recordings - Check for transcriptions -->
                 {% comment %}
-                Simple approach: Show transcribed state if first recording has transcription, otherwise show processing state
+                Check if any recording has a transcription using the context variable from the view
                 {% endcomment %}
-                {% if recordings.0.transcription %}
+                {% if has_transcribed_recordings %}
                     <!-- State 2a: Has transcribed recordings - Show generate notes option -->
                     <div class="mb-8">
                         <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
@@ -383,7 +383,6 @@
                                 Abbrechen
                             </button>
                             <button hx-post="{% url 'sessions:transcribe' recording.pk %}" 
-                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                     hx-target="body"
                                     type="button" 
                                     class="py-2 px-3 text-sm font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300">
@@ -410,7 +409,6 @@
                                 Nein, abbrechen
                             </button>
                             <button hx-post="{% url 'sessions:audio_delete' recording.pk %}" 
-                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                     hx-target="body"
                                     type="button" 
                                     class="py-2 px-3 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
@@ -596,6 +594,15 @@
 
 
 <script>
+// CSRF token setup for HTMX
+document.addEventListener('DOMContentLoaded', function() {
+    // Configure HTMX to include CSRF token in all requests
+    document.body.addEventListener('htmx:configRequest', function(evt) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        evt.detail.headers['X-CSRFToken'] = csrfToken;
+    });
+});
+
 // Auto-save functionality
 document.addEventListener('DOMContentLoaded', function() {
     let autoSaveTimeout;
