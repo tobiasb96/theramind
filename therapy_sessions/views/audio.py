@@ -1,8 +1,9 @@
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.urls import reverse
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -132,7 +133,9 @@ class AudioViewSet(viewsets.ViewSet):
 
             if request.headers.get("HX-Request"):
                 response = HttpResponse("")
-                response["HX-Redirect"] = f"/sessions/{session.pk}/"
+                response["HX-Redirect"] = reverse(
+                    "sessions:session_detail", kwargs={"pk": session.pk}
+                )
                 return response
             else:
                 return redirect("sessions:session_detail", pk=session.pk)
@@ -144,7 +147,9 @@ class AudioViewSet(viewsets.ViewSet):
 
                 if request.headers.get("HX-Request"):
                     response = HttpResponse("")
-                    response["HX-Redirect"] = f"/sessions/{session.pk}/"
+                    response["HX-Redirect"] = reverse(
+                        "sessions:session_detail", kwargs={"pk": session.pk}
+                    )
                     return response
                 else:
                     return redirect("sessions:session_detail", pk=session.pk)
@@ -170,7 +175,7 @@ class AudioViewSet(viewsets.ViewSet):
         # Redirect to session detail
         if request.headers.get("HX-Request"):
             response = HttpResponse("")
-            response["HX-Redirect"] = f"/sessions/{session.pk}/"
+            response["HX-Redirect"] = reverse("sessions:session_detail", kwargs={"pk": session.pk})
             return response
         else:
             return redirect("sessions:session_detail", pk=session.pk)
@@ -209,7 +214,9 @@ class AudioViewSet(viewsets.ViewSet):
             # Redirect to session detail
             if request.headers.get("HX-Request"):
                 response = HttpResponse("")
-                response["HX-Redirect"] = f"/sessions/{session.pk}/"
+                response["HX-Redirect"] = reverse(
+                    "sessions:session_detail", kwargs={"pk": session.pk}
+                )
                 return response
             else:
                 return redirect("sessions:session_detail", pk=session.pk)
@@ -220,7 +227,9 @@ class AudioViewSet(viewsets.ViewSet):
 
             if request.headers.get("HX-Request"):
                 response = HttpResponse("")
-                response["HX-Redirect"] = f"/sessions/{session.pk}/"
+                response["HX-Redirect"] = reverse(
+                    "sessions:session_detail", kwargs={"pk": session.pk}
+                )
                 return response
             else:
                 return redirect("sessions:session_detail", pk=session.pk)

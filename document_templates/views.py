@@ -12,7 +12,6 @@ from .models import DocumentTemplate
 from .service import TemplateService
 
 from .table import TemplateTable
-from users.mixins import TemplateOwnershipMixin
 
 
 class TemplateViewSet(viewsets.ViewSet):

@@ -66,9 +66,8 @@ class SessionViewSet(viewsets.ViewSet):
 
         # Check if any recording has a transcription
         has_transcribed_recordings = any(
-            hasattr(recording, "transcription")
-            and recording.transcription
-            and recording.transcription.text
+            getattr(recording, "transcription", None)
+            and getattr(recording, "transcription", None).text
             for recording in recordings
         )
 
