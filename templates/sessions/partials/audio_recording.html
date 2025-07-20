@@ -258,13 +258,18 @@
             const saved = sessionStorage.getItem(STORAGE_KEY);
             if (saved) {
                 const state = JSON.parse(saved);
-                // Only restore if less than 1 hour old
-                if (Date.now() - state.timestamp < 3600000) {
+                // Only restore if less than 30 minutes old (improved security)
+                const MAX_STATE_AGE = 1800000; // 30 minutes instead of 1 hour
+                if (Date.now() - state.timestamp < MAX_STATE_AGE) {
                     return state;
                 }
+                // Clean up expired state
+                sessionStorage.removeItem(STORAGE_KEY);
             }
         } catch (e) {
             console.warn('Failed to load audio recording state:', e);
+            // Clean up corrupted state
+            sessionStorage.removeItem(STORAGE_KEY);
         }
         return null;
     }
@@ -285,6 +290,24 @@
     function clearState() {
         sessionStorage.removeItem(STORAGE_KEY);
         hasUnsavedData = false;
+    }
+
+    function secureCleanup() {
+        // Clear sensitive data from memory
+        if (modalRecordedChunks.length > 0 && !isRecording) {
+            modalRecordedChunks = [];
+        }
+        
+        // Clear any object URLs to prevent memory leaks
+        if (recordedAudio && recordedAudio.src && recordedAudio.src.startsWith('blob:')) {
+            URL.revokeObjectURL(recordedAudio.src);
+            recordedAudio.src = '';
+        }
+        
+        // Clear state if no active recording
+        if (!isRecording) {
+            clearState();
+        }
     }
 
     // Navigation warning functions
@@ -363,16 +386,17 @@
 
     function resetRecordingUI() {
         // Reset to microphone icon
-        if (recordIcon) {
-            recordIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>';
-        }
+        updateRecordIcon(false);
         if (recordToggle) {
             recordToggle.className = 'relative w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-all duration-200 flex items-center justify-center group';
         }
         if (recordingPulse) recordingPulse.classList.add('opacity-0');
         if (recordingIndicator) recordingIndicator.classList.add('hidden');
         if (recordInstruction) recordInstruction.textContent = 'Klicken zum Starten';
-        if (recordingTime) recordingTime.textContent = '00:00';
+        if (recordingTime) {
+            recordingTime.textContent = '00:00';
+            console.log('Timer reset to 00:00'); // Debug log
+        }
         if (audioPreview) audioPreview.classList.add('hidden');
         if (recordedAudio) recordedAudio.src = '';
         if (activeRecordingWarning) activeRecordingWarning.classList.add('hidden');
@@ -394,12 +418,61 @@
         disableNavigationWarning();
     }
 
+    // Secure DOM manipulation functions
+    function updateRecordIcon(isRecording) {
+        if (!recordIcon) return;
+        
+        // Clear existing content safely
+        while (recordIcon.firstChild) {
+            recordIcon.removeChild(recordIcon.firstChild);
+        }
+        
+        if (isRecording) {
+            // Create stop icon (rectangle)
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('width', '12');
+            rect.setAttribute('height', '12');
+            rect.setAttribute('x', '6');
+            rect.setAttribute('y', '6');
+            rect.setAttribute('stroke', 'currentColor');
+            rect.setAttribute('stroke-linejoin', 'round');
+            rect.setAttribute('stroke-width', '2');
+            rect.setAttribute('rx', '1');
+            recordIcon.appendChild(rect);
+        } else {
+            // Create microphone icon (path)
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('d', 'M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z');
+            recordIcon.appendChild(path);
+        }
+    }
+
+    function sanitizeFileName(filename) {
+        if (!filename) return '';
+        // Remove potentially dangerous characters and limit length
+        return filename.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').substring(0, 255);
+    }
+
+    function updateTimerDisplay() {
+        if (recordingTime) {
+            const minutes = Math.floor(recordingSeconds / 60);
+            const seconds = recordingSeconds % 60;
+            recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            console.log('Timer updated:', recordingTime.textContent, 'recordingSeconds:', recordingSeconds); // Debug log
+        } else {
+            console.log('recordingTime element not found'); // Debug log
+        }
+    }
+
     function updateRecordingUI() {
         if (!recordIcon || !recordToggle || !recordingPulse || !recordingIndicator || !recordInstruction || !activeRecordingWarning) return;
         
         if (isRecording) {
             // Show recording state
-            recordIcon.innerHTML = '<rect width="12" height="12" x="6" y="6" stroke="currentColor" stroke-linejoin="round" stroke-width="2" rx="1"/>';
+            updateRecordIcon(true);
             recordToggle.className = 'relative w-20 h-20 rounded-full bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 transition-all duration-200 flex items-center justify-center group';
             recordingPulse.classList.remove('opacity-0');
             recordingIndicator.classList.remove('hidden');
@@ -407,7 +480,7 @@
             activeRecordingWarning.classList.remove('hidden');
         } else {
             // Show stopped state
-            recordIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>';
+            updateRecordIcon(false);
             recordToggle.className = 'relative w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-all duration-200 flex items-center justify-center group';
             recordingPulse.classList.add('opacity-0');
             recordingIndicator.classList.add('hidden');
@@ -427,11 +500,7 @@
         }
         
         // Update timer display
-        if (recordingTime && recordingSeconds > 0) {
-            const minutes = Math.floor(recordingSeconds / 60);
-            const seconds = recordingSeconds % 60;
-            recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
+        updateTimerDisplay();
     }
 
     async function restoreFromState(state) {
@@ -473,6 +542,8 @@
             // Resume timer from saved state
             recordingTimer = setInterval(() => {
                 recordingSeconds++;
+                console.log('Restart timer interval fired, recordingSeconds:', recordingSeconds); // Debug log
+                updateTimerDisplay();
                 saveState();
             }, 1000);
             
@@ -509,7 +580,8 @@
     function setupTabSwitching() {
         if (!tabRecord || !tabUpload) return;
         
-        tabRecord.onclick = function() {
+        // Remove any existing event listeners to prevent duplicates
+        const recordClickHandler = function() {
             // Don't switch if recording and user hasn't confirmed
             if (isRecording && !recordSection.classList.contains('hidden')) {
                 return; // Already on record tab
@@ -531,7 +603,7 @@
             saveState();
         };
 
-        tabUpload.onclick = function() {
+        const uploadClickHandler = function() {
             // Warn if recording is active
             if (isRecording) {
                 if (!confirm('Eine Aufnahme läuft gerade. Möchten Sie wirklich zum Upload-Tab wechseln? Die Aufnahme läuft weiter.')) {
@@ -554,13 +626,20 @@
             submitButton.textContent = 'Hochladen';
             saveState();
         };
+
+        // Use addEventListener for CSP compatibility
+        tabRecord.removeEventListener('click', recordClickHandler);
+        tabRecord.addEventListener('click', recordClickHandler);
+        
+        tabUpload.removeEventListener('click', uploadClickHandler);
+        tabUpload.addEventListener('click', uploadClickHandler);
     }
 
     // Recording functionality with persistence
     function setupRecordingFunctionality() {
         if (!recordToggle) return;
         
-        recordToggle.onclick = async function() {
+        const recordToggleHandler = async function() {
         if (!isRecording) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -583,6 +662,8 @@
                 // Timer (continue from existing time)
                 recordingTimer = setInterval(() => {
                     recordingSeconds++;
+                    console.log('Timer interval fired, recordingSeconds:', recordingSeconds); // Debug log
+                    updateTimerDisplay();
                     saveState();
                 }, 1000);
                 
@@ -599,6 +680,7 @@
                 modalMediaRecorder.start();
                 enableNavigationWarning();
                 updateRecordingUI();
+                updateTimerDisplay(); // Ensure timer shows immediately
                 saveState();
                 
             } catch (error) {
@@ -622,27 +704,36 @@
             saveState();
         }
         };
+
+        // Use addEventListener for CSP compatibility
+        recordToggle.removeEventListener('click', recordToggleHandler);
+        recordToggle.addEventListener('click', recordToggleHandler);
     }
 
     // Delete recording with confirmation
     function setupDeleteRecording() {
         if (!deleteRecording) return;
         
-        deleteRecording.onclick = function() {
+        const deleteHandler = function() {
             if (confirm('Möchten Sie die Aufnahme wirklich löschen?')) {
                 resetRecordingUI();
             }
         };
+
+        // Use addEventListener for CSP compatibility
+        deleteRecording.removeEventListener('click', deleteHandler);
+        deleteRecording.addEventListener('click', deleteHandler);
     }
 
     // File upload handling
     function setupFileUpload() {
         if (!modalAudioUpload) return;
         
-        modalAudioUpload.onchange = function(e) {
+        const fileChangeHandler = function(e) {
             const file = e.target.files[0];
             if (file) {
-                uploadFilename.textContent = file.name;
+                // Sanitize filename for display
+                uploadFilename.textContent = sanitizeFileName(file.name);
                 uploadFilesize.textContent = formatFileSize(file.size);
                 uploadPreview.classList.remove('hidden');
                 enableNavigationWarning();
@@ -651,13 +742,17 @@
                 disableNavigationWarning();
             }
         };
+
+        // Use addEventListener for CSP compatibility
+        modalAudioUpload.removeEventListener('change', fileChangeHandler);
+        modalAudioUpload.addEventListener('change', fileChangeHandler);
     }
 
     // Form submission
     function setupFormSubmission() {
         if (!audioUploadForm) return;
         
-        audioUploadForm.onsubmit = function(e) {
+        const formSubmitHandler = function(e) {
         if (!recordSection.classList.contains('hidden')) {
             // Recording mode
             if (modalRecordedChunks.length === 0) {
@@ -685,6 +780,10 @@
         disableNavigationWarning();
         clearState();
         };
+
+        // Use addEventListener for CSP compatibility
+        audioUploadForm.removeEventListener('submit', formSubmitHandler);
+        audioUploadForm.addEventListener('submit', formSubmitHandler);
     }
 
     // Enhanced modal close handling
@@ -714,6 +813,20 @@
     function initializeModal() {
         if (isInitialized) return;
         
+        // Security: Validate secure context (HTTPS required for MediaRecorder)
+        if (!window.isSecureContext) {
+            console.error('Audio recording requires HTTPS. MediaRecorder API is not available in insecure contexts.');
+            if (recordInstruction) {
+                recordInstruction.textContent = 'HTTPS erforderlich für Audioaufnahme';
+                recordInstruction.classList.add('text-red-600');
+            }
+            if (recordToggle) {
+                recordToggle.disabled = true;
+                recordToggle.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            return;
+        }
+
         initializeDOMElements();
         
         // Check if all required elements are available
@@ -763,6 +876,27 @@
     document.addEventListener('visibilitychange', function() {
         if (document.hidden && (isRecording || modalRecordedChunks.length > 0)) {
             saveState();
+        } else if (!document.hidden) {
+            // Clean up expired state when page becomes visible
+            const savedState = loadState();
+            if (!savedState) {
+                secureCleanup();
+            }
+        }
+    });
+
+    // Secure cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        // Only clean up if not actively recording
+        if (!isRecording) {
+            secureCleanup();
+        }
+    });
+
+    // Clean up on navigation
+    window.addEventListener('pagehide', function() {
+        if (!isRecording) {
+            secureCleanup();
         }
     });
 
