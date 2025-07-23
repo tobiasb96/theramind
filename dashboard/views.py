@@ -4,7 +4,6 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django_tables2 import RequestConfig
-from django.db.models import Q
 from itertools import chain
 from reports.models import Report
 from therapy_sessions.models import Session

@@ -13,6 +13,8 @@ from django_tables2 import RequestConfig
 from django.db.models import Q
 from django.shortcuts import render
 from itertools import chain
+from core.models import AudioInput, DocumentInput
+from core.services import UnifiedInputService
 from reports.models import Report
 from therapy_sessions.models import Session
 from core.tables import BaseDocumentTable

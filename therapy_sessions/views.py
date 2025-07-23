@@ -10,12 +10,10 @@ from rest_framework.permissions import IsAuthenticated
 import json
 import re
 import logging
-from django_tables2 import RequestConfig
 from django.shortcuts import render
 from therapy_sessions.models import Session
 from therapy_sessions.forms import SessionForm
 from therapy_sessions.services import get_transcription_service
-from core.tables import BaseDocumentTable
 
 logger = logging.getLogger(__name__)
 

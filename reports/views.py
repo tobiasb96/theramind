@@ -3,11 +3,9 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from django_tables2 import RequestConfig
 import json
 import logging
 
@@ -18,7 +16,6 @@ from .models import Report
 from .forms import ReportForm, ReportContentForm
 from core.forms import AudioInputForm, DocumentFileInputForm, DocumentTextInputForm
 from .services import ReportService
-from core.tables import BaseDocumentTable
 
 logger = logging.getLogger(__name__)
 
