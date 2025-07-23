@@ -7,10 +7,6 @@ from therapy_sessions.prompts import (
 
 
 class TranscriptionService:
-    """
-    Service focused on AI-powered text generation tasks for therapy sessions.
-    File transcription is now handled by the UnifiedInputService.
-    """
     def __init__(self):
         self.connector = get_llm_connector()
 
@@ -20,8 +16,6 @@ class TranscriptionService:
     def reinitialize(self):
         """Reinitialize the client (useful after settings change)"""
         self.connector.reinitialize()
-
-    # NOTE: transcribe method removed - now handled by UnifiedInputService
 
     def summarize_session_notes(self, session_notes: str) -> str:
         """

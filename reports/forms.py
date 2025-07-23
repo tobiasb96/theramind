@@ -40,12 +40,6 @@ class ReportForm(UserFormMixin, forms.ModelForm):
             ).order_by("name")
 
 
-# NOTE: ReportContextFileForm and ReportContextTextForm are now replaced
-# by unified forms in core.forms:
-# - DocumentFileInputForm for file uploads
-# - DocumentTextInputForm for manual text input
-# These old forms are kept temporarily for backward compatibility but should be removed
-
 
 class ReportContentForm(forms.ModelForm):
     """Form for editing report content"""

@@ -150,15 +150,6 @@ class ReportViewSet(viewsets.ViewSet):
             messages.success(request, "Bericht wurde erfolgreich gelöscht.")
             return redirect("reports:reports_list")
 
-    # NOTE: upload_context_file is now handled by the unified input service
-    # Use the core.views.UnifiedInputViewSet.add_document_file instead
-
-    # NOTE: add_context_text is now handled by the unified input service
-    # Use the core.views.UnifiedInputViewSet.add_document_text instead
-
-    # NOTE: delete_context_file is now handled by the unified input service
-    # Use the core.views.UnifiedInputViewSet.delete_audio or delete_document instead
-
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
     def generate_content(self, request, pk=None):

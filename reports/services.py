@@ -121,7 +121,6 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
         if template_id:
             template = DocumentTemplate.objects.get(id=template_id)
         else:
-            # TODO: Pass user_id when user model is implemented
             template = self.template_service.get_default_template(
                 DocumentTemplate.TemplateType.REPORT
             )

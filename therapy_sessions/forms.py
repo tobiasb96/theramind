@@ -4,7 +4,6 @@ from users.mixins import UserFormMixin
 
 
 class SessionForm(UserFormMixin, forms.ModelForm):
-
     class Meta:
         model = Session
         fields = ["date", "title", "patient_gender"]
@@ -16,12 +15,3 @@ class SessionForm(UserFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-
-# AudioUploadForm is now replaced by unified AudioInputForm in core.forms
-# This form is kept for backward compatibility but should be migrated
-class AudioUploadForm(forms.Form):
-    audio = forms.FileField(
-        widget=forms.FileInput(attrs={"class": "form-control", "accept": "audio/*"}),
-        label="Audio-Datei",
-    )

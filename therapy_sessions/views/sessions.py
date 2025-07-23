@@ -13,7 +13,7 @@ import logging
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from therapy_sessions.models import Session
-from therapy_sessions.forms import SessionForm, AudioUploadForm
+from therapy_sessions.forms import SessionForm
 from therapy_sessions.services import get_transcription_service
 
 logger = logging.getLogger(__name__)
@@ -113,23 +113,6 @@ class SessionViewSet(viewsets.ViewSet):
                 )
             return render(request, "sessions/session_form.html", {"form": form})
 
-    def _handle_htmx_create(self, request):
-        """Handle HTMX session creation"""
-        try:
-            session = Session.objects.create(
-                user=request.user,
-                date=request.POST.get("date"),
-                title=request.POST.get("title", ""),
-            )
-            response = HttpResponse()
-            response["HX-Redirect"] = reverse_lazy(
-                "sessions:session_detail", kwargs={"pk": session.pk}
-            )
-            return response
-
-        except ValueError:
-            return JsonResponse({"error": "Fehler beim Erstellen der Sitzung"}, status=400)
-
     def update(self, request, pk=None):
         """Update an existing session"""
         session = self.get_object(pk, request)
@@ -155,20 +138,6 @@ class SessionViewSet(viewsets.ViewSet):
                 )
 
             return render(request, "sessions/session_form.html", {"form": form, "session": session})
-
-    def _handle_htmx_update(self, request, session):
-        """Handle HTMX session update"""
-        form = SessionForm(request.POST, instance=session)
-        if form.is_valid():
-            form.save()
-        messages.success(request, "Sitzung wurde erfolgreich aktualisiert.")
-
-        response = HttpResponse("")
-        response["HX-Redirect"] = reverse_lazy(
-            "sessions:session_detail",
-            kwargs={"pk": session.pk},
-        )
-        return response
 
     def destroy(self, request, pk=None):
         """Delete a session"""
@@ -274,7 +243,6 @@ class SessionViewSet(viewsets.ViewSet):
                     session.summary = summary
                 except Exception as e:
                     logger.error(f"Fehler bei der Zusammenfassung: {str(e)}")
-                    pass
 
             session.notes = session_notes
             session.save()

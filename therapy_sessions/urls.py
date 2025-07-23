@@ -1,6 +1,5 @@
 from django.urls import path
 from .views import SessionViewSet
-# NOTE: AudioViewSet is deprecated - use core.views.UnifiedInputViewSet instead
 
 app_name = "sessions"
 
@@ -14,8 +13,6 @@ urlpatterns = [
     path("<int:pk>/", session_viewset.retrieve, name="session_detail"),
     path("<int:pk>/edit/", session_viewset.update, name="session_edit"),
     path("<int:pk>/delete/", session_viewset.destroy, name="session_delete"),
-    # NOTE: Audio upload now handled by unified input service
-    # path("<int:pk>/upload-audio/", audio_viewset.upload, name="session_audio_upload"),
     path(
         "<int:pk>/save-transcript/",
         session_viewset.save_transcript,
@@ -43,8 +40,4 @@ urlpatterns = [
         session_viewset.delete_notes,
         name="session_delete_notes",
     ),
-    # NOTE: Audio processing URLs are now handled by unified input service
-    # path("recordings/<int:pk>/transcribe/", audio_viewset.transcribe, name="transcribe"),
-    # path("recordings/<int:pk>/download/", audio_viewset.download, name="audio_download"),
-    # path("recordings/<int:pk>/delete/", audio_viewset.delete, name="audio_delete"),
 ]
