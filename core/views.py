@@ -1,19 +1,15 @@
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
-from django.http import JsonResponse, Http404
+from django.http import Http404
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 import logging
-from django.contrib.contenttypes.models import ContentType
 
 from .models import AudioInput, DocumentInput
 from .services import UnifiedInputService
-from .forms import AudioInputForm, DocumentFileInputForm, DocumentTextInputForm
 from therapy_sessions.models import Session
 from reports.models import Report
 

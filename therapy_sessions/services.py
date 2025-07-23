@@ -38,7 +38,7 @@ class TranscriptionService:
         Returns:
             Formatted context prefix
         """
-        context_prefix = f"""Erstelle strukturierte Sitzungsnotizen basierend auf dem folgenden Transkript einer Therapiesitzung.
+        context_prefix = """Erstelle strukturierte Sitzungsnotizen basierend auf dem folgenden Transkript einer Therapiesitzung.
 
 Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
