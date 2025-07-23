@@ -1,0 +1,801 @@
+<!-- Audio Input Modal -->
+<div id="audio-input-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-lg max-h-full">
+        <div class="relative bg-white rounded-lg shadow">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Audio aufnehmen
+                </h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-toggle="audio-input-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+            </div>
+            
+            <!-- Modal body -->
+            <form id="audio-upload-form" class="p-6" method="post" enctype="multipart/form-data" action="{% url 'inputs:add_audio_input' document_type=document_type document_id=document.pk %}">
+                {% csrf_token %}
+                
+                <!-- Active Recording Warning -->
+                <div id="active-recording-warning" class="hidden bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 text-amber-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="text-sm text-amber-800">Aufnahme läuft im Hintergrund</span>
+                    </div>
+                </div>
+
+                <!-- Recording Section -->
+                <div id="record-section" class="text-center">
+                    <!-- Recording Button -->
+                    <button id="record-toggle" type="button" class="relative w-24 h-24 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-all duration-200 flex items-center justify-center group mb-4 mx-auto">
+                        <svg id="record-icon" class="w-10 h-10 text-white transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path id="record-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>
+                        </svg>
+                        <div id="recording-pulse" class="absolute inset-0 rounded-full bg-red-500 opacity-0 animate-ping"></div>
+                    </button>
+
+                    <!-- Recording Status -->
+                    <div id="recording-status" class="mb-6">
+                        <div id="recording-indicator" class="hidden flex items-center justify-center space-x-2 mb-2">
+                            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                            <span id="recording-time" class="text-lg font-mono text-red-600 font-semibold">00:00</span>
+                        </div>
+                        <p id="record-instruction" class="text-sm text-gray-600">Klicken zum Starten</p>
+                    </div>
+
+                    <!-- Audio Visualizer -->
+                    <div id="audio-visualizer" class="hidden mb-6">
+                        <canvas id="visualizer-canvas" width="300" height="40" class="w-full h-10 bg-gray-50 rounded-lg border"></canvas>
+                    </div>
+
+                    <!-- Live Therapeutic Observations (visible during recording) -->
+                    <div id="live-observations" class="hidden mb-6">
+                        <label for="live-therapeutic-observations" class="block mb-2 text-sm font-medium text-gray-900 text-left">
+                            Notizen während der Aufnahme
+                        </label>
+                        <textarea id="live-therapeutic-observations" rows="3" 
+                                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                                  placeholder="Therapeutische Beobachtungen..."></textarea>
+                    </div>
+
+                    <!-- Audio Preview -->
+                    <div id="audio-preview" class="hidden mb-6">
+                        <div class="bg-gray-50 rounded-lg p-4 border text-left">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-sm font-medium text-gray-900">Aufnahme bereit</h4>
+                                <button type="button" id="delete-recording" class="text-red-600 hover:text-red-800 text-sm">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414L7.586 12l-1.293 1.293a1 1 0 101.414 1.414L9 13.414l2.293 2.293a1 1 0 001.414-1.414L11.414 12l1.293-1.293z" clip-rule="evenodd"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <audio id="recorded-audio" controls class="w-full mb-3"></audio>
+                            
+                            <!-- Therapeutic Observations Field -->
+                            <label for="therapeutic-observations" class="block mb-2 text-sm font-medium text-gray-900">Therapeutische Beobachtungen</label>
+                            <textarea id="therapeutic-observations" name="therapeutic_observations" rows="3" 
+                                      class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                                      placeholder="Zusätzliche Beobachtungen..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Section (simplified) -->
+                <div id="upload-section" class="hidden text-center">
+                    <div class="mb-6">
+                        <label for="modal-audio-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-8 h-8 mb-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                </svg>
+                                <p class="text-sm text-gray-500"><span class="font-semibold">Audio-Datei hochladen</span></p>
+                                <p class="text-xs text-gray-500">MP3, WAV, M4A oder FLAC</p>
+                            </div>
+                            <input id="modal-audio-upload" name="audio_file" type="file" accept="audio/*" class="hidden" />
+                        </label>
+                    </div>
+                    <div id="upload-preview" class="hidden mb-4">
+                        <div class="bg-gray-50 rounded-lg p-3 border">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <p id="upload-filename" class="text-sm font-medium text-gray-900"></p>
+                                    <p id="upload-filesize" class="text-xs text-gray-500"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Switching (simplified) -->
+                <div class="flex justify-center mb-6">
+                    <div class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+                        <button type="button" id="tab-record" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white rounded-md shadow-sm">
+                            Aufnehmen
+                        </button>
+                        <button type="button" id="tab-upload" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">
+                            Hochladen
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex justify-center">
+                    <button type="submit" id="submit-button" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
+                        Speichern
+                    </button>
+                </div>
+
+                <input type="hidden" name="audio_recorded" id="audio-recorded-input">
+                <input type="hidden" name="audio_type" value="recording">
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Streamlined Audio Recording Modal with Enhanced Reliability
+(function() {
+    // Global state key for persistence
+    const STORAGE_KEY = 'theramind_audio_recording_state';
+    
+    // Scoped variables
+    let modalMediaRecorder;
+    let modalRecordedChunks = [];
+    let recordingTimer;
+    let recordingSeconds = 0;
+    let isRecording = false;
+    let audioContext;
+    let analyser;
+    let dataArray;
+    let animationId;
+    let hasUnsavedData = false;
+    let recordingStartTime = null;
+    let isInitialized = false;
+
+    // DOM Elements
+    let recordSection;
+    let uploadSection;
+    let tabRecord;
+    let tabUpload;
+    let recordToggle;
+    let recordIcon;
+    let recordingPulse;
+    let recordingIndicator;
+    let recordingTime;
+    let recordInstruction;
+    let audioVisualizer;
+    let visualizerCanvas;
+    let audioPreview;
+    let recordedAudio;
+    let deleteRecording;
+    let audioUploadForm;
+    let modalAudioUpload;
+    let uploadPreview;
+    let uploadFilename;
+    let uploadFilesize;
+    let submitButton;
+    let activeRecordingWarning;
+    let liveObservations;
+
+    // Initialize DOM elements
+    function initializeDOMElements() {
+        recordSection = document.getElementById('record-section');
+        uploadSection = document.getElementById('upload-section');
+        tabRecord = document.getElementById('tab-record');
+        tabUpload = document.getElementById('tab-upload');
+        recordToggle = document.getElementById('record-toggle');
+        recordIcon = document.getElementById('record-icon');
+        recordingPulse = document.getElementById('recording-pulse');
+        recordingIndicator = document.getElementById('recording-indicator');
+        recordingTime = document.getElementById('recording-time');
+        recordInstruction = document.getElementById('record-instruction');
+        audioVisualizer = document.getElementById('audio-visualizer');
+        visualizerCanvas = document.getElementById('visualizer-canvas');
+        audioPreview = document.getElementById('audio-preview');
+        recordedAudio = document.getElementById('recorded-audio');
+        deleteRecording = document.getElementById('delete-recording');
+        audioUploadForm = document.getElementById('audio-upload-form');
+        modalAudioUpload = document.getElementById('modal-audio-upload');
+        uploadPreview = document.getElementById('upload-preview');
+        uploadFilename = document.getElementById('upload-filename');
+        uploadFilesize = document.getElementById('upload-filesize');
+        submitButton = document.getElementById('submit-button');
+        activeRecordingWarning = document.getElementById('active-recording-warning');
+        liveObservations = document.getElementById('live-observations');
+    }
+
+    // Persistence functions
+    function saveState() {
+        const liveObservationsTextarea = document.getElementById('live-therapeutic-observations');
+        const state = {
+            isRecording: isRecording,
+            recordingSeconds: recordingSeconds,
+            recordingStartTime: recordingStartTime,
+            hasRecordedData: modalRecordedChunks.length > 0,
+            therapeuticObservations: liveObservationsTextarea ? liveObservationsTextarea.value : '',
+            timestamp: Date.now()
+        };
+        
+        if (modalRecordedChunks.length > 0) {
+            try {
+                const blob = new Blob(modalRecordedChunks, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.onload = function() {
+                    state.recordedDataURL = reader.result;
+                    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                };
+                reader.readAsDataURL(blob);
+                return;
+            } catch (e) {
+                console.warn('Failed to save recorded chunks:', e);
+            }
+        }
+        
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const state = JSON.parse(saved);
+                const MAX_STATE_AGE = 1800000; // 30 minutes
+                if (Date.now() - state.timestamp < MAX_STATE_AGE) {
+                    return state;
+                }
+                sessionStorage.removeItem(STORAGE_KEY);
+            }
+        } catch (e) {
+            console.warn('Failed to load audio recording state:', e);
+            sessionStorage.removeItem(STORAGE_KEY);
+        }
+        return null;
+    }
+
+    async function restoreRecordedChunks(dataURL) {
+        if (!dataURL) return;
+        
+        try {
+            const response = await fetch(dataURL);
+            const blob = await response.blob();
+            modalRecordedChunks = [blob];
+        } catch (e) {
+            console.warn('Failed to restore recorded chunks:', e);
+            modalRecordedChunks = [];
+        }
+    }
+
+    function clearState() {
+        sessionStorage.removeItem(STORAGE_KEY);
+        hasUnsavedData = false;
+    }
+
+    // Navigation warning functions
+    function enableNavigationWarning() {
+        hasUnsavedData = true;
+        window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    function disableNavigationWarning() {
+        hasUnsavedData = false;
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    function handleBeforeUnload(e) {
+        if (hasUnsavedData) {
+            const message = 'Sie haben eine ungespeicherte Audioaufnahme. Möchten Sie die Seite wirklich verlassen?';
+            e.preventDefault();
+            e.returnValue = message;
+            return message;
+        }
+    }
+
+    // Audio Visualizer (simplified)
+    function setupAudioVisualizer(stream) {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            
+            analyser.fftSize = 128;
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            
+            audioVisualizer.classList.remove('hidden');
+            drawVisualizer();
+        } catch (e) {
+            console.warn('Audio visualizer setup failed:', e);
+        }
+    }
+
+    function drawVisualizer() {
+        if (!isRecording || !analyser) return;
+        
+        const canvas = visualizerCanvas;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        analyser.getByteFrequencyData(dataArray);
+        ctx.clearRect(0, 0, width, height);
+        
+        const barWidth = width / dataArray.length * 2;
+        let x = 0;
+
+        for (let i = 0; i < dataArray.length; i++) {
+            const barHeight = (dataArray[i] / 255) * height * 0.8;
+            ctx.fillStyle = `hsl(${200 + (i / dataArray.length) * 60}, 70%, 60%)`;
+            ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+            x += barWidth + 1;
+        }
+
+        animationId = requestAnimationFrame(drawVisualizer);
+    }
+
+    function stopVisualizer() {
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+        if (audioContext && audioContext.state !== 'closed') {
+            audioContext.close();
+            audioContext = null;
+        }
+        if (audioVisualizer) audioVisualizer.classList.add('hidden');
+    }
+
+    // Update record icon
+    function updateRecordIcon(isRecording) {
+        if (!recordIcon) return;
+        
+        while (recordIcon.firstChild) {
+            recordIcon.removeChild(recordIcon.firstChild);
+        }
+        
+        if (isRecording) {
+            // Stop icon (square)
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('width', '16');
+            rect.setAttribute('height', '16');
+            rect.setAttribute('x', '4');
+            rect.setAttribute('y', '4');
+            rect.setAttribute('stroke', 'currentColor');
+            rect.setAttribute('stroke-width', '2');
+            rect.setAttribute('rx', '2');
+            recordIcon.appendChild(rect);
+        } else {
+            // Microphone icon
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('d', 'M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z');
+            recordIcon.appendChild(path);
+        }
+    }
+
+    function updateTimerDisplay() {
+        if (recordingTime) {
+            const minutes = Math.floor(recordingSeconds / 60);
+            const seconds = recordingSeconds % 60;
+            recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+    }
+
+    function updateRecordingUI() {
+        if (!recordToggle || !recordingPulse || !recordingIndicator || !recordInstruction) return;
+        
+        if (isRecording) {
+            // Recording state
+            updateRecordIcon(true);
+            recordToggle.className = 'relative w-24 h-24 rounded-full bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 transition-all duration-200 flex items-center justify-center group mb-4 mx-auto';
+            recordingPulse.classList.remove('opacity-0');
+            recordingIndicator.classList.remove('hidden');
+            recordInstruction.textContent = 'Aufnahme läuft - Klicken zum Stoppen';
+            if (activeRecordingWarning) activeRecordingWarning.classList.remove('hidden');
+            if (liveObservations) liveObservations.classList.remove('hidden');
+        } else {
+            // Stopped state
+            updateRecordIcon(false);
+            recordToggle.className = 'relative w-24 h-24 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-all duration-200 flex items-center justify-center group mb-4 mx-auto';
+            recordingPulse.classList.add('opacity-0');
+            recordingIndicator.classList.add('hidden');
+            if (activeRecordingWarning) activeRecordingWarning.classList.add('hidden');
+            if (liveObservations) liveObservations.classList.add('hidden');
+            
+            if (modalRecordedChunks.length > 0) {
+                recordInstruction.textContent = 'Aufnahme bereit - Klicken zum Fortsetzen';
+                showRecordingPreview();
+            } else {
+                recordInstruction.textContent = 'Klicken zum Starten';
+                if (audioPreview) audioPreview.classList.add('hidden');
+            }
+        }
+        
+        updateTimerDisplay();
+    }
+
+    function showRecordingPreview() {
+        if (modalRecordedChunks.length > 0 && audioPreview && recordedAudio) {
+            const blob = new Blob(modalRecordedChunks, { type: 'audio/webm' });
+            recordedAudio.src = URL.createObjectURL(blob);
+            audioPreview.classList.remove('hidden');
+        }
+    }
+
+    // Enhanced recording functionality
+    async function toggleRecording() {
+        if (!isRecording) {
+            await startRecording();
+        } else {
+            stopRecording();
+        }
+    }
+
+    async function startRecording() {
+        try {
+            // Request permissions with retry mechanism
+            let stream;
+            let retryCount = 0;
+            const maxRetries = 3;
+            
+            while (retryCount < maxRetries) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                            sampleRate: 44100
+                        }
+                    });
+                    break;
+                } catch (e) {
+                    console.warn(`Recording attempt ${retryCount + 1} failed:`, e);
+                    retryCount++;
+                    if (retryCount >= maxRetries) throw e;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+            
+            modalMediaRecorder = new MediaRecorder(stream, {
+                mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+                    ? 'audio/webm;codecs=opus' 
+                    : 'audio/webm'
+            });
+            
+            // Continue from existing recording if available
+            if (modalRecordedChunks.length === 0) {
+                recordingSeconds = 0;
+                recordingStartTime = Date.now();
+            } else {
+                recordingStartTime = Date.now() - (recordingSeconds * 1000);
+            }
+            
+            isRecording = true;
+            
+            // Setup event handlers
+            modalMediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    modalRecordedChunks.push(event.data);
+                }
+            };
+            
+            modalMediaRecorder.onstop = () => {
+                enableNavigationWarning();
+                updateRecordingUI();
+                saveState();
+                syncObservationsToPreview();
+            };
+            
+            modalMediaRecorder.onerror = (event) => {
+                console.error('MediaRecorder error:', event.error);
+                isRecording = false;
+                updateRecordingUI();
+            };
+            
+            // Start recording
+            modalMediaRecorder.start(1000); // Collect data every second
+            
+            // Setup visualizer
+            setupAudioVisualizer(stream);
+            
+            // Start timer
+            recordingTimer = setInterval(() => {
+                recordingSeconds++;
+                updateTimerDisplay();
+                saveState();
+            }, 1000);
+            
+            enableNavigationWarning();
+            updateRecordingUI();
+            saveState();
+            
+        } catch (error) {
+            console.error('Error starting recording:', error);
+            isRecording = false;
+            updateRecordingUI();
+            
+            let errorMessage = 'Fehler beim Zugriff auf das Mikrofon.';
+            if (error.name === 'NotAllowedError') {
+                errorMessage = 'Mikrofon-Zugriff wurde verweigert. Bitte erlauben Sie den Zugriff in den Browser-Einstellungen.';
+            } else if (error.name === 'NotFoundError') {
+                errorMessage = 'Kein Mikrofon gefunden. Bitte überprüfen Sie Ihre Hardware.';
+            }
+            
+            alert(errorMessage);
+        }
+    }
+
+    function stopRecording() {
+        if (modalMediaRecorder && isRecording) {
+            modalMediaRecorder.stop();
+            modalMediaRecorder.stream.getTracks().forEach(track => track.stop());
+            isRecording = false;
+            
+            stopVisualizer();
+            
+            if (recordingTimer) {
+                clearInterval(recordingTimer);
+                recordingTimer = null;
+            }
+            
+            updateRecordingUI();
+            saveState();
+        }
+    }
+
+    function syncObservationsToPreview() {
+        const liveObservationsTextarea = document.getElementById('live-therapeutic-observations');
+        const therapeuticObservations = document.getElementById('therapeutic-observations');
+        
+        if (liveObservationsTextarea && therapeuticObservations) {
+            therapeuticObservations.value = liveObservationsTextarea.value;
+        }
+    }
+
+    function resetRecording() {
+        if (isRecording) stopRecording();
+        
+        modalRecordedChunks = [];
+        recordingSeconds = 0;
+        recordingStartTime = null;
+        
+        if (audioPreview) audioPreview.classList.add('hidden');
+        if (recordedAudio) recordedAudio.src = '';
+        
+        const liveObservationsTextarea = document.getElementById('live-therapeutic-observations');
+        const therapeuticObservations = document.getElementById('therapeutic-observations');
+        if (liveObservationsTextarea) liveObservationsTextarea.value = '';
+        if (therapeuticObservations) therapeuticObservations.value = '';
+        
+        updateRecordingUI();
+        clearState();
+        disableNavigationWarning();
+    }
+
+    // Tab switching
+    function setupTabSwitching() {
+        if (!tabRecord || !tabUpload) return;
+        
+        tabRecord.addEventListener('click', function() {
+            recordSection.classList.remove('hidden');
+            uploadSection.classList.add('hidden');
+            
+            this.classList.add('text-gray-900', 'bg-white', 'shadow-sm');
+            this.classList.remove('text-gray-500');
+            
+            tabUpload.classList.remove('text-gray-900', 'bg-white', 'shadow-sm');
+            tabUpload.classList.add('text-gray-500');
+        });
+
+        tabUpload.addEventListener('click', function() {
+            if (isRecording && !confirm('Eine Aufnahme läuft gerade. Möchten Sie wirklich zum Upload wechseln?')) {
+                return;
+            }
+            
+            recordSection.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            
+            this.classList.add('text-gray-900', 'bg-white', 'shadow-sm');
+            this.classList.remove('text-gray-500');
+            
+            tabRecord.classList.remove('text-gray-900', 'bg-white', 'shadow-sm');
+            tabRecord.classList.add('text-gray-500');
+        });
+    }
+
+    // File upload handling
+    function setupFileUpload() {
+        if (!modalAudioUpload) return;
+        
+        modalAudioUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                uploadFilename.textContent = file.name;
+                uploadFilesize.textContent = formatFileSize(file.size);
+                uploadPreview.classList.remove('hidden');
+                enableNavigationWarning();
+            } else {
+                uploadPreview.classList.add('hidden');
+                disableNavigationWarning();
+            }
+        });
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Form submission
+    function setupFormSubmission() {
+        if (!audioUploadForm) return;
+        
+        audioUploadForm.addEventListener('submit', function(e) {
+            if (!recordSection.classList.contains('hidden')) {
+                // Recording mode
+                if (modalRecordedChunks.length === 0) {
+                    e.preventDefault();
+                    alert('Bitte nehmen Sie zuerst etwas auf.');
+                    return;
+                }
+                
+                const blob = new Blob(modalRecordedChunks, { type: 'audio/webm' });
+                const file = new File([blob], 'aufnahme.webm', { type: 'audio/webm' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                modalAudioUpload.files = dataTransfer.files;
+            } else {
+                // Upload mode
+                if (!modalAudioUpload.files[0]) {
+                    e.preventDefault();
+                    alert('Bitte wählen Sie eine Datei aus.');
+                    return;
+                }
+            }
+            
+            submitButton.disabled = true;
+            submitButton.textContent = 'Wird verarbeitet...';
+            disableNavigationWarning();
+            clearState();
+        });
+    }
+
+    // Restore from state
+    async function restoreFromState(state) {
+        if (state.recordedDataURL) {
+            await restoreRecordedChunks(state.recordedDataURL);
+        }
+        
+        recordingSeconds = state.recordingSeconds || 0;
+        recordingStartTime = state.recordingStartTime;
+        
+        if (state.therapeuticObservations) {
+            const liveObservationsTextarea = document.getElementById('live-therapeutic-observations');
+            const therapeuticObservations = document.getElementById('therapeutic-observations');
+            if (liveObservationsTextarea) liveObservationsTextarea.value = state.therapeuticObservations;
+            if (therapeuticObservations) therapeuticObservations.value = state.therapeuticObservations;
+        }
+
+        if (state.isRecording) {
+            await startRecording();
+        } else if (state.hasRecordedData) {
+            enableNavigationWarning();
+            updateRecordingUI();
+        }
+    }
+
+    // Initialize modal
+    function initializeModal() {
+        if (isInitialized) return;
+        
+        if (!window.isSecureContext) {
+            console.error('Audio recording requires HTTPS');
+            if (recordInstruction) {
+                recordInstruction.textContent = 'HTTPS erforderlich für Audioaufnahme';
+                recordInstruction.classList.add('text-red-600');
+            }
+            if (recordToggle) {
+                recordToggle.disabled = true;
+                recordToggle.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            return;
+        }
+
+        initializeDOMElements();
+        
+        if (!recordToggle) {
+            console.warn('Audio modal elements not found');
+            return;
+        }
+        
+        setupTabSwitching();
+        setupFileUpload();
+        setupFormSubmission();
+        
+        // Setup recording button
+        recordToggle.addEventListener('click', toggleRecording);
+        
+        // Setup delete button
+        if (deleteRecording) {
+            deleteRecording.addEventListener('click', function() {
+                if (confirm('Möchten Sie die Aufnahme wirklich löschen?')) {
+                    resetRecording();
+                }
+            });
+        }
+        
+        // Auto-save live observations
+        const liveObservationsTextarea = document.getElementById('live-therapeutic-observations');
+        if (liveObservationsTextarea) {
+            liveObservationsTextarea.addEventListener('input', saveState);
+        }
+        
+        // Initialize default tab
+        if (tabRecord) tabRecord.click();
+        
+        // Restore state
+        const savedState = loadState();
+        if (savedState) {
+            setTimeout(async () => {
+                await restoreFromState(savedState);
+            }, 100);
+        }
+        
+        isInitialized = true;
+    }
+
+    // Modal event handling
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-modal-target="audio-input-modal"]')) {
+            setTimeout(initializeModal, 200);
+        }
+    });
+
+    // Page visibility and cleanup
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden && (isRecording || modalRecordedChunks.length > 0)) {
+            saveState();
+        }
+    });
+
+    window.addEventListener('beforeunload', function() {
+        if (!isRecording) {
+            clearState();
+        }
+    });
+
+    // Global status function
+    window.getAudioRecordingStatus = function() {
+        const savedState = loadState();
+        return {
+            isRecording: savedState ? savedState.isRecording : false,
+            hasUnsavedData: savedState ? (savedState.hasRecordedData && !savedState.isRecording) : false,
+            recordingTime: savedState ? savedState.recordingSeconds : 0
+        };
+    };
+
+    // Check for saved state on page load
+    const savedState = loadState();
+    if (savedState && (savedState.isRecording || savedState.hasRecordedData)) {
+        console.log('Found saved audio recording state');
+        if (window.updateBackgroundRecordingIndicator) {
+            window.updateBackgroundRecordingIndicator(savedState);
+        }
+    }
+})();
+</script> 

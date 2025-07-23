@@ -94,18 +94,91 @@
         {% endif %}
     </div>
 
+    <!-- Background Audio Recording Indicators -->
+    <div id="background-recording-indicators" class="mb-6 space-y-3">
+        <!-- Active Recording Indicator -->
+        <div id="active-recording-indicator" class="hidden bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-3"></div>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-red-900">Aufnahme läuft im Hintergrund</h3>
+                            <p class="text-red-700 text-sm">Laufzeit: <span id="background-recording-time" class="font-mono">00:00</span></p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button data-modal-target="audio-input-modal" data-modal-toggle="audio-input-modal" 
+                                    class="text-red-700 bg-red-100 hover:bg-red-200 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zM12 7a1 1 0 012 0v4a1 1 0 11-2 0V7z" clip-rule="evenodd"/>
+                                </svg>
+                                Stoppen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Unsaved Recording Indicator -->
+        <div id="unsaved-recording-indicator" class="hidden bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="w-5 h-5 text-amber-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-amber-900">Ungespeicherte Aufnahme vorhanden</h3>
+                            <p class="text-amber-700 text-sm">Sie haben eine ungespeicherte Audioaufnahme (<span id="unsaved-recording-duration" class="font-mono">00:00</span>)</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button data-modal-target="audio-input-modal" data-modal-toggle="audio-input-modal" 
+                                    class="text-amber-700 bg-amber-100 hover:bg-amber-200 focus:ring-4 focus:outline-none focus:ring-amber-300 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Fortsetzen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Indicator -->
+        <div id="processing-indicator" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="w-5 h-5 text-blue-600 mr-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-medium text-blue-900">Audio wird verarbeitet</h3>
+                    <p class="text-blue-700 text-sm">Transkription läuft im Hintergrund...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Session Notes Card with Workflow -->
     <div class="bg-white rounded-lg shadow p-6 mb-6">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-lg font-semibold text-gray-900">Sitzungsnotizen</h2>
             {% if session.notes %}
                 <div class="flex space-x-2">
-                    {% if recordings %}
+                    {% if session.all_inputs.total_count > 0 %}
                         <button data-modal-target="ai-notes-modal" data-modal-toggle="ai-notes-modal" type="button" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
                             <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
                             </svg>
-                            Aus Audio regenerieren
+                            Aus Material regenerieren
                         </button>
                     {% endif %}
                     <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal" type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
@@ -119,15 +192,8 @@
         </div>
         
         {% if not session.notes %}
-            {% comment %}
-            Determine the current state:
-            - No recordings: Show initial choice
-            - Has recordings with transcriptions: Show generate notes option
-            - Has recordings without transcriptions: Show waiting/processing state
-            {% endcomment %}
-            
-            {% if not recordings %}
-                <!-- State 1: No recordings - Initial workflow selection -->
+            {% if session.all_inputs.total_count == 0 %}
+                <!-- Step 1: No inputs - Initial workflow selection -->
                 <div class="mb-8">
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                         <div class="flex items-center">
@@ -143,48 +209,52 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button data-modal-target="audio-workflow-modal" data-modal-toggle="audio-workflow-modal" 
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button data-modal-target="audio-input-modal" data-modal-toggle="audio-input-modal" 
                                 class="flex flex-col items-center p-6 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
                             <svg class="w-8 h-8 text-blue-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
                             </svg>
-                            <h4 class="text-sm font-medium text-blue-900">Audio aufnehmen/hochladen</h4>
-                            <p class="text-xs text-blue-700 mt-1 text-center">Für automatische Transkription und KI-Notizen</p>
+                            <h4 class="text-sm font-medium text-blue-900">Aufnahme hinzufügen</h4>
+                            <p class="text-xs text-blue-700 mt-1 text-center">Audio aufnehmen oder hochladen</p>
                         </button>
-                        <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal"
+                        <button data-modal-target="document-input-modal" data-modal-toggle="document-input-modal"
                                 class="flex flex-col items-center p-6 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">
                             <svg class="w-8 h-8 text-green-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <h4 class="text-sm font-medium text-green-900">Notizen hinzufügen</h4>
+                            <p class="text-xs text-green-700 mt-1 text-center">Dokumente hochladen oder Text eingeben</p>
+                        </button>
+                        <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal"
+                                class="flex flex-col items-center p-6 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors">
+                            <svg class="w-8 h-8 text-purple-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
-                            <h4 class="text-sm font-medium text-green-900">Manuell mit Vorlage</h4>
-                            <p class="text-xs text-green-700 mt-1 text-center">Vorlage auswählen und direkt bearbeiten</p>
+                            <h4 class="text-sm font-medium text-purple-900">Mit Vorlage starten</h4>
+                            <p class="text-xs text-purple-700 mt-1 text-center">Vorlage auswählen und direkt bearbeiten</p>
                         </button>
                     </div>
                 </div>
             {% else %}
-                <!-- State 2: Has recordings - Check for transcriptions -->
-                {% comment %}
-                Check if any recording has a transcription using the context variable from the view
-                {% endcomment %}
-                {% if has_transcribed_recordings %}
-                    <!-- State 2a: Has transcribed recordings - Show generate notes option -->
+                <!-- Step 2: Has inputs - Show generate notes option -->
+                {% if session.all_inputs.audio_count > 0 or session.all_inputs.document_count > 0 %}
                     <div class="mb-8">
                         <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 mr-2 bg-green-600 rounded-full flex items-center justify-center">
+                                    <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
                                         <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                         </svg>
                                     </div>
                                 </div>
-                                <div class="ml-4 flex-1">
-                                    <h3 class="text-lg font-medium text-green-900">Audio transkribiert</h3>
-                                    <p class="text-green-700 text-sm mt-1">{{ recordings|length }} Audio-Aufnahme{{ recordings|length|pluralize:"n" }} bereit für KI-Notizen</p>
+                                <div class="ml-2 flex-1">
+                                    <h3 class="text-lg font-medium text-green-900">Material ist bereit</h3>
+                                    <p class="text-green-700 text-sm mt-1">{{ session.all_inputs.audio_count }} Audio + {{ session.all_inputs.document_count }} Dokumente bereit für KI-Notizgenerierung</p>
                                 </div>
                                 <div class="ml-4">
-                                    <button data-modal-target="ai-notes-modal" data-modal-toggle="ai-notes-modal" type="button" class="px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 inline-flex items-center">
+                                    <button data-modal-target="ai-notes-modal" data-modal-toggle="ai-notes-modal" type="button" class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-6 py-3 text-center inline-flex items-center">
                                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
                                         </svg>
@@ -194,28 +264,22 @@
                             </div>
                         </div>
                         
-                        <div class="flex justify-center">
+                        <div class="flex justify-center mt-6">
                             <div class="text-center">
                                 <p class="text-sm text-gray-600 mb-4">Oder wähle eine andere Option:</p>
                                 <div class="flex space-x-4">
-                                    <button data-modal-target="audio-workflow-modal" data-modal-toggle="audio-workflow-modal" type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                        </svg>
-                                        Weitere Audio-Aufnahme
-                                    </button>
-                                    <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal" type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center">
+                                    <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal" type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
-                                        Manuell mit Vorlage
+                                        Mit Vorlage starten
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 {% else %}
-                    <!-- State 2b: Has recordings but no transcriptions yet -->
+                    <!-- Step 2b: Has inputs but not processed yet -->
                     <div class="mb-8">
                         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                             <div class="flex items-center">
@@ -228,15 +292,15 @@
                                     </div>
                                 </div>
                                 <div class="ml-4 flex-1">
-                                    <h3 class="text-lg font-medium text-yellow-900">Audio wird verarbeitet</h3>
-                                    <p class="text-yellow-700 text-sm mt-1">Transkription läuft... Bitte warte einen Moment.</p>
+                                    <h3 class="text-lg font-medium text-yellow-900">Material wird verarbeitet</h3>
+                                    <p class="text-yellow-700 text-sm mt-1">Transkription und Textextraktion läuft... Bitte warte einen Moment.</p>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="text-center">
                             <p class="text-sm text-gray-600 mb-4">Oder starte bereits mit einer Vorlage:</p>
-                            <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal" type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center inline-flex items-center">
+                            <button data-modal-target="template-selection-modal" data-modal-toggle="template-selection-modal" type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                 </svg>
@@ -287,166 +351,13 @@
         {% endif %}
     </div>
 
-    <!-- Audio Recordings Section -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold text-gray-900">Audio-Aufnahmen</h2>
-            <div class="flex space-x-2">
-                <button data-modal-target="audio-workflow-modal" data-modal-toggle="audio-workflow-modal" type="button" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                    </svg>
-                    Aufnahme hinzufügen
-                </button>
-            </div>
-        </div>
-        
-        {% if recordings %}
-        <div class="space-y-4">
-            {% for recording in recordings %}
-            <div class="border rounded-lg p-4" data-recording-id="{{ recording.pk }}">
-                <div class="flex justify-between items-start mb-3">
-                    <div>
-                        <h3 class="font-medium text-gray-900">{{ recording.filename }}</h3>
-                        <p class="text-sm text-gray-500">
-                            Hochgeladen: {{ recording.created_at|date:"d.m.Y H:i" }}
-                            {% if recording.file_size %}
-                                | Größe: {{ recording.file_size|filesizeformat }}
-                            {% endif %}
-                            {% if recording.duration_seconds %}
-                                | Dauer: {{ recording.duration_seconds }}s
-                            {% endif %}
-                        </p>
-                    </div>
-                    <div class="flex space-x-2">
-                        {% if not recording.is_processed %}
-                            <button data-modal-target="transcribe-modal-{{ recording.pk }}" data-modal-toggle="transcribe-modal-{{ recording.pk }}" class="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 inline-flex items-center">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                Transkribieren
-                            </button>
-                        {% endif %}
-                        <a href="{% url 'sessions:audio_download' recording.pk %}" class="text-blue-600 bg-white border border-blue-300 hover:bg-blue-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            Download
-                        </a>
-                        <button data-modal-target="audio-delete-modal-{{ recording.pk }}" data-modal-toggle="audio-delete-modal-{{ recording.pk }}" class="text-red-600 bg-white border border-red-300 hover:bg-red-50 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                            Löschen
-                        </button>
-                    </div>
-                </div>
-                <audio controls class="w-full mb-3">
-                    <source src="{{ recording.audio.url }}" type="audio/mpeg">
-                    Dein Browser unterstützt leider keine Audio-Wiedergabe.
-                </audio>
-                {% if recording.transcription %}
-                    {% if recording.transcription.text %}
-                        <div class="bg-green-50 p-3 rounded">
-                            <details class="w-full">
-                                <summary class="cursor-pointer flex justify-between items-center">
-                                    <h4 class="text-sm font-medium text-green-700">Transkription verfügbar</h4>
-                                    <svg class="w-4 h-4 text-green-600 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </summary>
-                                <div class="mt-3 pt-3 border-t border-green-200">
-                                    <p class="text-gray-800 whitespace-pre-wrap text-sm">{{ recording.transcription.text }}</p>
-                                </div>
-                            </details>
-                        </div>
-                    {% else %}
-                        <div class="bg-red-50 p-3 rounded">
-                            <p class="text-sm text-red-800">Transkription fehlgeschlagen.</p>
-                        </div>
-                    {% endif %}
-                {% else %}
-                    {% if recording.is_processed %}
-                        <div class="bg-yellow-50 p-3 rounded">
-                            <p class="text-sm text-yellow-800">Transkription wird verarbeitet...</p>
-                        </div>
-                    {% else %}
-                        <div class="bg-gray-50 p-3 rounded">
-                            <p class="text-sm text-gray-600">Noch nicht transkribiert</p>
-                        </div>
-                    {% endif %}
-                {% endif %}
-            </div>
-            
-            <!-- Confirmation Modals for this recording -->
-            {% if not recording.is_processed %}
-            <!-- Transcribe Modal -->
-            <div id="transcribe-modal-{{ recording.pk }}" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                <div class="relative p-4 w-full max-w-md max-h-full">
-                    <div class="relative p-4 text-center bg-white rounded-lg shadow sm:p-5">
-                        <button type="button" class="text-gray-400 absolute top-2.5 right-2.5 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-toggle="transcribe-modal-{{ recording.pk }}">
-                            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                            <span class="sr-only">Close modal</span>
-                        </button>
-                        <svg class="text-blue-400 w-6 h-6 mb-3.5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <p class="mb-4 text-gray-500">Möchtest Du die Audio-Aufnahme <strong>"{{ recording.filename }}"</strong> transkribieren?</p>
-                        <p class="mb-4 text-sm text-gray-400">Die Transkription wird mit OpenAI Whisper durchgeführt und kann einige Minuten dauern.</p>
-                        <div class="flex justify-center items-center space-x-4">
-                            <button data-modal-toggle="transcribe-modal-{{ recording.pk }}" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
-                                Abbrechen
-                            </button>
-                            <button hx-post="{% url 'sessions:transcribe' recording.pk %}" 
-                                    hx-target="body"
-                                    type="button" 
-                                    class="py-2 px-3 text-sm font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300">
-                                Ja, transkribieren
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- Delete Modal -->
-            <div id="audio-delete-modal-{{ recording.pk }}" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                <div class="relative p-4 w-full max-w-md max-h-full">
-                    <div class="relative p-4 text-center bg-white rounded-lg shadow sm:p-5">
-                        <button type="button" class="text-gray-400 absolute top-2.5 right-2.5 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center" data-modal-toggle="audio-delete-modal-{{ recording.pk }}">
-                            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                            <span class="sr-only">Close modal</span>
-                        </button>
-                        <svg class="text-gray-400 w-6 h-6 mb-3.5 mx-auto" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                        <p class="mb-4 text-gray-500">Bist Du sicher, dass Du die Audio-Aufnahme <strong>"{{ recording.filename }}"</strong> löschen möchtest?</p>
-                        <div class="flex justify-center items-center space-x-4">
-                            <button data-modal-toggle="audio-delete-modal-{{ recording.pk }}" type="button" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-primary-300 hover:text-gray-900 focus:z-10">
-                                Nein, abbrechen
-                            </button>
-                            <button hx-post="{% url 'sessions:audio_delete' recording.pk %}" 
-                                    hx-target="body"
-                                    type="button" 
-                                    class="py-2 px-3 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
-                                Ja, löschen
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            {% endfor %}
-        </div>
-        {% else %}
-        <!-- No recordings state -->
-        <div class="text-center py-8">
-            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-            </svg>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Keine Audio-Aufnahmen</h3>
-            <p class="text-gray-500 mb-4">Du kannst Audio-Aufnahmen hinzufügen, um automatische Transkriptionen und KI-Notizen zu erstellen.</p>
-        </div>
-        {% endif %}
-    </div>
+    <!-- Unified Multimodal Input Section - Only show when inputs exist -->
+    {% if session.all_inputs.total_count > 0 %}
+        {% with document_type='session' audio_inputs=session.audio_inputs.all document_inputs=session.document_inputs.all document=session %}
+            {% include 'partials/multimodal_input_widget.html' %}
+        {% endwith %}
+    {% endif %}
+
 
     <!-- Template Selection Modal -->
     <div id="template-selection-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
@@ -474,6 +385,21 @@
                             {% endfor %}
                         </select>
                     </div>
+                    
+                    <div class="mb-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                <div class="text-sm">
+                                    <p class="font-medium text-blue-900">Optional: Material hinzufügen</p>
+                                    <p class="text-blue-700 mt-1">Du kannst nach der Vorlagenauswahl noch Audio oder Dokumente hinzufügen, um KI-generierte Notizen zu erstellen.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="mt-6 flex justify-end space-x-2">
                         <button type="button" data-modal-toggle="template-selection-modal" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-300">
                             Abbrechen
@@ -487,8 +413,7 @@
         </div>
     </div>
 
-    <!-- Include Audio Recording Modal -->
-    {% include 'sessions/partials/audio_recording.html' %}
+
 
     <!-- AI Notes Generation Modal -->
     <div id="ai-notes-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
@@ -514,8 +439,12 @@
                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                                 </svg>
                                 <div class="text-sm">
-                                    <p class="font-medium text-blue-900">Alle Audio-Transkriptionen werden kombiniert</p>
-                                    <p class="text-blue-700 mt-1">Die KI erstellt strukturierte Notizen basierend auf allen verfügbaren Transkriptionen dieser Sitzung.</p>
+                                    <p class="font-medium text-blue-900">Alle verfügbaren Eingaben werden kombiniert</p>
+                                    <p class="text-blue-700 mt-1">Die KI erstellt strukturierte Notizen basierend auf Audio-Transkriptionen und Dokumenten dieser Sitzung.</p>
+                                    <div class="mt-2 text-xs text-blue-600">
+                                        <span class="font-medium">{{ session.all_inputs.audio_count }} Audio</span> + 
+                                        <span class="font-medium">{{ session.all_inputs.document_count }} Dokumente</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -625,7 +554,109 @@ document.addEventListener('DOMContentLoaded', function() {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         evt.detail.headers['X-CSRFToken'] = csrfToken;
     });
+
+    // Initialize Flowbite modals manually if needed
+    if (typeof window.initFlowbite === 'function') {
+        window.initFlowbite();
+    }
 });
+
+// Background Recording Indicator Management
+(function() {
+    let backgroundTimer;
+    
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    
+    function updateBackgroundIndicators() {
+        if (typeof window.getAudioRecordingStatus === 'function') {
+            const status = window.getAudioRecordingStatus();
+            
+            const activeIndicator = document.getElementById('active-recording-indicator');
+            const unsavedIndicator = document.getElementById('unsaved-recording-indicator');
+            const processingIndicator = document.getElementById('processing-indicator');
+            const backgroundRecordingTime = document.getElementById('background-recording-time');
+            const unsavedRecordingDuration = document.getElementById('unsaved-recording-duration');
+            
+            if (status.isRecording) {
+                // Show active recording indicator
+                if (activeIndicator) {
+                    activeIndicator.classList.remove('hidden');
+                    if (backgroundRecordingTime) {
+                        backgroundRecordingTime.textContent = formatTime(status.recordingTime);
+                    }
+                }
+                if (unsavedIndicator) unsavedIndicator.classList.add('hidden');
+                if (processingIndicator) processingIndicator.classList.add('hidden');
+                
+                // Start timer for active recording
+                if (backgroundTimer) clearInterval(backgroundTimer);
+                let currentTime = status.recordingTime;
+                backgroundTimer = setInterval(() => {
+                    currentTime++;
+                    if (backgroundRecordingTime) {
+                        backgroundRecordingTime.textContent = formatTime(currentTime);
+                    }
+                }, 1000);
+                
+            } else if (status.hasUnsavedData) {
+                // Show unsaved recording indicator
+                if (unsavedIndicator) {
+                    unsavedIndicator.classList.remove('hidden');
+                    if (unsavedRecordingDuration) {
+                        unsavedRecordingDuration.textContent = formatTime(status.recordingTime);
+                    }
+                }
+                if (activeIndicator) activeIndicator.classList.add('hidden');
+                if (processingIndicator) processingIndicator.classList.add('hidden');
+                
+                // Clear background timer
+                if (backgroundTimer) {
+                    clearInterval(backgroundTimer);
+                    backgroundTimer = null;
+                }
+                
+            } else {
+                // Hide all indicators
+                if (activeIndicator) activeIndicator.classList.add('hidden');
+                if (unsavedIndicator) unsavedIndicator.classList.add('hidden');
+                if (processingIndicator) processingIndicator.classList.add('hidden');
+                
+                // Clear background timer
+                if (backgroundTimer) {
+                    clearInterval(backgroundTimer);
+                    backgroundTimer = null;
+                }
+            }
+        }
+    }
+    
+    // Make function globally available for audio modal
+    window.updateBackgroundRecordingIndicator = updateBackgroundIndicators;
+    
+    // Check on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateBackgroundIndicators();
+    });
+    
+    // Check periodically for status changes
+    setInterval(updateBackgroundIndicators, 5000);
+    
+    // Check when page becomes visible
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            updateBackgroundIndicators();
+        }
+    });
+    
+    // Listen for custom events from audio modal
+    document.addEventListener('audioRecordingStatusChanged', function() {
+        updateBackgroundIndicators();
+    });
+})();
 
 // Auto-save functionality
 document.addEventListener('DOMContentLoaded', function() {
@@ -749,6 +780,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+
+
 // Copy notes to clipboard
 const copyNotesBtn = document.getElementById('copy-notes-btn');
 if (copyNotesBtn) {
@@ -849,4 +882,15 @@ if (copyNotesBtn) {
 
 </script>
 </div>
+
+<!-- Include Audio Input Modal -->
+{% with document_type='session' document=session %}
+    {% include 'partials/audio_input_modal.html' %}
+{% endwith %}
+
+<!-- Include Document Input Modal -->
+{% with document_type='session' document=session %}
+    {% include 'partials/document_input_modal.html' %}
+{% endwith %}
+
 {% endblock %}

@@ -1,10 +1,9 @@
 from django import forms
-from .models import Session, AudioRecording
+from .models import Session
 from users.mixins import UserFormMixin
 
 
 class SessionForm(UserFormMixin, forms.ModelForm):
-
     class Meta:
         model = Session
         fields = ["date", "title", "patient_gender"]
@@ -16,15 +15,3 @@ class SessionForm(UserFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-
-class AudioUploadForm(forms.ModelForm):
-    class Meta:
-        model = AudioRecording
-        fields = ['audio']
-        widgets = {
-            'audio': forms.FileInput(attrs={
-                'class': 'form-control',
-                'accept': 'audio/*'
-            })
-        }

@@ -17,13 +17,6 @@ class TranscriptionService:
         """Reinitialize the client (useful after settings change)"""
         self.connector.reinitialize()
 
-    def transcribe(self, file_path: str) -> tuple[str, float]:
-        """
-        Transcribe audio file using OpenAI Whisper
-        Returns: (transcribed_text, processing_time_seconds)
-        """
-        return self.connector.transcribe(file_path)
-
     def summarize_session_notes(self, session_notes: str) -> str:
         """
         Create ultra-short summary using OpenAI GPT
@@ -45,7 +38,7 @@ class TranscriptionService:
         Returns:
             Formatted context prefix
         """
-        context_prefix = f"""Erstelle strukturierte Sitzungsnotizen basierend auf dem folgenden Transkript einer Therapiesitzung.
+        context_prefix = """Erstelle strukturierte Sitzungsnotizen basierend auf dem folgenden Transkript einer Therapiesitzung.
 
 Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
@@ -150,7 +143,7 @@ geschlechtsangemessene Sprache in den Notizen. Achte auf eine respektvolle und p
             Generated session notes
         """
         # Import here to avoid circular imports
-        from reports.services import TemplateService
+        from document_templates.service import TemplateService
 
         template_service = TemplateService()
         templates = template_service.get_session_templates()

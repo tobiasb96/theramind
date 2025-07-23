@@ -1,11 +1,10 @@
 from django.urls import path
-from .views import SessionViewSet, AudioViewSet
+from .views import SessionViewSet
 
 app_name = "sessions"
 
 # Initialize ViewSets
 session_viewset = SessionViewSet()
-audio_viewset = AudioViewSet()
 
 urlpatterns = [
     # Session URLs (now standalone)
@@ -14,8 +13,6 @@ urlpatterns = [
     path("<int:pk>/", session_viewset.retrieve, name="session_detail"),
     path("<int:pk>/edit/", session_viewset.update, name="session_edit"),
     path("<int:pk>/delete/", session_viewset.destroy, name="session_delete"),
-    # Session custom actions
-    path("<int:pk>/upload-audio/", audio_viewset.upload, name="session_audio_upload"),
     path(
         "<int:pk>/save-transcript/",
         session_viewset.save_transcript,
@@ -43,8 +40,4 @@ urlpatterns = [
         session_viewset.delete_notes,
         name="session_delete_notes",
     ),
-    # Audio processing URLs
-    path("recordings/<int:pk>/transcribe/", audio_viewset.transcribe, name="transcribe"),
-    path("recordings/<int:pk>/download/", audio_viewset.download, name="audio_download"),
-    path("recordings/<int:pk>/delete/", audio_viewset.delete, name="audio_delete"),
 ]

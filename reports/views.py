@@ -14,8 +14,9 @@ import logging
 from document_templates.models import DocumentTemplate
 from document_templates.service import TemplateService
 
-from .models import Report, ReportContextFile
-from .forms import ReportForm, ReportContextFileForm, ReportContextTextForm, ReportContentForm
+from .models import Report
+from .forms import ReportForm, ReportContentForm
+from core.forms import AudioInputForm, DocumentFileInputForm, DocumentTextInputForm
 from .services import ReportService
 from .tables import ReportTable
 
@@ -60,22 +61,21 @@ class ReportViewSet(viewsets.ViewSet):
         """Retrieve a specific report detail view"""
         # CRITICAL SECURITY: Only allow access to user's own reports
         report = get_object_or_404(Report, pk=pk, user=request.user)
-        
-        # Get context files
-        context_files = report.context_files.filter(extraction_successful=True).order_by(
-            "-created_at"
-        )
-        
+
+        # Get unified inputs
+        audio_inputs = report.audio_inputs.order_by("-created_at")
+        document_inputs = report.document_inputs.order_by("-created_at")
+
         # Get available templates for report generation
         template_service = TemplateService()
         report_templates = template_service.get_available_templates(
-            DocumentTemplate.TemplateType.REPORT,
-            user=request.user
+            DocumentTemplate.TemplateType.REPORT, user=request.user
         )
-        
-        # Initialize forms
-        file_form = ReportContextFileForm()
-        text_form = ReportContextTextForm()
+
+        # Initialize unified forms
+        audio_form = AudioInputForm()
+        document_file_form = DocumentFileInputForm()
+        document_text_form = DocumentTextInputForm()
         content_form = ReportContentForm(instance=report)
         
         # Get context summary
@@ -87,10 +87,12 @@ class ReportViewSet(viewsets.ViewSet):
             "reports/report_detail.html",
             {
                 "report": report,
-                "context_files": context_files,
+                "audio_inputs": audio_inputs,
+                "document_inputs": document_inputs,
                 "report_templates": report_templates,
-                "file_form": file_form,
-                "text_form": text_form,
+                "audio_form": audio_form,
+                "document_file_form": document_file_form,
+                "document_text_form": document_text_form,
                 "content_form": content_form,
                 "context_summary": context_summary,
             },
@@ -147,100 +149,6 @@ class ReportViewSet(viewsets.ViewSet):
             report.delete()
             messages.success(request, "Bericht wurde erfolgreich gelöscht.")
             return redirect("reports:reports_list")
-
-    @action(detail=True, methods=["post"])
-    @method_decorator(csrf_exempt)
-    def upload_context_file(self, request, pk=None):
-        """Upload a context file to a report"""
-        # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=request.user)
-        
-        if 'original_file' not in request.FILES:
-            messages.error(request, "Keine Datei hochgeladen")
-            return redirect("reports:report_detail", pk=report.pk)
-        
-        uploaded_file = request.FILES['original_file']
-        
-        try:
-            # Use report service to add context file
-            report_service = ReportService()
-            context_file = report_service.add_context_file(report, uploaded_file)
-            
-            if context_file.extraction_successful:
-                messages.success(
-                    request, 
-                    f"Datei '{context_file.file_name}' wurde erfolgreich hochgeladen und verarbeitet."
-                )
-            else:
-                messages.warning(
-                    request,
-                    f"Datei '{context_file.file_name}' wurde hochgeladen, aber die Textextraktion fehlgeschlagen: {context_file.extraction_error}"
-                )
-                
-        except Exception as e:
-            logger.error(f"Error uploading context file: {str(e)}")
-            messages.error(request, f"Fehler beim Hochladen der Datei: {str(e)}")
-        
-        return redirect("reports:report_detail", pk=report.pk)
-
-    @action(detail=True, methods=["post"])
-    @method_decorator(csrf_exempt)
-    def add_context_text(self, request, pk=None):
-        """Add manual text as context to a report"""
-        # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=request.user)
-        
-        form = ReportContextTextForm(request.POST)
-        if form.is_valid():
-            try:
-                # Use report service to add context text
-                report_service = ReportService()
-                context_file = report_service.add_context_text(
-                    report=report,
-                    text=form.cleaned_data['text_input'],
-                    file_name=form.cleaned_data['file_name']
-                )
-                
-                messages.success(
-                    request, 
-                    f"Text '{context_file.file_name}' wurde erfolgreich hinzugefügt."
-                )
-                
-            except Exception as e:
-                logger.error(f"Error adding context text: {str(e)}")
-                messages.error(request, f"Fehler beim Hinzufügen des Texts: {str(e)}")
-        else:
-            messages.error(request, "Ungültige Eingabe. Bitte prüfe die Eingaben.")
-        
-        return redirect("reports:report_detail", pk=report.pk)
-
-    @action(detail=True, methods=["post"])
-    @method_decorator(csrf_exempt)
-    def delete_context_file(self, request, pk=None):
-        """Delete a context file from a report"""
-        # CRITICAL SECURITY: Only allow access to user's own reports
-        report = get_object_or_404(Report, pk=pk, user=request.user)
-        
-        try:
-            data = json.loads(request.body)
-            context_file_id = data.get('context_file_id')
-            
-            if not context_file_id:
-                return JsonResponse({'error': 'Kontext-Datei-ID fehlt'}, status=400)
-            
-            # CRITICAL SECURITY: Double-check context file belongs to user's report
-            context_file = get_object_or_404(ReportContextFile, id=context_file_id, report=report)
-            file_name = context_file.file_name
-            context_file.delete()
-            
-            return JsonResponse({
-                'success': True,
-                'message': f'Kontext-Datei "{file_name}" wurde erfolgreich gelöscht.'
-            })
-            
-        except Exception as e:
-            logger.error(f"Error deleting context file: {str(e)}")
-            return JsonResponse({'error': f'Fehler beim Löschen: {str(e)}'}, status=500)
 
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)

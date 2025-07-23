@@ -26,6 +26,7 @@ urlpatterns = [
     path("document-templates/", include("document_templates.urls")),
     path("sessions/", include("therapy_sessions.urls")),
     path("reports/", include("reports.urls")),
+    path("core/", include("core.urls")),
 ]
 
 # Serve media files in development

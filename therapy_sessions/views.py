@@ -12,8 +12,8 @@ import re
 import logging
 from django.core.paginator import Paginator
 from django.shortcuts import render
-from therapy_sessions.models import Session, Transcription
-from therapy_sessions.forms import SessionForm, AudioUploadForm
+from therapy_sessions.models import Session
+from therapy_sessions.forms import SessionForm
 from therapy_sessions.services import get_transcription_service
 
 logger = logging.getLogger(__name__)
@@ -60,15 +60,19 @@ class SessionViewSet(viewsets.ViewSet):
         """Retrieve a specific session"""
         session = self.get_object(pk, request)
 
-        # Get related data
-        recordings = session.audiorecording_set.order_by("-created_at")
-        upload_form = AudioUploadForm()
+        # Get unified inputs
+        audio_inputs = session.audio_inputs.order_by("-created_at")
+        document_inputs = session.document_inputs.order_by("-created_at")
 
-        # Check if any recording has a transcription
+        from core.forms import AudioInputForm, DocumentFileInputForm, DocumentTextInputForm
+
+        audio_form = AudioInputForm()
+        document_file_form = DocumentFileInputForm()
+        document_text_form = DocumentTextInputForm()
+
+        # Check if any audio input has a transcription
         has_transcribed_recordings = any(
-            getattr(recording, "transcription", None)
-            and getattr(recording, "transcription", None).text
-            for recording in recordings
+            audio_input.transcribed_text for audio_input in audio_inputs
         )
 
         # Get session notes templates from TemplateService
@@ -82,8 +86,11 @@ class SessionViewSet(viewsets.ViewSet):
             "sessions/session_detail.html",
             {
                 "session": session,
-                "recordings": recordings,
-                "upload_form": upload_form,
+                "audio_inputs": audio_inputs,
+                "document_inputs": document_inputs,
+                "audio_form": audio_form,
+                "document_file_form": document_file_form,
+                "document_text_form": document_text_form,
                 "session_notes_templates": session_notes_templates,
                 "has_transcribed_recordings": has_transcribed_recordings,
             },
@@ -105,23 +112,6 @@ class SessionViewSet(viewsets.ViewSet):
                     reverse_lazy("sessions:session_detail", kwargs={"pk": session.pk})
                 )
             return render(request, "sessions/session_form.html", {"form": form})
-
-    def _handle_htmx_create(self, request):
-        """Handle HTMX session creation"""
-        try:
-            session = Session.objects.create(
-                user=request.user,
-                date=request.POST.get("date"),
-                title=request.POST.get("title", ""),
-            )
-            response = HttpResponse()
-            response["HX-Redirect"] = reverse_lazy(
-                "sessions:session_detail", kwargs={"pk": session.pk}
-            )
-            return response
-
-        except ValueError:
-            return JsonResponse({"error": "Fehler beim Erstellen der Sitzung"}, status=400)
 
     def update(self, request, pk=None):
         """Update an existing session"""
@@ -148,20 +138,6 @@ class SessionViewSet(viewsets.ViewSet):
                 )
 
             return render(request, "sessions/session_form.html", {"form": form, "session": session})
-
-    def _handle_htmx_update(self, request, session):
-        """Handle HTMX session update"""
-        form = SessionForm(request.POST, instance=session)
-        if form.is_valid():
-            form.save()
-        messages.success(request, "Sitzung wurde erfolgreich aktualisiert.")
-
-        response = HttpResponse("")
-        response["HX-Redirect"] = reverse_lazy(
-            "sessions:session_detail",
-            kwargs={"pk": session.pk},
-        )
-        return response
 
     def destroy(self, request, pk=None):
         """Delete a session"""
@@ -224,14 +200,29 @@ class SessionViewSet(viewsets.ViewSet):
                 messages.error(request, "Template nicht gefunden")
                 return self._redirect_to_session_detail(pk)
 
-            transcriptions = Transcription.objects.filter(recording__session=session)
+            # Get transcriptions from unified audio inputs
+            transcriptions = []
+            for audio_input in session.audio_inputs.filter(processing_successful=True):
+                if audio_input.transcribed_text:
+                    transcriptions.append(audio_input)
 
-            if not transcriptions.exists():
+            if not transcriptions:
                 messages.error(request, "Keine Transkriptionen für diese Sitzung verfügbar")
                 return self._redirect_to_session_detail(pk)
 
             # Combine all transcriptions
-            combined_transcript = "\n\n".join([t.text for t in transcriptions])
+            combined_transcript = "\n\n".join([t.transcribed_text for t in transcriptions])
+
+            # Generate session notes using unified service
+            from core.services import UnifiedInputService
+
+            unified_service = UnifiedInputService()
+
+            # Get combined text from all inputs (audio + documents)
+            combined_text = unified_service.get_combined_text(session)
+
+            # Use combined text if available, otherwise fall back to transcriptions only
+            text_for_generation = combined_text if combined_text.strip() else combined_transcript
 
             # Generate session notes
             transcription_service = get_transcription_service()
@@ -243,7 +234,7 @@ class SessionViewSet(viewsets.ViewSet):
             existing_notes = session.notes if session.notes else None
 
             session_notes = transcription_service.create_session_notes_with_template(
-                combined_transcript, template, existing_notes, session.patient_gender
+                text_for_generation, template, existing_notes, session.patient_gender
             )
 
             if session_notes:
@@ -252,7 +243,6 @@ class SessionViewSet(viewsets.ViewSet):
                     session.summary = summary
                 except Exception as e:
                     logger.error(f"Fehler bei der Zusammenfassung: {str(e)}")
-                    pass
 
             session.notes = session_notes
             session.save()
