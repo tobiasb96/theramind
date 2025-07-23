@@ -150,7 +150,20 @@ wenn es sinnvoll ist.
             context_prefix = self._build_context_prefix(session, existing_notes)
 
             # Combine context prefix with template structure
-            full_prompt = context_prefix + template.user_prompt
+            full_prompt = f"""
+            **AUFGABE** 
+            Erstelle strukturierte Sitzungsnotizen basierend auf Informationen zu einer Therapiesitzung.
+            
+            **ALLGMEINE ANWEISUNGEN FÜR DIE ERSTELLUNG DER SITZUNGSNOTIZEN**
+            {template.general_instructions}
+            
+            
+            **STRUKTUR FÜR DIE ERSTELLUNG DER SITZUNGSNOTIZEN**
+            {template.user_prompt}
+            
+            
+            {context_prefix}
+            """
 
             # Generate the notes using LLM connector
             params = LLMGenerationParams(

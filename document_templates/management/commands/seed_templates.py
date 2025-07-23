@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from document_templates.models import DocumentTemplate
-from document_templates.template_content.reports import REPORT_TEMPLATES
-from document_templates.template_content.sessions import SESSION_TEMPLATES
+from document_templates.template_content.reports import REPORT_TEMPLATES, REPORT_GENERAL_INSTRUCTIONS
+from document_templates.template_content.sessions import SESSION_TEMPLATES, SESSION_GENERAL_INSTRUCTIONS
 
 
 class Command(BaseCommand):
@@ -22,20 +22,22 @@ class Command(BaseCommand):
             # Session notes templates from therapy_sessions/prompts.py
             session_templates = [
                 {
-                    'name': 'Sitzungsnoriz',
+                    'name': 'Verlaufsnotiz',
                     'description': 'Strukturierte Sitzungsdokumentation aus Therapietranskript mit klinischer, objektiver Sprache und psychologischen Fachbegriffen',
                     'template_type': 'session_notes',
                     'user_prompt': SESSION_TEMPLATES.get("session_notes"),
+                    'general_instructions': SESSION_GENERAL_INSTRUCTIONS.get("session_notes"),
                     'max_tokens': 2500,
                     'temperature': 0.3,
                     'is_predefined': True,
                     'is_active': True,
                 },
                 {
-                    'name': 'Sitzungsnotiz (kurz)',
+                    'name': 'Verlaufsnotiz (kurz)',
                     'description': 'Kompakte strukturierte Sitzungsdokumentation aus Therapietranskript mit klinischer Sprache und Fokus auf therapeutisch relevante Inhalte',
                     'template_type': 'session_notes',
                     'user_prompt': SESSION_TEMPLATES.get("session_notes_short"),
+                    'general_instructions': SESSION_GENERAL_INSTRUCTIONS.get("session_notes_short"),
                     'max_tokens': 1500,
                     'temperature': 0.3,
                     'is_predefined': True,
@@ -46,6 +48,7 @@ class Command(BaseCommand):
                     'description': 'Strukturierte Dokumentation des Erstgesprächs mit umfassender Anamnese und diagnostischer Einschätzung in professionellem psychotherapeutischem Stil',
                     'template_type': 'session_notes',
                     'user_prompt': SESSION_TEMPLATES.get("initial_consultation"),
+                    'general_instructions': SESSION_GENERAL_INSTRUCTIONS.get("initial_consultation"),
                     'max_tokens': 3000,
                     'temperature': 0.3,
                     'is_predefined': True,
@@ -56,6 +59,7 @@ class Command(BaseCommand):
                     'description': 'Strukturierte biographische Anamnese mit Fokus auf prägende Ereignisse und Entwicklungsstufen der psychischen und emotionalen Entwicklung',
                     'template_type': 'session_notes',
                     'user_prompt': SESSION_TEMPLATES.get("biographical_anamnesis"),
+                    'general_instructions': SESSION_GENERAL_INSTRUCTIONS.get("biographical_anamnesis"),
                     'max_tokens': 2500,
                     'temperature': 0.3,
                     'is_predefined': True,
@@ -99,7 +103,8 @@ class Command(BaseCommand):
                     'name': 'Erstbericht',
                     'description': 'Strukturierter Erstbericht für Kostenträger mit umfassender Darstellung der Diagnose, Anamnese und Behandlungsplanung',
                     'template_type': 'report',
-                    'user_prompt': REPORT_TEMPLATES.get("intial_report"),
+                    'user_prompt': REPORT_TEMPLATES.get("initial_report"),
+                    'general_instructions': REPORT_GENERAL_INSTRUCTIONS.get("initial_report"),
                     'max_tokens': 3500,
                     'temperature': 0.3,
                     'is_predefined': True,
@@ -110,6 +115,7 @@ class Command(BaseCommand):
                     'description': 'Strukturierter psychologischer Befundbericht mit detaillierter Darstellung des psychischen Zustands und diagnostischer Einschätzung',
                     'template_type': 'report',
                     'user_prompt': REPORT_TEMPLATES.get("psychological_findings_report"),
+                    'general_instructions': REPORT_GENERAL_INSTRUCTIONS.get("psychological_findings_report"),
                     'max_tokens': 4000,
                     'temperature': 0.3,
                     'is_predefined': True,

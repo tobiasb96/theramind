@@ -53,8 +53,13 @@ report_initial = """
 </ul>
 """
 
-# ToDo(ME-23.07.25): 
+report_initial_general_instructions = """
+"""
+
 report_conversion = """
+"""
+
+report_conversion_general_instructions = """
 """
 
 report_psychological_findings = """
@@ -118,12 +123,19 @@ report_psychological_findings = """
 </ul>
 """
 
-# ToDo(ME-23.07.25):
+report_psychological_findings_general_instructions = """
+"""
+
 report_doctors_letter = """
 """
 
-# ToDo(ME-23.07.25):
+report_doctors_letter_general_instructions = """
+"""
+
 report_epicrisis = """
+"""
+
+report_epicrisis_general_instructions = """
 """
 
 REPORT_TEMPLATES = {
@@ -132,4 +144,12 @@ REPORT_TEMPLATES = {
     "psychological_findings_report": report_psychological_findings,
     "doctors_letter_report": report_doctors_letter,
     "epicrisis_report": report_epicrisis,
+}
+
+REPORT_GENERAL_INSTRUCTIONS = {
+    "initial_report": report_initial_general_instructions,
+    "conversion_report": report_conversion_general_instructions,
+    "psychological_findings_report": report_psychological_findings_general_instructions,
+    "doctors_letter_report": report_doctors_letter_general_instructions,
+    "epicrisis_report": report_epicrisis_general_instructions,
 }

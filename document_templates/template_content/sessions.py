@@ -63,6 +63,15 @@ session_notes = """
 </ul>
 """
 
+session_notes_general_instructions = """
+- Erstelle eine strukturierte Sitzungsdokumentation aus dem Therapietranskript
+- Verwende klinische, objektive Sprache mit psychologischen Fachbegriffen
+- Sei umfassend aber präzise
+- Verwende wörtliche Patientenzitate bei therapeutisch relevanten Aussagen (z.B. Konflikte, Glaubenssätze, Grundüberzeugungen, Kernannahmen)
+- Nutze nur Informationen aus dem Transkript, keine zusätzlichen Interpretationen
+- Ignoriere Smalltalk und konzentriere dich auf therapeutisch relevante Gesprächsteile
+"""
+
 session_notes_short = """
 <p><strong>Titel</strong></p>
 <ul>
@@ -93,6 +102,16 @@ session_notes_short = """
 <li>Neue Vereinbarungen zwischen Therapeut und Patient</li>
 <li>Hausaufgaben, Termine, Absprachen mit Deadlines</li>
 </ul>
+"""
+
+session_notes_short_general_instructions = """
+- Erstelle eine strukturierte Sitzungsdokumentation aus dem Therapietranskript
+- Verwende klinische, objektive Sprache mit psychologischen Fachbegriffen
+- Sei knapp, aber dennoch umfassend und detailliert
+- Verwende wörtliche Patientenzitate bei therapeutisch relevanten Aussagen (z.B. Konflikte, Glaubenssätze, Grundüberzeugungen, Kernannahmen)
+- Nutze nur Informationen aus dem Transkript, keine zusätzlichen Interpretationen
+- Ignoriere Smalltalk und konzentriere dich auf therapeutisch relevante Gesprächsteile
+- Ignoriere Smalltalk und konzentriere dich auf therapeutisch relevante Gesprächsteile
 """
 
 session_initial_consultation = """
@@ -162,6 +181,13 @@ session_initial_consultation = """
 </ul>
 """
 
+session_initial_consultation_general_instructions = """
+- Schreibe in professionellem psychotherapeutischem Stil und nutze den Konjunktiv für Patientenaussagen.
+- Ordne die Notiz nach Themen, damit sie klarer wird.
+- Halte die Zusammenfassung präzise, detailliert und kurz.
+- Vermeide die Wiederholung von Fakten in den Abschnitten.
+"""
+
 session_biographical_anamnesis = """
 <p><strong>Vorstellungsgrund</strong></p>
 <ul>
@@ -206,9 +232,23 @@ session_biographical_anamnesis = """
 </ul>
 """
 
+session_biographical_anamnesis_general_instructions = """
+- Erstelle eine strukturierte biographische Anamnese
+- Fokus auf Ereignisse, Erfahrungen und Umstände, die des Patienten psychische und emotionale Entwicklung geprägt haben könnten.
+- Verwende klinische, objektive Sprache mit psychologischen Fachbegriffen
+- Sei umfassend aber präzise
+"""
+
 SESSION_TEMPLATES = {
     "session_notes": session_notes,
     "session_notes_short": session_notes_short,
     "initial_consultation": session_initial_consultation,
     "biographical_anamnesis": session_biographical_anamnesis,
+}
+
+SESSION_GENERAL_INSTRUCTIONS = {
+    "session_notes": session_notes_general_instructions,
+    "session_notes_short": session_notes_short_general_instructions,
+    "initial_consultation": session_initial_consultation_general_instructions,
+    "biographical_anamnesis": session_biographical_anamnesis_general_instructions,
 }
