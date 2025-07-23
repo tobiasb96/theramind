@@ -35,12 +35,14 @@ class QuickSessionCreateView(LoginRequiredMixin, View):
         try:
             title = request.POST.get("title", "")
             date = request.POST.get("date")
+            patient_gender = request.POST.get("patient_gender", "not_specified")
 
             # Create the session
             session = Session.objects.create(
                 user=request.user,
                 date=date,
                 title=title,
+                patient_gender=patient_gender,
             )
 
             messages.success(request, "Sitzung wurde erfolgreich erstellt.")
@@ -59,9 +61,11 @@ class QuickDocumentCreateView(LoginRequiredMixin, View):
     def post(self, request):
         try:
             title = request.POST.get("title")
+            patient_gender = request.POST.get("patient_gender", "not_specified")
             report = Report.objects.create(
                 user=request.user,
-                title=title
+                title=title,
+                patient_gender=patient_gender,
             )
             return redirect("reports:report_detail", pk=report.pk)
 

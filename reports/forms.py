@@ -15,9 +15,10 @@ class ReportForm(UserFormMixin, forms.ModelForm):
 
     class Meta:
         model = Report
-        fields = ["title", "template"]
+        fields = ["title", "patient_gender", "template"]
         widgets = {
             "title": forms.TextInput(attrs={"class": "form-control"}),
+            "patient_gender": forms.Select(attrs={"class": "form-control"}),
         }
 
     def __init__(self, *args, **kwargs):

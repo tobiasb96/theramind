@@ -4,6 +4,12 @@ from django.conf import settings
 
 
 class Report(models.Model):
+    class PatientGender(models.TextChoices):
+        MALE = "male", "Männlich"
+        FEMALE = "female", "Weiblich"
+        DIVERSE = "diverse", "Divers"
+        NOT_SPECIFIED = "not_specified", "Nicht angegeben"
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -12,6 +18,13 @@ class Report(models.Model):
         blank=True,
     )
     title = models.CharField(max_length=200, verbose_name="Titel")
+    patient_gender = models.CharField(
+        max_length=20,
+        choices=PatientGender.choices,
+        default=PatientGender.NOT_SPECIFIED,
+        verbose_name="Geschlecht des Patienten",
+        help_text="Geschlecht des Patienten für geschlechtsspezifische KI-Generierung",
+    )
     content = models.TextField(verbose_name="Inhalt", blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Aktualisiert am")

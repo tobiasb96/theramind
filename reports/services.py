@@ -126,15 +126,37 @@ class ReportService:
             Formatted context prefix
         """
         context_files = report.context_files.filter(extraction_successful=True)
-        
-        if not context_files.exists():
-            return """Erstelle einen professionellen Bericht für eine Psychotherapie.
+
+        # Start building the context prefix
+        context_prefix = """Erstelle einen professionellen Bericht für eine Psychotherapie.
 
 Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
-**HINWEIS:** Keine Kontextdateien verfügbar. Erstelle einen generischen Bericht basierend auf der Vorlage.
+"""
+
+        # Add patient gender context if provided
+        if report.patient_gender and report.patient_gender != "not_specified":
+            gender_mapping = {"male": "männlich", "female": "weiblich", "diverse": "divers"}
+            gender_display = gender_mapping.get(report.patient_gender, "nicht angegeben")
+
+            pronouns_mapping = {
+                "male": "er/ihm/sein",
+                "female": "sie/ihr/ihre",
+                "diverse": "sie/dey/deren (verwende geschlechtsneutrale Sprache)",
+            }
+            pronouns = pronouns_mapping.get(report.patient_gender, "")
+
+            context_prefix += f"""**PATIENT*INNEN-INFORMATIONEN**
+Das Geschlecht des Patienten ist {gender_display}. Verwende entsprechende Pronomen ({pronouns}) und 
+geschlechtsangemessene Sprache im Bericht. Achte auf eine respektvolle und professionelle Darstellung.
 
 """
+
+        if not context_files.exists():
+            context_prefix += """**HINWEIS:** Keine Kontextdateien verfügbar. Erstelle einen generischen Bericht basierend auf der Vorlage.
+
+"""
+            return context_prefix
         
         # Format context files
         context_text = "**KONTEXT-INFORMATIONEN**\n\n"
@@ -143,12 +165,8 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
             context_text += f"**{context_file.file_name}** ({context_file.get_file_type_display()})\n"
             context_text += f"{context_file.extracted_text}\n\n"
             context_text += "---\n\n"
-        
-        context_prefix = f"""Erstelle einen professionellen Bericht für eine Psychotherapie.
 
-Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
-
-{context_text}
+        context_prefix += f"""{context_text}
 
 Verwende diese Informationen aus den Kontextdateien, um einen strukturierten und professionellen Bericht zu erstellen.
 

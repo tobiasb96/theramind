@@ -29,10 +29,30 @@
         <div class="flex justify-between items-start">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">{{ report.title }}</h1>
-                <p class="text-gray-600 mt-1">Erstellt: {{ report.created_at|date:"d.m.Y H:i" }}</p>
-                {% if report.updated_at != report.created_at %}
-                    <p class="text-gray-600">Aktualisiert: {{ report.updated_at|date:"d.m.Y H:i" }}</p>
-                {% endif %}
+                <div class="mt-3 space-y-2">
+                    <div class="flex items-center text-gray-600">
+                        <svg class="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/>
+                        </svg>
+                        <span>Erstellt: {{ report.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    {% if report.patient_gender != 'not_specified' %}
+                        <div class="flex items-center text-gray-600">
+                            <svg class="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-width="2" d="M7 17v1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3Zm8-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                            </svg>
+                            <span>{{ report.get_patient_gender_display }}</span>
+                        </div>
+                    {% endif %}
+                    {% if report.updated_at != report.created_at %}
+                        <div class="flex items-center text-gray-500 text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            <span>Aktualisiert: {{ report.updated_at|date:"d.m.Y H:i" }}</span>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
             <div class="flex space-x-2">
                 <button id="report-actions-dropdown" data-dropdown-toggle="report-actions-menu"
@@ -380,6 +400,15 @@
                     <div class="col-span-2">
                         <label for="edit-title" class="block mb-2 text-sm font-medium text-gray-900">Titel</label>
                         <input type="text" name="title" id="edit-title" value="{{ report.title }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="Berichttitel" required>
+                    </div>
+                    <div class="col-span-2">
+                        <label for="edit-report-patient-gender" class="block mb-2 text-sm font-medium text-gray-900">Patient: Geschlecht</label>
+                        <select id="edit-report-patient-gender" name="patient_gender" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" required>
+                            <option value="not_specified" {% if report.patient_gender == 'not_specified' %}selected{% endif %}>Nicht angegeben</option>
+                            <option value="male" {% if report.patient_gender == 'male' %}selected{% endif %}>Männlich</option>
+                            <option value="female" {% if report.patient_gender == 'female' %}selected{% endif %}>Weiblich</option>
+                            <option value="diverse" {% if report.patient_gender == 'diverse' %}selected{% endif %}>Divers</option>
+                        </select>
                     </div>
                 </div>
                 <button type="submit" class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">

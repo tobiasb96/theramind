@@ -32,7 +32,7 @@ class TranscriptionService:
         return self.connector.generate_text(SYSTEM_PROMPT_SUMMARY, prompt, max_tokens=100)
 
     def _build_session_context_prefix(
-        self, transcript_text: str, existing_notes: str = None
+        self, transcript_text: str, existing_notes: str = None, patient_gender: str = None
     ) -> str:
         """
         Build the context prefix for session notes generation
@@ -40,6 +40,7 @@ class TranscriptionService:
         Args:
             transcript_text: The transcript text
             existing_notes: Existing session notes (if any)
+            patient_gender: The patient's gender for appropriate language use
 
         Returns:
             Formatted context prefix
@@ -48,7 +49,27 @@ class TranscriptionService:
 
 Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
 
-**TRANSKRIPT DER SITZUNG**
+"""
+
+        # Add patient gender context if provided
+        if patient_gender and patient_gender != "not_specified":
+            gender_mapping = {"male": "männlich", "female": "weiblich", "diverse": "divers"}
+            gender_display = gender_mapping.get(patient_gender, "nicht angegeben")
+
+            pronouns_mapping = {
+                "male": "er/ihm/sein",
+                "female": "sie/ihr/ihre",
+                "diverse": "sie/dey/deren (verwende geschlechtsneutrale Sprache)",
+            }
+            pronouns = pronouns_mapping.get(patient_gender, "")
+
+            context_prefix += f"""**PATIENT*INNEN-INFORMATIONEN**
+Das Geschlecht des Patienten ist {gender_display}. Verwende entsprechende Pronomen ({pronouns}) und
+geschlechtsangemessene Sprache in den Notizen. Achte auf eine respektvolle und professionelle Darstellung.
+
+"""
+
+        context_prefix += f"""**TRANSKRIPT DER SITZUNG**
 {transcript_text}
 
 """
@@ -56,8 +77,8 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
         # Include existing notes if they exist
         if existing_notes and existing_notes.strip():
             context_prefix += f"""**VORHANDENE NOTIZEN**
-                Die folgenden Notizen existieren bereits für diese Sitzung. Bitte berücksichtige diese und 
-                erweitere sie sinnvoll mit den Informationen aus dem Transkript, wo es angemessen ist. 
+                Die folgenden Notizen existieren bereits für diese Sitzung. Bitte berücksichtige diese und
+                erweitere sie sinnvoll mit den Informationen aus dem Transkript, wo es angemessen ist.
                 Füge keine neuen Abschnitte hinzu:
                 1. Entweder erweitere die bestehenden Abschnitte wenn das neue Format mit dem vorhandenen Format kompatibel ist.
                 2. Oder ersetze die bestehenden Abschnitte mit dem neuen Format, schau dir aber den Inhalt an und übertrage
@@ -72,7 +93,7 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
         return context_prefix
 
     def create_session_notes_with_template(
-        self, transcript_text: str, template, existing_notes: str = None
+        self, transcript_text: str, template, existing_notes: str = None, patient_gender: str = None
     ) -> str:
         """
         Create structured session notes using a specific template
@@ -81,6 +102,7 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
             transcript_text: The transcript text
             template: DocumentTemplate instance
             existing_notes: Existing session notes (if any)
+            patient_gender: The patient's gender for appropriate language use
 
         Returns:
             Generated session notes
@@ -90,7 +112,9 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
 
         try:
             # Build context prefix with transcript and existing notes
-            context_prefix = self._build_session_context_prefix(transcript_text, existing_notes)
+            context_prefix = self._build_session_context_prefix(
+                transcript_text, existing_notes, patient_gender
+            )
 
             # Combine context prefix with template structure
             full_prompt = context_prefix + template.user_prompt
@@ -107,7 +131,11 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
             raise Exception(f"Fehler bei der Erstellung der Sitzungsnotizen: {str(e)}")
 
     def create_session_notes(
-        self, transcript_text: str, template_key: str, existing_notes: str = None
+        self,
+        transcript_text: str,
+        template_key: str,
+        existing_notes: str = None,
+        patient_gender: str = None,
     ) -> str:
         """
         Create structured session notes using a template key (legacy method)
@@ -116,6 +144,7 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
             transcript_text: The transcript text
             template_key: Template key for backwards compatibility
             existing_notes: Existing session notes (if any)
+            patient_gender: The patient's gender for appropriate language use
 
         Returns:
             Generated session notes
@@ -148,7 +177,9 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
         if not template:
             raise ValueError(f"Kein Template gefunden für: {template_key}")
 
-        return self.create_session_notes_with_template(transcript_text, template, existing_notes)
+        return self.create_session_notes_with_template(
+            transcript_text, template, existing_notes, patient_gender
+        )
 
 
 # Singleton instance - lazy initialization
