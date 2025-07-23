@@ -12,7 +12,7 @@ import re
 import logging
 from django.core.paginator import Paginator
 from django.shortcuts import render
-from therapy_sessions.models import Session, Transcription
+from therapy_sessions.models import Session
 from therapy_sessions.forms import SessionForm, AudioUploadForm
 from therapy_sessions.services import get_transcription_service
 

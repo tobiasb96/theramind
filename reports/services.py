@@ -1,10 +1,9 @@
 from typing import Dict, Any, Optional
-from django.core.files.uploadedfile import UploadedFile
 from core.connector import get_llm_connector
 from core.utils.text_extraction import TextExtractionService
 from document_templates.models import DocumentTemplate
 from document_templates.service import TemplateService
-from .models import Report, ReportContextFile
+from .models import Report
 from .prompts import REPORT_SYSTEM_PROMPT
 import logging
 
@@ -22,98 +21,6 @@ class ReportService:
     def is_available(self) -> bool:
         """Check if the report service is available"""
         return self.connector.is_available()
-
-    def add_context_file(self, report: Report, uploaded_file: UploadedFile) -> ReportContextFile:
-        """
-        Add a context file to a report and extract its text
-        
-        Args:
-            report: The report to add context to
-            uploaded_file: The uploaded file
-            
-        Returns:
-            Created ReportContextFile instance
-        """
-        # Determine file type
-        file_type = self._determine_file_type(uploaded_file.name)
-        
-        # Create context file record
-        context_file = ReportContextFile.objects.create(
-            report=report,
-            file_name=uploaded_file.name,
-            file_type=file_type,
-            file_size=uploaded_file.size,
-            original_file=uploaded_file,
-            extracted_text="",
-            extraction_successful=False
-        )
-        
-        # Extract text from file
-        try:
-            extracted_text = self.text_extraction_service.extract_text_from_file(
-                context_file.original_file.path,
-                context_file.file_name
-            )
-            
-            if extracted_text:
-                context_file.extracted_text = extracted_text
-                context_file.extraction_successful = True
-                context_file.extraction_error = ""
-            else:
-                context_file.extraction_error = "Textextraktion fehlgeschlagen"
-                
-        except Exception as e:
-            logger.error(f"Error extracting text from {uploaded_file.name}: {str(e)}")
-            context_file.extraction_error = str(e)
-            
-        context_file.save()
-        return context_file
-
-    def add_context_text(self, report: Report, text: str, file_name: str) -> ReportContextFile:
-        """
-        Add manual text input as context to a report
-        
-        Args:
-            report: The report to add context to
-            text: The text content
-            file_name: Display name for the text
-            
-        Returns:
-            Created ReportContextFile instance
-        """
-        context_file = ReportContextFile.objects.create(
-            report=report,
-            file_name=file_name,
-            file_type=ReportContextFile.FileType.MANUAL,
-            file_size=len(text.encode('utf-8')),
-            original_file=None,
-            extracted_text=text,
-            extraction_successful=True,
-            extraction_error=""
-        )
-        
-        return context_file
-
-    def _determine_file_type(self, filename: str) -> str:
-        """
-        Determine file type based on filename
-        
-        Args:
-            filename: Name of the file
-            
-        Returns:
-            File type from ReportContextFile.FileType choices
-        """
-        extension = filename.lower().split('.')[-1] if '.' in filename else ''
-        
-        if extension == 'pdf':
-            return ReportContextFile.FileType.PDF
-        elif extension in ['docx', 'doc']:
-            return ReportContextFile.FileType.WORD
-        elif extension == 'txt':
-            return ReportContextFile.FileType.TXT
-        else:
-            return ReportContextFile.FileType.TXT  # Default fallback
 
     def _build_context_prefix(self, report: Report) -> str:
         """
