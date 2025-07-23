@@ -4,6 +4,12 @@ from django.conf import settings
 
 
 class Session(models.Model):
+    class PatientGender(models.TextChoices):
+        MALE = "male", "Männlich"
+        FEMALE = "female", "Weiblich"
+        DIVERSE = "diverse", "Divers"
+        NOT_SPECIFIED = "not_specified", "Nicht angegeben"
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -13,6 +19,13 @@ class Session(models.Model):
     )
     date = models.DateTimeField(default=timezone.now, verbose_name="Datum")
     title = models.CharField(max_length=200, verbose_name="Titel", blank=True)
+    patient_gender = models.CharField(
+        max_length=20,
+        choices=PatientGender.choices,
+        default=PatientGender.NOT_SPECIFIED,
+        verbose_name="Geschlecht des Patienten",
+        help_text="Geschlecht des Patienten für geschlechtsspezifische KI-Generierung",
+    )
     notes = models.TextField(verbose_name="Notizen", blank=True)
     summary = models.TextField(verbose_name="Zusammenfassung", blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")

@@ -243,7 +243,7 @@ class SessionViewSet(viewsets.ViewSet):
             existing_notes = session.notes if session.notes else None
 
             session_notes = transcription_service.create_session_notes_with_template(
-                combined_transcript, template, existing_notes
+                combined_transcript, template, existing_notes, session.patient_gender
             )
 
             if session_notes:

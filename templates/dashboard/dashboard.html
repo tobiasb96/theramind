@@ -102,6 +102,15 @@
                             <input type="text" name="title" id="session-title" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="z.B. Erstgespräch">
                         </div>
                         <div class="col-span-2">
+                            <label for="session-patient-gender" class="block mb-2 text-sm font-medium text-gray-900">Geschlecht des Patienten</label>
+                            <select name="patient_gender" id="session-patient-gender" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5">
+                                <option value="not_specified">Nicht angegeben</option>
+                                <option value="female">Weiblich</option>
+                                <option value="male">Männlich</option>
+                                <option value="diverse">Divers</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
                             <label for="session-date" class="block mb-2 text-sm font-medium text-gray-900">Datum</label>
                             <input type="datetime-local" name="date" id="session-date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" required>
                         </div>
@@ -139,6 +148,16 @@
                         <div class="col-span-2">
                             <label for="document-title" class="block mb-2 text-sm font-medium text-gray-900">Titel</label>
                             <input type="text" name="title" id="document-title" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="Berichtstitel" required>
+                        </div>
+                        
+                        <div class="col-span-2">
+                            <label for="document-patient-gender" class="block mb-2 text-sm font-medium text-gray-900">Geschlecht des Patienten</label>
+                            <select name="patient_gender" id="document-patient-gender" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5">
+                                <option value="not_specified">Nicht angegeben</option>
+                                <option value="female">Weiblich</option>
+                                <option value="male">Männlich</option>
+                                <option value="diverse">Divers</option>
+                            </select>
                         </div>
                         
                         <!-- Template Selection -->
