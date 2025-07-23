@@ -15,10 +15,10 @@ class Report(BaseDocument):
 
     @property
     def has_context(self):
-        """Check if report has any context files"""
-        return self.context_files.exists()
+        """Check if report has any inputs"""
+        return self.all_inputs["total_count"] > 0
 
     @property
     def context_files_count(self):
-        """Get count of context files"""
-        return self.context_files.count()
+        """Get count of all inputs (backward compatibility)"""
+        return self.all_inputs["total_count"]

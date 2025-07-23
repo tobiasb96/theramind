@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
 from core.connector import get_llm_connector
-from core.utils.text_extraction import TextExtractionService
+from core.services import UnifiedInputService
 from document_templates.models import DocumentTemplate
 from document_templates.service import TemplateService
 from .models import Report
@@ -16,7 +16,7 @@ class ReportService:
     def __init__(self):
         self.connector = get_llm_connector()
         self.template_service = TemplateService()
-        self.text_extraction_service = TextExtractionService()
+        self.unified_input_service = UnifiedInputService()
 
     def is_available(self) -> bool:
         """Check if the report service is available"""
@@ -24,15 +24,16 @@ class ReportService:
 
     def _build_context_prefix(self, report: Report) -> str:
         """
-        Build the context prefix from report context files
-        
+        Build the context prefix from unified inputs
+
         Args:
             report: The report to build context for
-            
+
         Returns:
             Formatted context prefix
         """
-        context_files = report.context_files.filter(extraction_successful=True)
+        # Use unified input service to get combined text
+        combined_text = self.unified_input_service.get_combined_text(report)
 
         # Start building the context prefix
         context_prefix = """Erstelle einen professionellen Bericht für eine Psychotherapie.
@@ -59,23 +60,18 @@ geschlechtsangemessene Sprache im Bericht. Achte auf eine respektvolle und profe
 
 """
 
-        if not context_files.exists():
+        if not combined_text.strip():
             context_prefix += """**HINWEIS:** Keine Kontextdateien verfügbar. Erstelle einen generischen Bericht basierend auf der Vorlage.
 
 """
             return context_prefix
-        
-        # Format context files
-        context_text = "**KONTEXT-INFORMATIONEN**\n\n"
-        
-        for context_file in context_files:
-            context_text += f"**{context_file.file_name}** ({context_file.get_file_type_display()})\n"
-            context_text += f"{context_file.extracted_text}\n\n"
-            context_text += "---\n\n"
 
-        context_prefix += f"""{context_text}
+        # Format combined input text
+        context_prefix += f"""**KONTEXT-INFORMATIONEN**
 
-Verwende diese Informationen aus den Kontextdateien, um einen strukturierten und professionellen Bericht zu erstellen.
+{combined_text}
+
+Verwende diese Informationen aus den Eingaben, um einen strukturierten und professionellen Bericht zu erstellen.
 
 """
         return context_prefix
@@ -83,11 +79,11 @@ Verwende diese Informationen aus den Kontextdateien, um einen strukturierten und
     def generate_with_template(self, report: Report, template: DocumentTemplate) -> str:
         """
         Generate a report using a specific template
-        
+
         Args:
             report: The report to generate content for
             template: The template to use
-            
+
         Returns:
             Generated report content
         """
@@ -96,7 +92,7 @@ Verwende diese Informationen aus den Kontextdateien, um einen strukturierten und
 
         try:
             context_prefix = self._build_context_prefix(report)
-            
+
             # Combine context prefix with template structure
             full_prompt = context_prefix + template.user_prompt
 
@@ -114,11 +110,11 @@ Verwende diese Informationen aus den Kontextdateien, um einen strukturierten und
     def generate(self, report: Report, template_id: Optional[int] = None) -> str:
         """
         Generate a report
-        
+
         Args:
             report: The report to generate content for
             template_id: Optional specific template ID to use
-            
+
         Returns:
             Generated document content
         """
@@ -137,28 +133,29 @@ Verwende diese Informationen aus den Kontextdateien, um einen strukturierten und
 
     def get_context_summary(self, report: Report) -> Dict[str, Any]:
         """
-        Get a summary of context files for a report
-        
+        Get a summary of unified inputs for a report
+
         Args:
             report: The report to get context summary for
-            
+
         Returns:
             Dictionary with context summary
         """
-        context_files = report.context_files.all()
+        audio_inputs = report.audio_inputs.all()
+        document_inputs = report.document_inputs.all()
         
         summary = {
-            'total_files': context_files.count(),
-            'successful_extractions': context_files.filter(extraction_successful=True).count(),
-            'failed_extractions': context_files.filter(extraction_successful=False).count(),
-            'total_text_length': sum(len(cf.extracted_text) for cf in context_files if cf.extracted_text),
-            'file_types': {},
+            "audio_inputs": audio_inputs.count(),
+            "document_inputs": document_inputs.count(),
+            "total_inputs": audio_inputs.count() + document_inputs.count(),
+            "successful_audio": audio_inputs.filter(processing_successful=True).count(),
+            "successful_documents": document_inputs.filter(processing_successful=True).count(),
+            "failed_audio": audio_inputs.filter(processing_successful=False).count(),
+            "failed_documents": document_inputs.filter(processing_successful=False).count(),
+            "total_text_length": (
+                sum(len(ai.transcribed_text) for ai in audio_inputs if ai.transcribed_text)
+                + sum(len(di.extracted_text) for di in document_inputs if di.extracted_text)
+            ),
         }
-        
-        # Count file types
-        for file_type in ReportContextFile.FileType:
-            count = context_files.filter(file_type=file_type.value).count()
-            if count > 0:
-                summary['file_types'][file_type.label] = count
-        
+
         return summary

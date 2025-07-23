@@ -4,26 +4,25 @@ from .models import Report
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ['title', 'context_files_count', 'created_at', 'updated_at']
+    list_display = ["title", "input_count", "created_at", "updated_at"]
     list_filter = ['created_at', 'updated_at']
     search_fields = ['title', 'content']
-    readonly_fields = ["created_at", "updated_at", "context_files_count"]
+    readonly_fields = ["created_at", "updated_at", "input_count"]
     
     fieldsets = (
-        ('Grundinformationen', {
-            'fields': ('title', 'content')
-        }),
-        ('Kontext', {
-            'fields': ('context_files_count',),
-            'description': 'Kontextdateien werden in der Inline-Tabelle unten angezeigt'
-        }),
-        ('Metadaten', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        })
+        ("Grundinformationen", {"fields": ("title", "content", "patient_gender")}),
+        (
+            "Eingaben",
+            {
+                "fields": ("input_count",),
+                "description": "Audio- und Dokumenteingaben über die Unified Input Service",
+            },
+        ),
+        ("Metadaten", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
-    
-    def context_files_count(self, obj):
-        """Display count of context files"""
-        return obj.context_files_count
-    context_files_count.short_description = 'Anzahl Kontextdateien'
+
+    def input_count(self, obj):
+        """Display count of all inputs"""
+        return obj.all_inputs["total_count"]
+
+    input_count.short_description = "Anzahl Eingaben"

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Session, AudioRecording
+from .models import Session
 from users.mixins import UserFormMixin
 
 
@@ -18,13 +18,10 @@ class SessionForm(UserFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
 
-class AudioUploadForm(forms.ModelForm):
-    class Meta:
-        model = AudioRecording
-        fields = ['audio']
-        widgets = {
-            'audio': forms.FileInput(attrs={
-                'class': 'form-control',
-                'accept': 'audio/*'
-            })
-        }
+# AudioUploadForm is now replaced by unified AudioInputForm in core.forms
+# This form is kept for backward compatibility but should be migrated
+class AudioUploadForm(forms.Form):
+    audio = forms.FileField(
+        widget=forms.FileInput(attrs={"class": "form-control", "accept": "audio/*"}),
+        label="Audio-Datei",
+    )

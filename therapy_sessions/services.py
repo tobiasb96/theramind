@@ -7,6 +7,10 @@ from therapy_sessions.prompts import (
 
 
 class TranscriptionService:
+    """
+    Service focused on AI-powered text generation tasks for therapy sessions.
+    File transcription is now handled by the UnifiedInputService.
+    """
     def __init__(self):
         self.connector = get_llm_connector()
 
@@ -17,12 +21,7 @@ class TranscriptionService:
         """Reinitialize the client (useful after settings change)"""
         self.connector.reinitialize()
 
-    def transcribe(self, file_path: str) -> tuple[str, float]:
-        """
-        Transcribe audio file using OpenAI Whisper
-        Returns: (transcribed_text, processing_time_seconds)
-        """
-        return self.connector.transcribe(file_path)
+    # NOTE: transcribe method removed - now handled by UnifiedInputService
 
     def summarize_session_notes(self, session_notes: str) -> str:
         """
@@ -150,7 +149,7 @@ geschlechtsangemessene Sprache in den Notizen. Achte auf eine respektvolle und p
             Generated session notes
         """
         # Import here to avoid circular imports
-        from reports.services import TemplateService
+        from document_templates.service import TemplateService
 
         template_service = TemplateService()
         templates = template_service.get_session_templates()

@@ -1,6 +1,6 @@
 from django import forms
 from document_templates.models import DocumentTemplate
-from .models import Report, ReportContextFile
+from .models import Report
 from users.mixins import UserFormMixin
 
 
@@ -40,62 +40,11 @@ class ReportForm(UserFormMixin, forms.ModelForm):
             ).order_by("name")
 
 
-class ReportContextFileForm(forms.ModelForm):
-    """Form for uploading context files"""
-    
-    class Meta:
-        model = ReportContextFile
-        fields = ["original_file"]
-        widgets = {
-            "original_file": forms.FileInput(attrs={
-                "class": "form-control",
-                "accept": ".pdf,.docx,.doc,.txt",
-                "multiple": False
-            })
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["original_file"].label = "Datei hochladen"
-        self.fields["original_file"].help_text = "Unterstützte Formate: PDF, Word (.docx, .doc), Text (.txt)"
-
-
-class ReportContextTextForm(forms.ModelForm):
-    """Form for manual text input as context"""
-    
-    text_input = forms.CharField(
-        widget=forms.Textarea(
-            attrs={
-                "class": "form-control",
-                "rows": 10,
-                "placeholder": "Gib hier den Text ein, der als Kontext für den Bericht verwendet werden soll...",
-            }
-        ),
-        label="Text eingeben",
-        help_text="Gib den Text direkt ein, der als Kontext für die Berichtgenerierung verwendet werden soll.",
-    )
-    
-    class Meta:
-        model = ReportContextFile
-        fields = ["file_name"]
-        widgets = {
-            "file_name": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "z.B. Notizen vom 15.01.2024"
-            })
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["file_name"].label = "Bezeichnung"
-        self.fields[
-            "file_name"
-        ].help_text = "Gib eine aussagekräftige Bezeichnung für diesen Text ein"
-        
-        # Set default file name if not provided
-        if not self.instance.pk and not self.initial.get("file_name"):
-            from django.utils import timezone
-            self.initial["file_name"] = f"Manueller Text vom {timezone.now().strftime('%d.%m.%Y')}"
+# NOTE: ReportContextFileForm and ReportContextTextForm are now replaced
+# by unified forms in core.forms:
+# - DocumentFileInputForm for file uploads
+# - DocumentTextInputForm for manual text input
+# These old forms are kept temporarily for backward compatibility but should be removed
 
 
 class ReportContentForm(forms.ModelForm):
