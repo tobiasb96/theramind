@@ -7,9 +7,8 @@ from users.mixins import UserFormMixin
 class SessionForm(UserFormMixin, forms.ModelForm):
     class Meta:
         model = Session
-        fields = ["date", "title", "patient_gender"]
+        fields = ["title", "patient_gender"]
         widgets = {
-            "date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
             "title": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "z.B. Erstgespräch"}
             ),
@@ -18,11 +17,6 @@ class SessionForm(UserFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Set default date to today if not editing existing session
-        if not self.instance.pk:
-            today = timezone.now().date()
-            self.fields["date"].initial = today
 
         # Make title field optional but provide helpful text
         self.fields["title"].required = False

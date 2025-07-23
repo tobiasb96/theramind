@@ -98,8 +98,9 @@ class ReportViewSet(viewsets.ViewSet):
                 if request.headers.get("HX-Request") or request.POST.get("modal"):
                     from django.http import HttpResponse
 
-                    # Return HX-Redirect header to redirect client
+                    # Return JavaScript to close modal and redirect
                     response = HttpResponse()
+                    response["HX-Trigger"] = "closeModal"
                     response["HX-Redirect"] = f"/reports/{report.pk}/"
                     return response
 

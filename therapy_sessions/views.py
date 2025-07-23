@@ -99,13 +99,10 @@ class SessionViewSet(viewsets.ViewSet):
                 if request.headers.get("HX-Request") or request.POST.get("modal"):
                     from django.http import HttpResponse
 
-                    # Return HX-Redirect header to redirect client and close modal
+                    # Return JavaScript to close modal and redirect
                     response = HttpResponse()
-                    response["HX-Redirect"] = reverse_lazy(
-                        "sessions:session_detail", kwargs={"pk": session.pk}
-                    )
-                    # Also trigger modal close
                     response["HX-Trigger"] = "closeModal"
+                    response["HX-Redirect"] = f"/sessions/{session.pk}/"
                     return response
 
                 return HttpResponseRedirect(
