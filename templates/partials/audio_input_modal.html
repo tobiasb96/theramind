@@ -16,7 +16,7 @@
             </div>
             
             <!-- Modal body -->
-            <form id="audio-upload-form" class="p-6" method="post" enctype="multipart/form-data" action="{% url 'inputs:add_audio_input' document_type=document_type document_id=document.pk %}">
+            <form id="audio-upload-form" class="p-6" method="post" enctype="multipart/form-data" action="{% url 'core:add_audio_input' document_type=document_type document_id=document.pk %}">
                 {% csrf_token %}
                 
                 <!-- Active Recording Warning -->

@@ -3,11 +3,9 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from django_tables2 import RequestConfig
 import json
 import logging
 
@@ -18,7 +16,6 @@ from .models import Report
 from .forms import ReportForm, ReportContentForm
 from core.forms import AudioInputForm, DocumentFileInputForm, DocumentTextInputForm
 from .services import ReportService
-from .tables import ReportTable
 
 logger = logging.getLogger(__name__)
 
@@ -34,28 +31,6 @@ class ReportViewSet(viewsets.ViewSet):
         if request is None:
             raise ValueError("Request is required for get_queryset")
         return Report.objects.filter(user=request.user).order_by("-created_at")
-
-    def list(self, request):
-        """List all reports"""
-        reports = self.get_queryset(request)
-
-        # Handle search
-        search_query = request.GET.get("search", "")
-        if search_query:
-            reports = reports.filter(Q(title__icontains=search_query))
-        
-        # Create table with proper ordering
-        table = ReportTable(reports)
-        RequestConfig(request, paginate={"per_page": 20}).configure(table)
-
-        return render(
-            request,
-            "reports/reports_list.html",
-            {
-                "reports_table": table,
-                "search_query": search_query,
-            },
-        )
 
     def retrieve(self, request, pk=None):
         """Retrieve a specific report detail view"""
@@ -148,7 +123,7 @@ class ReportViewSet(viewsets.ViewSet):
         elif request.method == "POST":
             report.delete()
             messages.success(request, "Bericht wurde erfolgreich gelöscht.")
-            return redirect("reports:reports_list")
+            return redirect("core:dashboard")
 
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
@@ -275,6 +250,8 @@ class ReportViewSet(viewsets.ViewSet):
                 content=report.content,
                 filename_prefix="Bericht",
             )
+
+            report.mark_as_exported()
 
             # Create Django response
             response = HttpResponse(pdf_data["content"], content_type=pdf_data["content_type"])

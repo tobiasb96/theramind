@@ -10,7 +10,6 @@ from rest_framework.permissions import IsAuthenticated
 import json
 import re
 import logging
-from django.core.paginator import Paginator
 from django.shortcuts import render
 from therapy_sessions.models import Session
 from therapy_sessions.forms import SessionForm
@@ -38,23 +37,6 @@ class SessionViewSet(viewsets.ViewSet):
                 raise ValueError("Request is required for get_object")
             return get_object_or_404(Session, pk=pk, user=request.user)
         return None
-
-    def list(self, request):
-        """List all sessions"""
-        sessions = self.get_queryset(request)
-
-        paginator = Paginator(sessions, 20)
-        page_number = request.GET.get("page")
-        page_obj = paginator.get_page(page_number)
-
-        return render(
-            request,
-            "sessions/session_list.html",
-            {
-                "sessions": page_obj,
-                "page_obj": page_obj,
-            },
-        )
 
     def retrieve(self, request, pk=None):
         """Retrieve a specific session"""
@@ -150,7 +132,7 @@ class SessionViewSet(viewsets.ViewSet):
             session.delete()
             messages.success(request, "Sitzung wurde erfolgreich gelöscht.")
 
-        return HttpResponseRedirect(reverse_lazy("sessions:session_list"))
+        return HttpResponseRedirect(reverse_lazy("core:dashboard"))
 
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
@@ -344,6 +326,8 @@ class SessionViewSet(viewsets.ViewSet):
                 content=session.notes,
                 filename_prefix="Sitzungsnotizen",
             )
+
+            session.mark_as_exported()
 
             # Create Django response
             response = HttpResponse(pdf_data["content"], content_type=pdf_data["content_type"])

@@ -79,9 +79,9 @@
 
         {% block pagination %}
             <nav class="flex items-center justify-between p-4" aria-label="Table navigation">
-                <span class="text-sm font-normal text-gray-500">Zeigt <span
+                {% comment %} <span class="text-sm font-normal text-gray-500">Zeigt <span
                         class="font-semibold text-gray-900"> {{ table.page.start_index }}-{{ table.page.end_index }} </span> von <span
-                        class="font-semibold text-gray-900">{{ table.paginator.count }}</span> Ergebnissen </span>
+                        class="font-semibold text-gray-900">{{ table.paginator.count }}</span> Ergebnissen </span> {% endcomment %}
 
                 {% if table.page and table.paginator.num_pages > 1 %}
                     <ul class="inline-flex items-center -space-x-px">

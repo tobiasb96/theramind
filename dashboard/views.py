@@ -4,10 +4,11 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django_tables2 import RequestConfig
+from itertools import chain
 from reports.models import Report
-from reports.tables import ReportTable
-from reports.services import TemplateService
 from therapy_sessions.models import Session
+from core.tables import BaseDocumentTable
+from reports.services import TemplateService
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -15,12 +16,16 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        recent_reports = Report.objects.filter(user=self.request.user).order_by("-created_at")[:10]
 
-        # Create table for recent documents (convert to list to avoid queryset ordering issues)
-        table = ReportTable(list(recent_reports))
+        recent_reports = Report.objects.filter(user=self.request.user).order_by("-created_at")[:8]
+        recent_sessions = Session.objects.filter(user=self.request.user).order_by("-created_at")[:8]
+        recent_documents = sorted(
+            chain(recent_reports, recent_sessions), key=lambda doc: doc.created_at, reverse=True
+        )[:8]
+
+        table = BaseDocumentTable(recent_documents)
         RequestConfig(self.request, paginate=False).configure(table)
-        context["recent_reports_table"] = table
+        context["recent_documents_table"] = table
 
         template_service = TemplateService()
         context["report_templates"] = template_service.get_document_templates(user=self.request.user)

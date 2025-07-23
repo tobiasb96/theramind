@@ -26,9 +26,8 @@
         </a>
       </li>
       <li>
-      <li>
-        <a href="{% url 'reports:reports_list' %}"
-           class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group {% if request.resolver_match.app_name == 'documents' %}bg-gray-100{% endif %}">
+        <a href="{% url 'core:documents_list' %}"
+           class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group {% if request.resolver_match.url_name == 'documents_list' %}bg-gray-100{% endif %}">
           <svg aria-hidden="true"
                class="flex-shrink-0 w-6 h-6 text-gray-400 transition duration-75 group-hover:text-gray-900"
                fill="currentColor"
@@ -38,7 +37,7 @@
                   d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
                   clip-rule="evenodd"></path>
           </svg>
-          <span class="flex-1 ml-3 whitespace-nowrap">Berichte</span>
+          <span class="flex-1 ml-3 whitespace-nowrap">Alle Dokumente</span>
         </a>
       </li>
     </ul>
@@ -59,7 +58,6 @@
                   d="M3 9a2 2 0 0 1 2-2h4.157a2 2 0 0 1 1.656.879L12.249 10H3V9Zm0 3v7a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-7H3Z"
                   clip-rule="evenodd"/>
           </svg>
-
           <span class="ml-3">Vorlagen</span>
         </a>
       </li>

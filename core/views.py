@@ -7,11 +7,18 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 import logging
-
-from .models import AudioInput, DocumentInput
-from .services import UnifiedInputService
-from therapy_sessions.models import Session
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django_tables2 import RequestConfig
+from django.db.models import Q
+from django.shortcuts import render
+from itertools import chain
+from core.models import AudioInput, DocumentInput
+from core.services import UnifiedInputService
 from reports.models import Report
+from therapy_sessions.models import Session
+from core.tables import BaseDocumentTable
+
 
 logger = logging.getLogger(__name__)
 
@@ -169,3 +176,39 @@ class UnifiedInputViewSet(viewsets.ViewSet):
             messages.error(request, f"Fehler beim Löschen: {str(e)}")
         
         return redirect(f"{document_type}s:{document_type}_detail", pk=document_id) 
+
+
+class DocumentsListView(LoginRequiredMixin, TemplateView):
+    template_name = "core/documents_list.html"
+    
+    def get(self, request, *args, **kwargs):
+        # Get all reports and sessions for the user
+        reports = Report.objects.filter(user=request.user).order_by("-created_at")
+        sessions = Session.objects.filter(user=request.user).order_by("-created_at")
+        
+        # Handle search
+        search_query = request.GET.get("search", "")
+        if search_query:
+            reports = reports.filter(Q(title__icontains=search_query))
+            sessions = sessions.filter(Q(title__icontains=search_query))
+        
+        # Combine and sort by created_at
+        all_documents = sorted(
+            chain(reports, sessions), key=lambda doc: doc.created_at, reverse=True
+        )
+        
+        # Create unified table
+        table = BaseDocumentTable(all_documents)
+        RequestConfig(request, paginate={"per_page": 25}).configure(table)
+        
+        return render(
+            request,
+            self.template_name,
+            {
+                "documents_table": table,
+                "search_query": search_query,
+                "total_count": len(all_documents),
+                "reports_count": reports.count(),
+                "sessions_count": sessions.count(),
+            },
+        ) 

@@ -43,7 +43,7 @@
                 
                 <!-- File Upload Tab Content -->
                 <div id="document-file-tab" class="document-tab-content">
-                                         <form method="post" enctype="multipart/form-data" action="{% url 'inputs:add_document_file_input' document_type=document_type document_id=document.pk %}">
+                                         <form method="post" enctype="multipart/form-data" action="{% url 'core:add_document_file_input' document_type=document_type document_id=document.pk %}">
                         {% csrf_token %}
                         
                         <div class="mb-4">
@@ -69,7 +69,7 @@
                 
                 <!-- Text Input Tab Content -->
                 <div id="document-text-tab" class="document-tab-content hidden">
-                                         <form method="post" action="{% url 'inputs:add_document_text_input' document_type=document_type document_id=document.pk %}">
+                                         <form method="post" action="{% url 'core:add_document_text_input' document_type=document_type document_id=document.pk %}">
                         {% csrf_token %}
                         
 
