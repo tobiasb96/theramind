@@ -33,6 +33,10 @@ class SessionForm(UserFormMixin, forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
 
+        # Set default date to now if not provided
+        if not instance.date:
+            instance.date = timezone.now()
+
         # Set default title if empty
         if not instance.title:
             if instance.date:
