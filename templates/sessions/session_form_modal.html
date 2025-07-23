@@ -1,0 +1,43 @@
+<!-- Session form content for modal body -->
+<form class="p-4 md:p-5" method="post" action="{% url 'sessions:session_create' %}"
+      hx-post="{% url 'sessions:session_create' %}"
+      hx-target="#session-form-content"
+      hx-swap="outerHTML">
+    {% csrf_token %}
+    <input type="hidden" name="modal" value="1">
+    
+    <div class="grid gap-4 mb-4">
+        <!-- Title -->
+        <div class="col-span-2">
+            <label for="{{ form.title.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">{{ form.title.label }} (optional)</label>
+            <input type="text" name="title" id="{{ form.title.id_for_label }}" value="{{ form.title.value|default:'' }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="z.B. Erstgespräch">
+            {% if form.title.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+
+        
+        <!-- Patient Gender -->
+        <div class="col-span-2">
+            <label for="{{ form.patient_gender.id_for_label }}" class="block mb-2 text-sm font-medium text-gray-900">{{ form.patient_gender.label }}</label>
+            <select id="{{ form.patient_gender.id_for_label }}" name="patient_gender" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" required>
+                <option value="not_specified" {% if form.patient_gender.value == 'not_specified' %}selected{% endif %}>Nicht angegeben</option>
+                <option value="male" {% if form.patient_gender.value == 'male' %}selected{% endif %}>Männlich</option>
+                <option value="female" {% if form.patient_gender.value == 'female' %}selected{% endif %}>Weiblich</option>
+                <option value="diverse" {% if form.patient_gender.value == 'diverse' %}selected{% endif %}>Divers</option>
+            </select>
+            {% if form.patient_gender.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.patient_gender.errors.0 }}</p>
+            {% endif %}
+            <p class="mt-1 text-sm text-gray-500">Hilft der KI bei der geschlechtsspezifischen Berichtgenerierung</p>
+        </div>
+    </div>
+    
+    <button type="submit" class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+        <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
+        </svg>
+        Sitzung erstellen
+    </button>
+</form>

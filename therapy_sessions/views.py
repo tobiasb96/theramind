@@ -83,6 +83,10 @@ class SessionViewSet(viewsets.ViewSet):
         if request.method == "GET":
             form = SessionForm(user=request.user)
 
+            # Check if this is a modal request (from dashboard)
+            if request.headers.get("HX-Request") or request.GET.get("modal"):
+                return render(request, "sessions/session_form_modal.html", {"form": form})
+
             return render(request, "sessions/session_form.html", {"form": form})
 
         elif request.method == "POST":
@@ -90,9 +94,25 @@ class SessionViewSet(viewsets.ViewSet):
             if form.is_valid():
                 session = form.save()
                 messages.success(request, "Sitzung wurde erfolgreich angelegt.")
+
+                # Check if this is a modal/HTMX request
+                if request.headers.get("HX-Request") or request.POST.get("modal"):
+                    from django.http import HttpResponse
+
+                    # Return JavaScript to close modal and redirect
+                    response = HttpResponse()
+                    response["HX-Trigger"] = "closeModal"
+                    response["HX-Redirect"] = f"/sessions/{session.pk}/"
+                    return response
+
                 return HttpResponseRedirect(
                     reverse_lazy("sessions:session_detail", kwargs={"pk": session.pk})
                 )
+
+            # Check if this is a modal request for error handling
+            if request.headers.get("HX-Request") or request.POST.get("modal"):
+                return render(request, "sessions/session_form_modal.html", {"form": form})
+
             return render(request, "sessions/session_form.html", {"form": form})
 
     def update(self, request, pk=None):

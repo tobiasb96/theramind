@@ -9,11 +9,7 @@
         <div class="flex justify-between items-start">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">
-                    {% if session.title %}
-                        {{ session.title }}
-                    {% else %}
-                        Sitzung vom {{ session.date|date:"d.m.Y" }}
-                    {% endif %}
+                    {{ session.title }}
                 </h1>
                 <div class="mt-3 space-y-2">
                     <div class="flex items-center text-gray-600">
@@ -495,10 +491,6 @@
                     <div class="col-span-2">
                         <label for="edit-title" class="block mb-2 text-sm font-medium text-gray-900">Titel (optional)</label>
                         <input type="text" name="title" id="edit-title" value="{{ session.title }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" placeholder="z.B. Erstgespräch">
-                    </div>
-                    <div class="col-span-2">
-                        <label for="edit-date" class="block mb-2 text-sm font-medium text-gray-900">Datum</label>
-                        <input type="datetime-local" name="date" id="edit-date" value="{{ session.date|date:'Y-m-d\TH:i' }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" required>
                     </div>
                     <div class="col-span-2">
                         <label for="edit-patient-gender" class="block mb-2 text-sm font-medium text-gray-900">Patient: Geschlecht</label>
