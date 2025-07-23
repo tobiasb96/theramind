@@ -16,6 +16,6 @@ class SessionAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at", "updated_at"]
     fieldsets = (
         ("Sitzungsdetails", {"fields": ("date", "title")}),
-        ("Inhalt", {"fields": ("notes", "summary")}),
+        ("Inhalt", {"fields": ("content", "summary")}),
         ("System", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
