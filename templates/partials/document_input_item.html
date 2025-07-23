@@ -1,0 +1,81 @@
+<!-- Individual document input item display -->
+<div class="border rounded-lg p-4 bg-gray-50">
+    <div class="flex justify-between items-start">
+        <div class="flex-1">
+            <div class="flex items-center space-x-2">
+                <h3 class="font-medium text-gray-900">{{ document.name }}</h3>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    {% if document.file_type == 'pdf' %}bg-red-100 text-red-800
+                    {% elif document.file_type == 'word' %}bg-blue-100 text-blue-800
+                    {% elif document.file_type == 'txt' %}bg-green-100 text-green-800
+                    {% elif document.file_type == 'manual' %}bg-purple-100 text-purple-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ document.get_file_type_display }}
+                </span>
+                {% if document.processing_successful %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        ✓ Verarbeitet
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        ✗ Fehler
+                    </span>
+                {% endif %}
+            </div>
+            <div class="mt-2 text-sm text-gray-600">
+                {% if document.file_size %}
+                    <span>{{ document.get_file_size_display }}</span> •
+                {% endif %}
+                <span>{{ document.created_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            {% if document.processing_successful and document.extracted_text %}
+                <div class="mt-2 text-sm text-gray-700">
+                    <strong>Vorschau:</strong> {{ document.get_text_preview }}
+                </div>
+            {% elif not document.processing_successful %}
+                <div class="mt-2 text-sm text-red-600">
+                    <strong>Fehler:</strong> {{ document.processing_error }}
+                </div>
+            {% endif %}
+            {% if document.description %}
+                <div class="mt-2 text-sm text-gray-600">
+                    <strong>Beschreibung:</strong> {{ document.description }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="flex space-x-2">
+            {% if document.extracted_text %}
+                <button type="button" class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center" onclick="toggleDocumentPreview({{ document.id }})">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    Volltext anzeigen
+                </button>
+            {% endif %}
+                         <form method="post" action="{% url 'inputs:delete_document_input' pk=document.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center" onclick="return confirm('Möchtest Du diese Dokument-Eingabe wirklich löschen?')">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Löschen
+                </button>
+            </form>
+        </div>
+    </div>
+    <!-- Hidden full text preview -->
+    <div id="document-preview-{{ document.id }}" class="mt-4 hidden">
+        <div class="bg-white p-4 rounded border">
+            <h4 class="font-medium text-gray-900 mb-2">Volltext:</h4>
+            <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ document.extracted_text }}</div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDocumentPreview(documentId) {
+    const preview = document.getElementById(`document-preview-${documentId}`);
+    preview.classList.toggle('hidden');
+}
+</script> 

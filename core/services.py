@@ -4,8 +4,167 @@ import logging
 from fpdf import FPDF
 from django.utils.html import strip_tags
 from html import unescape
+from django.contrib.contenttypes.models import ContentType
+from core.utils.text_extraction import TextExtractionService
+from therapy_sessions.services import get_transcription_service
 
 logger = logging.getLogger(__name__)
+
+
+class UnifiedInputService:
+    """Service for handling both audio and document inputs"""
+
+    def __init__(self):
+        self.text_extraction_service = TextExtractionService()
+        self.transcription_service = get_transcription_service()
+
+    def add_audio_input(
+        self, document, audio_file, audio_type: str = "upload", therapeutic_observations: str = ""
+    ):
+        """Add audio input and process transcription"""
+        from core.models import AudioInput
+        from django.utils import timezone
+
+        # Determine file format from filename
+        file_format = self._determine_audio_format(audio_file.name)
+
+        # Generate a name based on audio type and timestamp
+        if audio_type == "recording":
+            name = f"Aufnahme vom {timezone.now().strftime('%d.%m.%Y %H:%M')}"
+        else:
+            name = audio_file.name
+
+        audio_input = AudioInput.objects.create(
+            document=document,
+            name=name,
+            description=therapeutic_observations,  # Store therapeutic observations in description
+            audio_type=audio_type,
+            file_format=file_format,
+            audio_file=audio_file,
+            file_size=audio_file.size,
+        )
+
+        # Process transcription asynchronously
+        self._process_audio_transcription(audio_input)
+        return audio_input
+
+    def add_document_input(self, document, file=None, text=None):
+        """Add document input and extract text"""
+        from core.models import DocumentInput
+        from django.utils import timezone
+
+        if file:
+            # File upload - use original filename
+            document_input = DocumentInput.objects.create(
+                document=document,
+                name=file.name,
+                input_type=DocumentInput.InputType.FILE_UPLOAD,
+                file_type=self._determine_document_file_type(file.name),
+                document_file=file,
+                file_size=file.size,
+                extracted_text="",
+            )
+            self._process_document_extraction(document_input)
+        else:
+            # Manual text - generate name with timestamp
+            name = f"Text vom {timezone.now().strftime('%d.%m.%Y %H:%M')}"
+            document_input = DocumentInput.objects.create(
+                document=document,
+                name=name,
+                input_type=DocumentInput.InputType.MANUAL_TEXT,
+                file_type=DocumentInput.FileType.MANUAL,
+                extracted_text=text or "",
+                processing_successful=True,
+            )
+
+        return document_input
+
+    def get_combined_text(self, document, include_audio=True, include_documents=True) -> str:
+        """Get combined text from all inputs"""
+        texts = []
+
+        if include_audio:
+            for audio in document.audio_inputs.filter(processing_successful=True):
+                if audio.transcribed_text:
+                    texts.append(f"[Audio: {audio.name}]\n{audio.transcribed_text}")
+
+        if include_documents:
+            for doc in document.document_inputs.filter(processing_successful=True):
+                if doc.extracted_text:
+                    texts.append(f"[Dokument: {doc.name}]\n{doc.extracted_text}")
+
+        return "\n\n".join(texts)
+
+    def _determine_audio_format(self, filename: str) -> str:
+        """Determine audio format based on filename"""
+        from core.models import AudioInput
+
+        extension = filename.lower().split(".")[-1] if "." in filename else ""
+
+        format_mapping = {
+            "mp3": AudioInput.FileFormat.MP3,
+            "wav": AudioInput.FileFormat.WAV,
+            "m4a": AudioInput.FileFormat.M4A,
+            "webm": AudioInput.FileFormat.WEBM,
+            "flac": AudioInput.FileFormat.FLAC,
+        }
+
+        return format_mapping.get(extension, AudioInput.FileFormat.MP3)
+
+    def _determine_document_file_type(self, filename: str) -> str:
+        """Determine document file type based on filename"""
+        from core.models import DocumentInput
+
+        extension = filename.lower().split(".")[-1] if "." in filename else ""
+
+        if extension == "pdf":
+            return DocumentInput.FileType.PDF
+        elif extension in ["docx", "doc"]:
+            return DocumentInput.FileType.WORD
+        elif extension == "txt":
+            return DocumentInput.FileType.TXT
+        else:
+            return DocumentInput.FileType.TXT  # Default fallback
+
+    def _process_audio_transcription(self, audio_input):
+        """Process audio transcription"""
+        try:
+            if self.transcription_service.is_available():
+                file_path = audio_input.audio_file.path
+                transcribed_text, processing_time = self.transcription_service.transcribe(file_path)
+
+                audio_input.transcribed_text = transcribed_text
+                audio_input.processing_time_seconds = processing_time
+                audio_input.processing_successful = True
+                audio_input.processing_error = ""
+            else:
+                audio_input.processing_error = "Transkriptions-Service nicht verfügbar"
+
+        except Exception as e:
+            logger.error(f"Error transcribing audio {audio_input.name}: {str(e)}")
+            audio_input.processing_error = str(e)
+
+        audio_input.save()
+
+    def _process_document_extraction(self, document_input):
+        """Process document text extraction"""
+        try:
+            extracted_text = self.text_extraction_service.extract_text_from_file(
+                document_input.document_file.path, document_input.name
+            )
+
+            if extracted_text:
+                document_input.extracted_text = extracted_text
+                document_input.processing_successful = True
+                document_input.processing_error = ""
+            else:
+                document_input.processing_error = "Textextraktion fehlgeschlagen"
+
+        except Exception as e:
+            logger.error(f"Error extracting text from {document_input.name}: {str(e)}")
+            document_input.processing_error = str(e)
+
+        document_input.save()
 
 
 class PDFExportService:
