@@ -52,26 +52,44 @@ class BaseDocumentTable(tables.Table):
         order_by = "-created_at"
 
     def render_document_type(self, record):
-        """Render document type with colored tag"""
+        """Render document type with colored tag and draft badge for unexported documents"""
+        # Determine document type and base styling
         if isinstance(record, Report):
-            return format_html(
-                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">'
-                '<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">'
-                '<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>'
-                '</svg>'
-                'Bericht'
-                '</span>'
-            )
+            base_badge = format_html("""
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <svg class="w-3 h-3 mr-1 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 3v4a1 1 0 0 1-1 1H5m4 8h6m-6-4h6m4-8v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7.914a1 1 0 0 1 .293-.707l3.914-3.914A1 1 0 0 1 9.914 3H18a1 1 0 0 1 1 1Z"/>
+                    </svg>
+                    Bericht
+                </span>
+            """)
         elif isinstance(record, Session):
-            return format_html(
-                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">'
-                '<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">'
-                '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>'
-                '</svg>'
-                'Sitzung'
-                '</span>'
+            base_badge = format_html(
+                """
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <svg class="w-3 h-3 mr-1 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>
+                    </svg>
+                    Sitzung
+                </span>
+            """
             )
-        return "Unbekannt"
+        else:
+            return "Unbekannt"
+
+        # Add draft badge for unexported documents
+        if not record.is_exported:
+            draft_badge = format_html(
+                '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 ml-2">'
+                '<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">'
+                '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>'
+                "</svg>"
+                "Entwurf"
+                "</span>"
+            )
+            return format_html("{} {}", base_badge, draft_badge)
+
+        return base_badge
 
     def render_title(self, record):
         """Render title with fallback for sessions"""

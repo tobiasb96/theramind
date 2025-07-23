@@ -327,6 +327,8 @@ class SessionViewSet(viewsets.ViewSet):
                 filename_prefix="Sitzungsnotizen",
             )
 
+            session.mark_as_exported()
+
             # Create Django response
             response = HttpResponse(pdf_data["content"], content_type=pdf_data["content_type"])
             response["Content-Disposition"] = f"attachment; filename={pdf_data['filename']}"

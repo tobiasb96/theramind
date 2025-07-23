@@ -30,7 +30,14 @@ class BaseDocument(models.Model):
     title = models.CharField(max_length=200, verbose_name="Titel", blank=True)
     content = models.TextField(verbose_name="Inhalt", blank=True)
     summary = models.TextField(verbose_name="Zusammenfassung", blank=True)
-    
+
+    # Export tracking
+    is_exported = models.BooleanField(
+        default=False,
+        verbose_name="Exportiert",
+        help_text="Gibt an, ob das Dokument bereits als Datei exportiert wurde",
+    )
+
     # Patient information
     patient_gender = models.CharField(
         max_length=20,
@@ -73,6 +80,11 @@ class BaseDocument(models.Model):
             "document_count": self.document_inputs.count(),
             "total_count": self.audio_inputs.count() + self.document_inputs.count(),
         }
+
+    def mark_as_exported(self):
+        """Mark the document as exported"""
+        self.is_exported = True
+        self.save()
 
 
 class BaseInput(models.Model):
