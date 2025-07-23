@@ -98,6 +98,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         else:
             return self.email
 
+    def save(self, *args, **kwargs):
+        """Create user settings when user is created"""
+        if not self.pk:
+            UserSettings.objects.create(user=self)
+        super().save(*args, **kwargs)
+
 
 class UserSettings(models.Model):
     """User settings for transcription and report generation preferences"""
@@ -136,17 +142,3 @@ class UserSettings(models.Model):
 
     def __str__(self):
         return f"Settings for {self.user}"
-
-
-@receiver(post_save, sender=User)
-def create_user_settings(sender, instance, created, **kwargs):
-    """Create user settings when a user is created"""
-    if created:
-        UserSettings.objects.create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_settings(sender, instance, **kwargs):
-    """Save user settings when user is saved"""
-    if hasattr(instance, "settings"):
-        instance.settings.save()
