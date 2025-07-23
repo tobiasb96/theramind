@@ -8,7 +8,6 @@ session_viewset = SessionViewSet()
 
 urlpatterns = [
     # Session URLs (now standalone)
-    path("", session_viewset.list, name="session_list"),
     path("create/", session_viewset.create, name="session_create"),
     path("<int:pk>/", session_viewset.retrieve, name="session_detail"),
     path("<int:pk>/edit/", session_viewset.update, name="session_edit"),

@@ -18,7 +18,7 @@ from .models import Report
 from .forms import ReportForm, ReportContentForm
 from core.forms import AudioInputForm, DocumentFileInputForm, DocumentTextInputForm
 from .services import ReportService
-from .tables import ReportTable
+from core.tables import BaseDocumentTable
 
 logger = logging.getLogger(__name__)
 
@@ -34,28 +34,6 @@ class ReportViewSet(viewsets.ViewSet):
         if request is None:
             raise ValueError("Request is required for get_queryset")
         return Report.objects.filter(user=request.user).order_by("-created_at")
-
-    def list(self, request):
-        """List all reports"""
-        reports = self.get_queryset(request)
-
-        # Handle search
-        search_query = request.GET.get("search", "")
-        if search_query:
-            reports = reports.filter(Q(title__icontains=search_query))
-        
-        # Create table with proper ordering
-        table = ReportTable(reports)
-        RequestConfig(request, paginate={"per_page": 20}).configure(table)
-
-        return render(
-            request,
-            "reports/reports_list.html",
-            {
-                "reports_table": table,
-                "search_query": search_query,
-            },
-        )
 
     def retrieve(self, request, pk=None):
         """Retrieve a specific report detail view"""

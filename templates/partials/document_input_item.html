@@ -38,7 +38,7 @@
                     Text anzeigen
                 </button>
             {% endif %}
-                         <form method="post" action="{% url 'inputs:delete_document_input' pk=document.pk %}" class="inline">
+                         <form method="post" action="{% url 'core:delete_document_input' pk=document.pk %}" class="inline">
                 {% csrf_token %}
                 <button type="submit" class="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center" onclick="return confirm('Möchtest Du diese Dokument-Eingabe wirklich löschen?')">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

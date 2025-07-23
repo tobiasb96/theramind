@@ -10,11 +10,12 @@ from rest_framework.permissions import IsAuthenticated
 import json
 import re
 import logging
-from django.core.paginator import Paginator
+from django_tables2 import RequestConfig
 from django.shortcuts import render
 from therapy_sessions.models import Session
 from therapy_sessions.forms import SessionForm
 from therapy_sessions.services import get_transcription_service
+from core.tables import BaseDocumentTable
 
 logger = logging.getLogger(__name__)
 
@@ -38,23 +39,6 @@ class SessionViewSet(viewsets.ViewSet):
                 raise ValueError("Request is required for get_object")
             return get_object_or_404(Session, pk=pk, user=request.user)
         return None
-
-    def list(self, request):
-        """List all sessions"""
-        sessions = self.get_queryset(request)
-
-        paginator = Paginator(sessions, 20)
-        page_number = request.GET.get("page")
-        page_obj = paginator.get_page(page_number)
-
-        return render(
-            request,
-            "sessions/session_list.html",
-            {
-                "sessions": page_obj,
-                "page_obj": page_obj,
-            },
-        )
 
     def retrieve(self, request, pk=None):
         """Retrieve a specific session"""
