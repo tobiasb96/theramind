@@ -12,7 +12,7 @@ class SessionInline(admin.TabularInline):
 class SessionAdmin(admin.ModelAdmin):
     list_display = ["date", "title", "created_at"]
     list_filter = ["date", "created_at"]
-    search_fields = ["title", "notes"]
+    search_fields = ["title", "content"]
     readonly_fields = ["created_at", "updated_at"]
     fieldsets = (
         ("Sitzungsdetails", {"fields": ("date", "title")}),
