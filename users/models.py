@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class UserManager(BaseUserManager):
@@ -95,3 +97,49 @@ class User(AbstractBaseUser, PermissionsMixin):
             return f"{self.first_name} {self.last_name}"
         else:
             return self.email
+
+    def save(self, *args, **kwargs):
+        """Create user settings when user is created"""
+        is_new_user = not self.pk
+        super().save(*args, **kwargs)
+        if is_new_user:
+            UserSettings.objects.create(user=self)
+
+
+class UserSettings(models.Model):
+    """User settings for transcription and report generation preferences"""
+
+    GENDER_CHOICES = [
+        ("weiblich", "Weiblich"),
+        ("männlich", "Männlich"),
+        ("divers", "Divers"),
+    ]
+
+    PATIENT_FOCUS_CHOICES = [
+        ("erwachsene", "Erwachsene (PP)"),
+        ("kinder", "Kinder und Jugendliche (KJP)"),
+    ]
+
+    THERAPY_FOCUS_CHOICES = [
+        ("ap", "Psychoanalyse (AP)"),
+        ("st", "Systemische Therapie (ST)"),
+        ("tp", "Tiefenpsychologie (TP)"),
+        ("vt", "Verhaltenstherapie (VT)"),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="settings")
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, default="weiblich")
+    patient_focus = models.CharField(
+        max_length=20, choices=PATIENT_FOCUS_CHOICES, default="erwachsene"
+    )
+    therapy_focus = models.CharField(max_length=20, choices=THERAPY_FOCUS_CHOICES, default="vt")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "User Settings"
+        verbose_name_plural = "User Settings"
+
+    def __str__(self):
+        return f"Settings for {self.user}"
