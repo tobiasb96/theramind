@@ -543,6 +543,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         evt.detail.headers['X-CSRFToken'] = csrfToken;
     });
+
+    // Initialize Flowbite modals manually if needed
+    if (typeof window.initFlowbite === 'function') {
+        window.initFlowbite();
+    }
 });
 
 // Background Recording Indicator Management

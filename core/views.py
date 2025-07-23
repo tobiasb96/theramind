@@ -122,19 +122,14 @@ class UnifiedInputViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     def delete_audio(self, request, pk=None):
         """Delete an audio input"""
-        # Security check: ensure the audio input belongs to the user
-        audio_input = get_object_or_404(
-            AudioInput, 
-            pk=pk,
-            document__content_type__in=[
-                ContentType.objects.get_for_model(Session),
-                ContentType.objects.get_for_model(Report)
-            ]
-        )
-        
-        # Additional security check based on document type
+        # Get the audio input first
+        audio_input = get_object_or_404(AudioInput, pk=pk)
+
+        # Get the associated document
         document = audio_input.document
-        if hasattr(document, 'user') and document.user != request.user:
+
+        # Security check: ensure the document belongs to the user
+        if not hasattr(document, "user") or document.user != request.user:
             raise Http404("Audio input not found")
         
         try:
@@ -155,19 +150,14 @@ class UnifiedInputViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     def delete_document(self, request, pk=None):
         """Delete a document input"""
-        # Security check: ensure the document input belongs to the user
-        document_input = get_object_or_404(
-            DocumentInput, 
-            pk=pk,
-            document__content_type__in=[
-                ContentType.objects.get_for_model(Session),
-                ContentType.objects.get_for_model(Report)
-            ]
-        )
-        
-        # Additional security check based on document type
+        # Get the document input first
+        document_input = get_object_or_404(DocumentInput, pk=pk)
+
+        # Get the associated document
         document = document_input.document
-        if hasattr(document, 'user') and document.user != request.user:
+
+        # Security check: ensure the document belongs to the user
+        if not hasattr(document, "user") or document.user != request.user:
             raise Http404("Document input not found")
         
         try:

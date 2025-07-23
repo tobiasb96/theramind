@@ -368,7 +368,7 @@
                     <span class="sr-only">Close modal</span>
                 </button>
             </div>
-            <form class="p-4 md:p-5" method="post" enctype="multipart/form-data" action="{% url 'reports:upload_context_file' report.pk %}">
+            <form class="p-4 md:p-5" method="post" enctype="multipart/form-data" action="{% url 'inputs:add_document_file_input' document_type='report' document_id=report.pk %}">
                 {% csrf_token %}
                 <div class="mb-4">
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -422,7 +422,7 @@
                     <span class="sr-only">Close modal</span>
                 </button>
             </div>
-            <form class="p-4 md:p-5" method="post" action="{% url 'reports:add_context_text' report.pk %}">
+            <form class="p-4 md:p-5" method="post" action="{% url 'inputs:add_document_text_input' document_type='report' document_id=report.pk %}">
                 {% csrf_token %}
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -582,7 +582,7 @@ function deleteContextFile(contextFileId) {
         return;
     }
 
-    fetch(`{% url 'reports:delete_context_file' report.pk %}`, {
+    fetch(`{% url 'inputs:delete_document_input' 0 %}`.replace('0', contextFileId), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

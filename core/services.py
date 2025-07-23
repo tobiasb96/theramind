@@ -4,9 +4,9 @@ import logging
 from fpdf import FPDF
 from django.utils.html import strip_tags
 from html import unescape
-from django.contrib.contenttypes.models import ContentType
 from core.utils.text_extraction import TextExtractionService
 from therapy_sessions.services import get_transcription_service
+from core.connector import get_llm_connector
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,8 @@ class UnifiedInputService:
     def __init__(self):
         self.text_extraction_service = TextExtractionService()
         self.transcription_service = get_transcription_service()
+
+        self.llm_connector = get_llm_connector()
 
     def add_audio_input(
         self, document, audio_file, audio_type: str = "upload", therapeutic_observations: str = ""
@@ -129,9 +131,9 @@ class UnifiedInputService:
     def _process_audio_transcription(self, audio_input):
         """Process audio transcription"""
         try:
-            if self.transcription_service.is_available():
+            if self.llm_connector.is_available():
                 file_path = audio_input.audio_file.path
-                transcribed_text, processing_time = self.transcription_service.transcribe(file_path)
+                transcribed_text, processing_time = self.llm_connector.transcribe(file_path)
 
                 audio_input.transcribed_text = transcribed_text
                 audio_input.processing_time_seconds = processing_time
