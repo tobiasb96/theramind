@@ -11,22 +11,6 @@
             <h1 class="text-2xl font-bold text-gray-900">Alle Dokumente</h1>
             <p class="text-gray-600 mt-1">Übersicht über alle deine Sitzungen und Berichte</p>
         </div>
-        <div class="flex space-x-3">
-            <a href="{% url 'sessions:session_create' %}" 
-               class="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 inline-flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>
-                </svg>
-                Neue Sitzung
-            </a>
-            <a href="{% url 'reports:report_create' %}" 
-               class="px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 inline-flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                Neuer Bericht
-            </a>
-        </div>
     </div>
 </div>
 
@@ -107,24 +91,6 @@
                         Erstelle deine erste Sitzung oder deinen ersten Bericht, um loszulegen.
                     {% endif %}
                 </p>
-                {% if not search_query %}
-                    <div class="flex justify-center space-x-4">
-                        <a href="{% url 'sessions:session_create' %}" 
-                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>
-                            </svg>
-                            Neue Sitzung
-                        </a>
-                        <a href="{% url 'reports:report_create' %}" 
-                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            Neuer Bericht
-                        </a>
-                    </div>
-                {% endif %}
             </div>
         {% endif %}
     </div>
