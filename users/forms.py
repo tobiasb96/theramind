@@ -61,7 +61,7 @@ class UserSettingsForm(forms.ModelForm):
             }),
         }
         labels = {
-            'gender': 'Ihr Geschlecht',
-            'patient_focus': 'Fokus',
-            'therapy_focus': 'Vertiefung',
+            "gender": "Geschlecht",
+            "patient_focus": "Patientenfokus",
+            "therapy_focus": "Therapeutische Vertiefung",
         } 

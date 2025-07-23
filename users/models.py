@@ -100,9 +100,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def save(self, *args, **kwargs):
         """Create user settings when user is created"""
-        if not self.pk:
-            UserSettings.objects.create(user=self)
+        is_new_user = not self.pk
         super().save(*args, **kwargs)
+        if is_new_user:
+            UserSettings.objects.create(user=self)
 
 
 class UserSettings(models.Model):
