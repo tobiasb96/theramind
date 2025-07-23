@@ -1,35 +1,22 @@
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
+from core.models import BaseDocument
 
 
-class Session(models.Model):
-    class PatientGender(models.TextChoices):
-        MALE = "male", "Männlich"
-        FEMALE = "female", "Weiblich"
-        DIVERSE = "diverse", "Divers"
-        NOT_SPECIFIED = "not_specified", "Nicht angegeben"
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        verbose_name="User",
-        null=True,
-        blank=True,
-    )
+class Session(BaseDocument):
+    # Session-specific fields
     date = models.DateTimeField(default=timezone.now, verbose_name="Datum")
-    title = models.CharField(max_length=200, verbose_name="Titel", blank=True)
-    patient_gender = models.CharField(
-        max_length=20,
-        choices=PatientGender.choices,
-        default=PatientGender.NOT_SPECIFIED,
-        verbose_name="Geschlecht des Patienten",
-        help_text="Geschlecht des Patienten für geschlechtsspezifische KI-Generierung",
-    )
-    notes = models.TextField(verbose_name="Notizen", blank=True)
-    summary = models.TextField(verbose_name="Zusammenfassung", blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="Aktualisiert am")
+
+    # Map notes to content field in BaseDocument
+    # We'll keep notes as a property for backward compatibility
+    @property
+    def notes(self):
+        return self.content
+
+    @notes.setter
+    def notes(self, value):
+        self.content = value
     
     class Meta:
         verbose_name = "Sitzung"
