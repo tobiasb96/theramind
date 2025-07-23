@@ -132,7 +132,7 @@ class SessionViewSet(viewsets.ViewSet):
             session.delete()
             messages.success(request, "Sitzung wurde erfolgreich gelöscht.")
 
-        return HttpResponseRedirect(reverse_lazy("sessions:session_list"))
+        return HttpResponseRedirect(reverse_lazy("core:dashboard"))
 
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)

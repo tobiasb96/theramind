@@ -123,7 +123,7 @@ class ReportViewSet(viewsets.ViewSet):
         elif request.method == "POST":
             report.delete()
             messages.success(request, "Bericht wurde erfolgreich gelöscht.")
-            return redirect("reports:reports_list")
+            return redirect("core:dashboard")
 
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
