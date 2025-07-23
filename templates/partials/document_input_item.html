@@ -1,6 +1,6 @@
 <!-- Individual document input item display -->
-<div class="border rounded-lg p-4 bg-gray-50">
-    <div class="flex justify-between items-start">
+<div class="border rounded-lg p-2 bg-gray-50">
+    <div class="flex justify-between items-center">
         <div class="flex-1">
             <div class="flex items-center space-x-2">
                 <h3 class="font-medium text-gray-900">{{ document.name }}</h3>
@@ -22,24 +22,9 @@
                     </span>
                 {% endif %}
             </div>
-            <div class="mt-2 text-sm text-gray-600">
-                {% if document.file_size %}
-                    <span>{{ document.get_file_size_display }}</span> •
-                {% endif %}
-                <span>{{ document.created_at|date:"d.m.Y H:i" }}</span>
-            </div>
-            {% if document.processing_successful and document.extracted_text %}
-                <div class="mt-2 text-sm text-gray-700">
-                    <strong>Vorschau:</strong> {{ document.get_text_preview }}
-                </div>
-            {% elif not document.processing_successful %}
+            {% if not document.processing_successful %}
                 <div class="mt-2 text-sm text-red-600">
                     <strong>Fehler:</strong> {{ document.processing_error }}
-                </div>
-            {% endif %}
-            {% if document.description %}
-                <div class="mt-2 text-sm text-gray-600">
-                    <strong>Beschreibung:</strong> {{ document.description }}
                 </div>
             {% endif %}
         </div>
@@ -50,7 +35,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                     </svg>
-                    Volltext anzeigen
+                    Text anzeigen
                 </button>
             {% endif %}
                          <form method="post" action="{% url 'inputs:delete_document_input' pk=document.pk %}" class="inline">
@@ -67,7 +52,6 @@
     <!-- Hidden full text preview -->
     <div id="document-preview-{{ document.id }}" class="mt-4 hidden">
         <div class="bg-white p-4 rounded border">
-            <h4 class="font-medium text-gray-900 mb-2">Volltext:</h4>
             <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ document.extracted_text }}</div>
         </div>
     </div>

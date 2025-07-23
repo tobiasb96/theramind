@@ -56,6 +56,19 @@
                         </div>
                     </div>
 
+                    <!-- Active Recording Warning -->
+                    <div id="active-recording-warning" class="hidden bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-amber-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
+                            <div class="text-sm">
+                                <p class="font-medium text-amber-900">Aufnahme läuft im Hintergrund</p>
+                                <p class="text-amber-700 mt-1">Eine Aufnahme wurde fortgesetzt. Sie können diese beenden oder fortfahren.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="flex flex-col items-center space-y-4">
                         <!-- Recording Button -->
                         <button id="record-toggle" type="button" class="relative w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-all duration-200 flex items-center justify-center group">
@@ -77,6 +90,19 @@
                         <!-- Audio Visualizer -->
                         <div id="audio-visualizer" class="hidden w-full max-w-sm">
                             <canvas id="visualizer-canvas" width="300" height="60" class="w-full h-15 bg-gray-50 rounded-lg border"></canvas>
+                        </div>
+
+                        <!-- Live Therapeutic Observations (visible during recording) -->
+                        <div id="live-observations" class="hidden w-full">
+                            <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                <label for="live-therapeutic-observations" class="block mb-2 text-sm font-medium text-blue-900">
+                                    Therapeutische Beobachtungen (während der Aufnahme)
+                                </label>
+                                <textarea id="live-therapeutic-observations" rows="3" 
+                                          class="bg-white border border-blue-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                                          placeholder="z.B. Patient schafft es nicht den Augenkontakt zu halten, zeigt Anzeichen von Nervosität, erwähnt Schlafprobleme seit Medikamentenumstellung..."></textarea>
+                                <p class="mt-1 text-xs text-blue-600">Du kannst während der Aufnahme Notizen machen - diese werden automatisch gespeichert.</p>
+                            </div>
                         </div>
 
                         <!-- Audio Preview -->
@@ -157,58 +183,191 @@
 </div>
 
 <script>
-// Tab switching functionality
-function switchAudioTab(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('.audio-tab-content').forEach(tab => {
-        tab.classList.add('hidden');
-    });
+// Enhanced Audio Recording with Persistence and Data Loss Prevention
+(function() {
+    // Global state key for persistence
+    const STORAGE_KEY = 'theramind_audio_recording_state';
     
-    // Remove active state from all tab buttons
-    document.querySelectorAll('.audio-tab-btn').forEach(btn => {
-        btn.classList.remove('border-blue-600', 'text-blue-600');
-        btn.classList.add('border-transparent');
-    });
-    
-    // Show selected tab content
-    document.getElementById(`audio-${tabName}-tab`).classList.remove('hidden');
-    
-    // Add active state to selected tab button
-    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
-    activeBtn.classList.add('border-blue-600', 'text-blue-600');
-    activeBtn.classList.remove('border-transparent');
-}
+    // Scoped variables
+    let mediaRecorder;
+    let recordedChunks = [];
+    let recordingTimer;
+    let recordingSeconds = 0;
+    let isRecording = false;
+    let audioContext;
+    let analyser;
+    let dataArray;
+    let animationId;
+    let recordingStartTime = null;
+    let hasUnsavedData = false;
+    let isInitialized = false;
 
-// Audio recording functionality
-let mediaRecorder;
-let recordedChunks = [];
-let recordingTimer;
-let recordingSeconds = 0;
-let isRecording = false;
-let audioContext;
-let analyser;
-let dataArray;
-let animationId;
-let recordingStartTime = null;
-
-// Initialize with record tab active
-document.addEventListener('DOMContentLoaded', function() {
-    switchAudioTab('record');
-    initializeRecording();
-});
-
-function initializeRecording() {
-    const recordToggle = document.getElementById('record-toggle');
-    const deleteRecordingBtn = document.getElementById('delete-recording');
-    
-    if (recordToggle) {
-        recordToggle.addEventListener('click', toggleRecording);
+    // Tab switching functionality
+    function switchAudioTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.audio-tab-content').forEach(tab => {
+            tab.classList.add('hidden');
+        });
+        
+        // Remove active state from all tab buttons
+        document.querySelectorAll('.audio-tab-btn').forEach(btn => {
+            btn.classList.remove('border-blue-600', 'text-blue-600');
+            btn.classList.add('border-transparent');
+        });
+        
+        // Show selected tab content
+        document.getElementById(`audio-${tabName}-tab`).classList.remove('hidden');
+        
+        // Add active state to selected tab button
+        const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+        activeBtn.classList.add('border-blue-600', 'text-blue-600');
+        activeBtn.classList.remove('border-transparent');
     }
-    
-    if (deleteRecordingBtn) {
-        deleteRecordingBtn.addEventListener('click', resetRecording);
+
+    // Make switchAudioTab available globally
+    window.switchAudioTab = switchAudioTab;
+
+    // Persistence functions
+    function saveState() {
+        const liveObservations = document.getElementById('live-therapeutic-observations');
+        const state = {
+            isRecording: isRecording,
+            recordingSeconds: recordingSeconds,
+            recordingStartTime: recordingStartTime,
+            hasRecordedData: recordedChunks.length > 0,
+            therapeuticObservations: liveObservations ? liveObservations.value : '',
+            timestamp: Date.now()
+        };
+        
+        // Save recorded chunks as base64 for persistence
+        if (recordedChunks.length > 0) {
+            try {
+                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.onload = function() {
+                    state.recordedDataURL = reader.result;
+                    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                };
+                reader.readAsDataURL(blob);
+                return;
+            } catch (e) {
+                console.warn('Failed to save recorded chunks:', e);
+            }
+        }
+        
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
-}
+
+    function loadState() {
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const state = JSON.parse(saved);
+                // Only restore if less than 30 minutes old
+                const MAX_STATE_AGE = 1800000; // 30 minutes
+                if (Date.now() - state.timestamp < MAX_STATE_AGE) {
+                    return state;
+                }
+                // Clean up expired state
+                sessionStorage.removeItem(STORAGE_KEY);
+            }
+        } catch (e) {
+            console.warn('Failed to load audio recording state:', e);
+            sessionStorage.removeItem(STORAGE_KEY);
+        }
+        return null;
+    }
+
+    async function restoreRecordedChunks(dataURL) {
+        if (!dataURL) return;
+        
+        try {
+            const response = await fetch(dataURL);
+            const blob = await response.blob();
+            recordedChunks = [blob];
+        } catch (e) {
+            console.warn('Failed to restore recorded chunks:', e);
+            recordedChunks = [];
+        }
+    }
+
+    function clearState() {
+        sessionStorage.removeItem(STORAGE_KEY);
+        hasUnsavedData = false;
+    }
+
+    // Navigation warning functions
+    function enableNavigationWarning() {
+        hasUnsavedData = true;
+        window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    function disableNavigationWarning() {
+        hasUnsavedData = false;
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    function handleBeforeUnload(e) {
+        if (hasUnsavedData) {
+            const message = 'Sie haben eine ungespeicherte Audioaufnahme. Möchten Sie die Seite wirklich verlassen?';
+            e.preventDefault();
+            e.returnValue = message;
+            return message;
+        }
+    }
+
+    // Initialize modal
+    function initializeModal() {
+        if (isInitialized) return;
+        
+        const recordToggle = document.getElementById('record-toggle');
+        const deleteRecordingBtn = document.getElementById('delete-recording');
+        
+        if (recordToggle) {
+            recordToggle.addEventListener('click', toggleRecording);
+        }
+        
+        if (deleteRecordingBtn) {
+            deleteRecordingBtn.addEventListener('click', resetRecording);
+        }
+        
+        // Restore state if available
+        const savedState = loadState();
+        if (savedState) {
+            setTimeout(async () => {
+                await restoreFromState(savedState);
+            }, 100);
+        }
+        
+        isInitialized = true;
+    }
+
+    // Restore from saved state
+    async function restoreFromState(state) {
+        if (state.hasRecordedData && state.recordedDataURL) {
+            await restoreRecordedChunks(state.recordedDataURL);
+        }
+        
+        if (state.therapeuticObservations) {
+            const liveObservations = document.getElementById('live-therapeutic-observations');
+            const therapeuticObservations = document.getElementById('therapeutic-observations');
+            if (liveObservations) liveObservations.value = state.therapeuticObservations;
+            if (therapeuticObservations) therapeuticObservations.value = state.therapeuticObservations;
+        }
+        
+        recordingSeconds = state.recordingSeconds || 0;
+        recordingStartTime = state.recordingStartTime;
+        
+        if (state.isRecording) {
+            // Resume recording if it was active
+            isRecording = true;
+            updateRecordingUI();
+            startTimer();
+        } else if (state.hasRecordedData) {
+            // Show preview if there's recorded data
+            showRecordingPreview();
+        }
+    }
 
 async function toggleRecording() {
     if (!isRecording) {
@@ -272,6 +431,8 @@ async function startRecording() {
         updateRecordingUI();
         startTimer();
         startVisualizer(stream);
+        enableNavigationWarning();
+        saveState();
         
     } catch (error) {
         console.error('Error accessing microphone:', error);
@@ -291,6 +452,10 @@ function stopRecording() {
         updateRecordingUI();
         stopTimer();
         stopVisualizer();
+        saveState();
+        
+        // Sync live observations to preview
+        syncObservationsToPreview();
     }
 }
 
@@ -315,6 +480,38 @@ function resetRecording() {
     recordingStartTime = null;
     
     updateRecordingUI();
+    clearState();
+    disableNavigationWarning();
+}
+
+function syncObservationsToPreview() {
+    const liveObservations = document.getElementById('live-therapeutic-observations');
+    const therapeuticObservations = document.getElementById('therapeutic-observations');
+    
+    if (liveObservations && therapeuticObservations) {
+        therapeuticObservations.value = liveObservations.value;
+    }
+}
+
+function showRecordingPreview() {
+    if (recordedChunks.length > 0) {
+        const recordedAudio = document.getElementById('recorded-audio');
+        const audioPreview = document.getElementById('audio-preview');
+        const recordedAudioFile = document.getElementById('recorded-audio-file');
+        
+        if (recordedAudio && audioPreview) {
+            const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(blob);
+            recordedAudio.src = audioUrl;
+            audioPreview.classList.remove('hidden');
+            
+            // Create file for form submission
+            const file = new File([blob], `recording-${Date.now()}.webm`, { type: 'audio/webm' });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            recordedAudioFile.files = dataTransfer.files;
+        }
+    }
 }
 
 function updateRecordingUI() {
@@ -443,15 +640,54 @@ function showRecordingError() {
     }
 }
 
-// Handle form submission to include therapeutic observations
-document.addEventListener('submit', function(e) {
-    if (e.target.closest('#audio-record-tab')) {
-        const therapeuticObservations = document.getElementById('therapeutic-observations');
-        const therapeuticObservationsInput = document.getElementById('therapeutic-observations-input');
-        
-        if (therapeuticObservations && therapeuticObservationsInput) {
-            therapeuticObservationsInput.value = therapeuticObservations.value;
+    // Auto-save live observations
+    function setupLiveObservationsSync() {
+        const liveObservations = document.getElementById('live-therapeutic-observations');
+        if (liveObservations) {
+            liveObservations.addEventListener('input', function() {
+                saveState();
+            });
         }
     }
-});
+
+    // Handle form submission to include therapeutic observations
+    document.addEventListener('submit', function(e) {
+        if (e.target.closest('#audio-record-tab')) {
+            const therapeuticObservations = document.getElementById('therapeutic-observations');
+            const therapeuticObservationsInput = document.getElementById('therapeutic-observations-input');
+            
+            if (therapeuticObservations && therapeuticObservationsInput) {
+                therapeuticObservationsInput.value = therapeuticObservations.value;
+            }
+            
+            // Clear state on successful submission
+            disableNavigationWarning();
+            clearState();
+        }
+    });
+
+    // Modal event handling
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-modal-target="audio-input-modal"]')) {
+            setTimeout(() => {
+                switchAudioTab('record');
+                initializeModal();
+                setupLiveObservationsSync();
+            }, 200);
+        }
+    });
+
+    // Page visibility change - save state when tab becomes hidden
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden && (isRecording || recordedChunks.length > 0)) {
+            saveState();
+        }
+    });
+
+    // Initialize with record tab active on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        switchAudioTab('record');
+    });
+
+})();
 </script> 
