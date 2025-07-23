@@ -39,15 +39,15 @@ class UnifiedInputService:
         audio_input = AudioInput.objects.create(
             document=document,
             name=name,
-            description=therapeutic_observations,  # Store therapeutic observations in description
+            description="",  # No longer store therapeutic observations in description
             audio_type=audio_type,
             file_format=file_format,
             audio_file=audio_file,
             file_size=audio_file.size,
         )
 
-        # Process transcription asynchronously
-        self._process_audio_transcription(audio_input)
+        # Process transcription asynchronously, passing therapeutic observations
+        self._process_audio_transcription(audio_input, therapeutic_observations)
         return audio_input
 
     def add_document_input(self, document, file=None, text=None):
@@ -128,12 +128,16 @@ class UnifiedInputService:
         else:
             return DocumentInput.FileType.TXT  # Default fallback
 
-    def _process_audio_transcription(self, audio_input):
-        """Process audio transcription"""
+    def _process_audio_transcription(self, audio_input, therapeutic_observations: str = ""):
+        """Process audio transcription and append therapeutic observations"""
         try:
             if self.llm_connector.is_available():
                 file_path = audio_input.audio_file.path
                 transcribed_text, processing_time = self.llm_connector.transcribe(file_path)
+
+                # Append therapeutic observations if provided
+                if therapeutic_observations.strip():
+                    transcribed_text += f"\n\nWeitere Notizen: {therapeutic_observations.strip()}"
 
                 audio_input.transcribed_text = transcribed_text
                 audio_input.processing_time_seconds = processing_time
