@@ -1,7 +1,7 @@
 from django.urls import path
 
 from core.views import DocumentsListView, UnifiedInputViewSet
-from dashboard.views import DashboardView, QuickDocumentCreateView, QuickSessionCreateView
+from dashboard.views import DashboardView
 
 
 app_name = "core"
@@ -34,6 +34,4 @@ urlpatterns = [
     ),
     path("", DashboardView.as_view(), name="dashboard"),
     path("documents/", DocumentsListView.as_view(), name="documents_list"),
-    path("quick-session-create/", QuickSessionCreateView.as_view(), name="quick_session_create"),
-    path("quick-document-create/", QuickDocumentCreateView.as_view(), name="quick_document_create"),
 ]
