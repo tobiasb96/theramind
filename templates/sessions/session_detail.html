@@ -92,32 +92,6 @@
 
     <!-- Background Audio Recording Indicators -->
     <div id="background-recording-indicators" class="mb-6 space-y-3">
-        <!-- Active Recording Indicator -->
-        <div id="active-recording-indicator" class="hidden bg-red-50 border border-red-200 rounded-lg p-4">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-3"></div>
-                </div>
-                <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-sm font-medium text-red-900">Aufnahme läuft im Hintergrund</h3>
-                            <p class="text-red-700 text-sm">Laufzeit: <span id="background-recording-time" class="font-mono">00:00</span></p>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button data-modal-target="audio-input-modal" data-modal-toggle="audio-input-modal" 
-                                    class="text-red-700 bg-red-100 hover:bg-red-200 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 text-center inline-flex items-center">
-                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zM12 7a1 1 0 012 0v4a1 1 0 11-2 0V7z" clip-rule="evenodd"/>
-                                </svg>
-                                Stoppen
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Unsaved Recording Indicator -->
         <div id="unsaved-recording-indicator" class="hidden bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div class="flex items-center">
