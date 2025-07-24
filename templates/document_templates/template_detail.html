@@ -164,7 +164,7 @@
                     <div class="col-span-2">
                         <label for="edit-template-type" class="block mb-2 text-sm font-medium text-gray-900">Vorlagentyp</label>
                         <select name="template_type" id="edit-template-type" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" required>
-                            <option value="report" {% if template.template_type == DocumentTemplate.TemplateType.REPORT %}selected{% endif %}>Berichte</option>
+                            <option value="report" {% if template.template_type == DocumentTemplate.TemplateType.REPORT %}selected{% endif %}>Reports</option>
                             <option value="session_notes" {% if template.template_type == 'session_notes' %}selected{% endif %}>Sitzungsnotizen</option>
                         </select>
                     </div>

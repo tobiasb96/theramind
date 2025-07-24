@@ -89,7 +89,7 @@ class TemplateViewSet(viewsets.ViewSet):
                 request,
                 "document_templates/template_form.html",
                 {
-                    "template_types": DocumentTemplate.TEMPLATE_TYPES,
+                    "template_types": DocumentTemplate.TemplateType.choices,
                 },
             )
 
@@ -137,7 +137,7 @@ class TemplateViewSet(viewsets.ViewSet):
                     request,
                     "document_templates/template_form.html",
                     {
-                        "template_types": DocumentTemplate.TEMPLATE_TYPES,
+                        "template_types": DocumentTemplate.TemplateType.choices,
                     },
                 )
 
@@ -157,7 +157,7 @@ class TemplateViewSet(viewsets.ViewSet):
                 "documents/template_form.html",
                 {
                     "template": template,
-                    "template_types": DocumentTemplate.TEMPLATE_TYPES,
+                    "template_types": DocumentTemplate.TemplateType.choices,
                 },
             )
 
@@ -195,7 +195,7 @@ class TemplateViewSet(viewsets.ViewSet):
                     "documents/template_form.html",
                     {
                         "template": template,
-                        "template_types": DocumentTemplate.TEMPLATE_TYPES,
+                        "template_types": DocumentTemplate.TemplateType.choices,
                     },
                 )
 
