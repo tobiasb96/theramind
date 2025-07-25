@@ -1,43 +1,89 @@
-from core.connector import get_llm_connector
+from typing import Optional
+from django.db.models import Q
+from core.ai_connectors import get_llm_connector
+from core.ai_connectors.base.llm import LLMGenerationParams
+from core.utils.ai_helpers import build_gender_context
+from core.services import UnifiedInputService
+from document_templates.models import DocumentTemplate
+from document_templates.service import TemplateService
 from therapy_sessions.prompts import (
     SUMMARY_PROMPT,
     SYSTEM_PROMPT_SUMMARY,
     SYSTEM_PROMPT,  # Fallback
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-class TranscriptionService:
+class SessionService:
+    """Service for session-specific notes generation"""
+
     def __init__(self):
-        self.connector = get_llm_connector()
+        self.llm_connector = get_llm_connector()
+        self.template_service = TemplateService()
+        self.unified_input_service = UnifiedInputService()
 
     def is_available(self) -> bool:
-        return self.connector.is_available()
+        """Check if LLM service is available"""
+        return self.llm_connector.is_available()
 
     def reinitialize(self):
-        """Reinitialize the client (useful after settings change)"""
-        self.connector.reinitialize()
+        """Reinitialize the connector (useful after settings change)"""
+        self.llm_connector.reinitialize()
 
-    def summarize_session_notes(self, session_notes: str) -> str:
+    def get_template(self, template_id: int, user=None) -> DocumentTemplate:
         """
-        Create ultra-short summary using OpenAI GPT
-        """
-        prompt = SUMMARY_PROMPT.format(session_notes=session_notes)
-        return self.connector.generate_text(SYSTEM_PROMPT_SUMMARY, prompt, max_tokens=100)
-
-    def _build_session_context_prefix(
-        self, transcript_text: str, existing_notes: str = None, patient_gender: str = None
-    ) -> str:
-        """
-        Build the context prefix for session notes generation
+        Get and validate template access for session notes
 
         Args:
-            transcript_text: The transcript text
+            template_id: ID of the template
+            user: User object for access validation
+
+        Returns:
+            DocumentTemplate instance
+
+        Raises:
+            DocumentTemplate.DoesNotExist: If template not found or access denied
+        """
+        query = DocumentTemplate.objects.filter(
+            id=template_id,
+            template_type=DocumentTemplate.TemplateType.SESSION_NOTES,
+            is_active=True,
+        )
+
+        if user:
+            query = query.filter(Q(is_predefined=True) | Q(user=user))
+        else:
+            query = query.filter(is_predefined=True)
+
+        return query.get()
+
+    def summarize_session_notes(self, session_notes: str) -> str:
+        """Create ultra-short summary using LLM"""
+        if not session_notes.strip():
+            return ""
+
+        prompt = SUMMARY_PROMPT.format(session_notes=session_notes)
+        params = LLMGenerationParams(max_tokens=100)
+        result = self.llm_connector.generate_text(SYSTEM_PROMPT_SUMMARY, prompt, params)
+        return result.text
+
+    def _build_context_prefix(self, session, existing_notes: str = None) -> str:
+        """
+        Build the context prefix from unified inputs
+
+        Args:
+            session: The session to build context for
             existing_notes: Existing session notes (if any)
-            patient_gender: The patient's gender for appropriate language use
 
         Returns:
             Formatted context prefix
         """
+        # Use unified input service to get combined text
+        combined_text = self.unified_input_service.get_combined_text(session)
+
+        # Start building the context prefix
         context_prefix = """Erstelle strukturierte Sitzungsnotizen basierend auf dem folgenden Transkript einer Therapiesitzung.
 
 Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
@@ -45,141 +91,148 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
 """
 
         # Add patient gender context if provided
-        if patient_gender and patient_gender != "not_specified":
-            gender_mapping = {"male": "männlich", "female": "weiblich", "diverse": "divers"}
-            gender_display = gender_mapping.get(patient_gender, "nicht angegeben")
+        gender_context = build_gender_context(session.patient_gender)
+        if gender_context:
+            context_prefix += gender_context
 
-            pronouns_mapping = {
-                "male": "er/ihm/sein",
-                "female": "sie/ihr/ihre",
-                "diverse": "sie/dey/deren (verwende geschlechtsneutrale Sprache)",
-            }
-            pronouns = pronouns_mapping.get(patient_gender, "")
-
-            context_prefix += f"""**PATIENT*INNEN-INFORMATIONEN**
-Das Geschlecht des Patienten ist {gender_display}. Verwende entsprechende Pronomen ({pronouns}) und
-geschlechtsangemessene Sprache in den Notizen. Achte auf eine respektvolle und professionelle Darstellung.
+        if not combined_text.strip():
+            context_prefix += """**HINWEIS:** Keine Kontextdateien verfügbar. Erstelle generische Sitzungsnotizen basierend auf der Vorlage.
 
 """
+            return context_prefix
 
-        context_prefix += f"""**TRANSKRIPT DER SITZUNG**
-{transcript_text}
+        # Format combined input text
+        context_prefix += f"""**SITZUNGSINFORMATIONEN**
+
+{combined_text}
 
 """
 
         # Include existing notes if they exist
         if existing_notes and existing_notes.strip():
             context_prefix += f"""**VORHANDENE NOTIZEN**
-                Die folgenden Notizen existieren bereits für diese Sitzung. Bitte berücksichtige diese und
-                erweitere sie sinnvoll mit den Informationen aus dem Transkript, wo es angemessen ist.
-                Füge keine neuen Abschnitte hinzu:
-                1. Entweder erweitere die bestehenden Abschnitte wenn das neue Format mit dem vorhandenen Format kompatibel ist.
-                2. Oder ersetze die bestehenden Abschnitte mit dem neuen Format, schau dir aber den Inhalt an und übertrage
-                wenn es sinnvoll ist.
+Die folgenden Notizen existieren bereits für diese Sitzung. Bitte berücksichtige diese und
+erweitere sie sinnvoll mit den Informationen aus den Sitzungsinformationen, wo es angemessen ist.
+Füge keine neuen Abschnitte hinzu:
+1. Entweder erweitere die bestehenden Abschnitte wenn das neue Format mit dem vorhandenen Format kompatibel ist.
+2. Oder ersetze die bestehenden Abschnitte mit dem neuen Format, schau dir aber den Inhalt an und übertrage
+wenn es sinnvoll ist.
 
-                {existing_notes}
+{existing_notes}
 
-                """
+"""
 
-        context_prefix += "**SITZUNGSNOTIZEN**\n\n"
+        context_prefix += """Verwende diese Informationen aus den Eingaben, um strukturierte und professionelle Sitzungsnotizen zu erstellen.
 
+**SITZUNGSNOTIZEN**
+
+"""
         return context_prefix
 
-    def create_session_notes_with_template(
-        self, transcript_text: str, template, existing_notes: str = None, patient_gender: str = None
+    def generate_with_template(
+        self, session, template: DocumentTemplate, existing_notes: str = None
     ) -> str:
         """
-        Create structured session notes using a specific template
+        Generate session notes using a specific template
 
         Args:
-            transcript_text: The transcript text
-            template: DocumentTemplate instance
+            session: The session to generate notes for
+            template: The template to use
             existing_notes: Existing session notes (if any)
-            patient_gender: The patient's gender for appropriate language use
 
         Returns:
             Generated session notes
         """
-        if not transcript_text.strip():
-            return ""
+        if not self.is_available():
+            raise ValueError("LLM connector ist nicht verfügbar")
 
         try:
-            # Build context prefix with transcript and existing notes
-            context_prefix = self._build_session_context_prefix(
-                transcript_text, existing_notes, patient_gender
-            )
+            context_prefix = self._build_context_prefix(session, existing_notes)
 
             # Combine context prefix with template structure
             full_prompt = context_prefix + template.user_prompt
 
-            # Use hardcoded system prompt
-            return self.connector.generate_text(
-                system_prompt=SYSTEM_PROMPT,
-                user_prompt=full_prompt,
+            # Generate the notes using LLM connector
+            params = LLMGenerationParams(
                 max_tokens=template.max_tokens,
                 temperature=template.temperature,
             )
 
+            result = self.llm_connector.generate_text(
+                system_prompt=SYSTEM_PROMPT,
+                user_prompt=full_prompt,
+                params=params,
+            )
+
+            return result.text
+
         except Exception as e:
             raise Exception(f"Fehler bei der Erstellung der Sitzungsnotizen: {str(e)}")
 
-    def create_session_notes(
-        self,
-        transcript_text: str,
-        template_key: str,
-        existing_notes: str = None,
-        patient_gender: str = None,
+    def generate(
+        self, session, template_id: Optional[int] = None, existing_notes: str = None, user=None
     ) -> str:
         """
-        Create structured session notes using a template key (legacy method)
+        Generate session notes
 
         Args:
-            transcript_text: The transcript text
-            template_key: Template key for backwards compatibility
+            session: The session to generate notes for
+            template_id: Optional specific template ID to use
             existing_notes: Existing session notes (if any)
-            patient_gender: The patient's gender for appropriate language use
+            user: User object for template access validation
 
         Returns:
             Generated session notes
         """
-        # Import here to avoid circular imports
-        from document_templates.service import TemplateService
+        if template_id:
+            template = self.get_template(template_id, user=user)
+        else:
+            template = self.template_service.get_default_template(
+                DocumentTemplate.TemplateType.SESSION_NOTES
+            )
 
-        template_service = TemplateService()
-        templates = template_service.get_session_templates()
+        if not template:
+            raise ValueError("Kein Template gefunden")
 
-        # Find template by matching name with template_key
-        template = None
-        template_key_mapping = {
-            "erstgespraech": "Erstgespräch",
-            "verlaufsgespraech": "Verlaufsgespräch",
-            "abschlussgespraech": "Abschlussgespräch",
+        return self.generate_with_template(session, template, existing_notes)
+
+    def get_context_summary(self, session):
+        """
+        Get a summary of unified inputs for a session
+
+        Args:
+            session: The session to get context summary for
+
+        Returns:
+            Dictionary with context summary
+        """
+        audio_inputs = session.audio_inputs.all()
+        document_inputs = session.document_inputs.all()
+
+        summary = {
+            "audio_inputs": audio_inputs.count(),
+            "document_inputs": document_inputs.count(),
+            "total_inputs": audio_inputs.count() + document_inputs.count(),
+            "successful_audio": audio_inputs.filter(processing_successful=True).count(),
+            "successful_documents": document_inputs.filter(processing_successful=True).count(),
+            "failed_audio": audio_inputs.filter(processing_successful=False).count(),
+            "failed_documents": document_inputs.filter(processing_successful=False).count(),
+            "total_text_length": (
+                sum(len(ai.transcribed_text) for ai in audio_inputs if ai.transcribed_text)
+                + sum(len(di.extracted_text) for di in document_inputs if di.extracted_text)
+            ),
         }
 
-        target_name = template_key_mapping.get(template_key, template_key)
-
-        for t in templates:
-            if t.name == target_name:
-                template = t
-                break
-
-        if not template:
-            # Fall back to first available template
-            template = templates[0] if templates else None
-
-        if not template:
-            raise ValueError(f"Kein Template gefunden für: {template_key}")
-
-        return self.create_session_notes_with_template(
-            transcript_text, template, existing_notes, patient_gender
-        )
+        return summary
 
 
 # Singleton instance - lazy initialization
-_transcription_service_instance = None
+_session_service_instance = None
 
-def get_transcription_service():
-    global _transcription_service_instance
-    if _transcription_service_instance is None:
-        _transcription_service_instance = TranscriptionService()
-    return _transcription_service_instance
+
+def get_session_service():
+    """Get singleton session service instance"""
+    global _session_service_instance
+    if _session_service_instance is None:
+        _session_service_instance = SessionService()
+    return _session_service_instance

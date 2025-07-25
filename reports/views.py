@@ -157,13 +157,24 @@ class ReportViewSet(viewsets.ViewSet):
             
             if not template_id:
                 return JsonResponse({'error': 'Template-ID ist erforderlich'}, status=400)
-            
-            # Generate content using ReportService
+
+            # Initialize ReportService
             report_service = ReportService()
             if not report_service.is_available():
-                return JsonResponse({'error': 'KI-Service ist nicht verfügbar'}, status=400)
-            
-            generated_content = report_service.generate(report, template_id=int(template_id))
+                return JsonResponse({"error": "KI-Service ist nicht verfügbar"}, status=400)
+
+            # Validate template access
+            try:
+                template = report_service.get_template(int(template_id), user=request.user)
+            except Exception:
+                return JsonResponse({"error": "Template nicht gefunden"}, status=400)
+
+            # Check if there are any inputs to process
+            context_summary = report_service.get_context_summary(report)
+            if context_summary["total_inputs"] == 0:
+                logger.warning(f"Generating report {report.id} without context inputs")
+
+            generated_content = report_service.generate_with_template(report, template)
             
             # Update report content
             report.content = generated_content
@@ -219,18 +230,11 @@ class ReportViewSet(viewsets.ViewSet):
                 messages.error(request, "Template ist erforderlich")
                 return redirect("reports:report_detail", pk=report.pk)
 
-            # Get the template
+            # Get the template using service helper
+            report_service = ReportService()
             try:
-                # CRITICAL SECURITY: Only allow access to predefined templates or user's own templates
-                from django.db.models import Q
-                template = DocumentTemplate.objects.filter(
-                    id=template_id, 
-                    template_type=DocumentTemplate.TemplateType.REPORT,
-                    is_active=True
-                ).filter(
-                    Q(is_predefined=True) | Q(user=request.user)
-                ).get()
-            except DocumentTemplate.DoesNotExist:
+                template = report_service.get_template(int(template_id), user=request.user)
+            except Exception:
                 messages.error(request, "Template nicht gefunden")
                 return redirect("reports:report_detail", pk=report.pk)
 

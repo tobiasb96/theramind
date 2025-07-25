@@ -1,5 +1,8 @@
 from typing import Dict, Any, Optional
-from core.connector import get_llm_connector
+from django.db.models import Q
+from core.ai_connectors import get_llm_connector
+from core.ai_connectors.base.llm import LLMGenerationParams
+from core.utils.ai_helpers import build_gender_context
 from core.services import UnifiedInputService
 from document_templates.models import DocumentTemplate
 from document_templates.service import TemplateService
@@ -14,13 +17,44 @@ class ReportService:
     """Service for generating therapy reports using AI"""
 
     def __init__(self):
-        self.connector = get_llm_connector()
+        self.llm_connector = get_llm_connector()
         self.template_service = TemplateService()
         self.unified_input_service = UnifiedInputService()
 
     def is_available(self) -> bool:
         """Check if the report service is available"""
-        return self.connector.is_available()
+        return self.llm_connector.is_available()
+
+    def reinitialize(self):
+        """Reinitialize the connector (useful after settings change)"""
+        self.llm_connector.reinitialize()
+
+    def get_template(self, template_id: int, user=None) -> DocumentTemplate:
+        """
+        Get and validate template access for reports
+
+        Args:
+            template_id: ID of the template
+            user: User object for access validation
+
+        Returns:
+            DocumentTemplate instance
+
+        Raises:
+            DocumentTemplate.DoesNotExist: If template not found or access denied
+        """
+        query = DocumentTemplate.objects.filter(
+            id=template_id,
+            template_type=DocumentTemplate.TemplateType.REPORT,
+            is_active=True,
+        )
+
+        if user:
+            query = query.filter(Q(is_predefined=True) | Q(user=user))
+        else:
+            query = query.filter(is_predefined=True)
+
+        return query.get()
 
     def _build_context_prefix(self, report: Report) -> str:
         """
@@ -43,22 +77,9 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
 """
 
         # Add patient gender context if provided
-        if report.patient_gender and report.patient_gender != "not_specified":
-            gender_mapping = {"male": "männlich", "female": "weiblich", "diverse": "divers"}
-            gender_display = gender_mapping.get(report.patient_gender, "nicht angegeben")
-
-            pronouns_mapping = {
-                "male": "er/ihm/sein",
-                "female": "sie/ihr/ihre",
-                "diverse": "sie/dey/deren (verwende geschlechtsneutrale Sprache)",
-            }
-            pronouns = pronouns_mapping.get(report.patient_gender, "")
-
-            context_prefix += f"""**PATIENT*INNEN-INFORMATIONEN**
-Das Geschlecht des Patienten ist {gender_display}. Verwende entsprechende Pronomen ({pronouns}) und 
-geschlechtsangemessene Sprache im Bericht. Achte auf eine respektvolle und professionelle Darstellung.
-
-"""
+        gender_context = build_gender_context(report.patient_gender)
+        if gender_context:
+            context_prefix += gender_context
 
         if not combined_text.strip():
             context_prefix += """**HINWEIS:** Keine Kontextdateien verfügbar. Erstelle einen generischen Bericht basierend auf der Vorlage.
@@ -88,7 +109,7 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
             Generated report content
         """
         if not self.is_available():
-            raise ValueError("OpenAI API key ist nicht konfiguriert")
+            raise ValueError("LLM connector ist nicht verfügbar")
 
         try:
             context_prefix = self._build_context_prefix(report)
@@ -96,30 +117,37 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
             # Combine context prefix with template structure
             full_prompt = context_prefix + template.user_prompt
 
-            # Generate the document using hardcoded system prompt
-            return self.connector.generate_text(
-                system_prompt=REPORT_SYSTEM_PROMPT,
-                user_prompt=full_prompt,
+            # Generate the document using LLM connector
+            params = LLMGenerationParams(
                 max_tokens=template.max_tokens,
                 temperature=template.temperature,
             )
 
+            result = self.llm_connector.generate_text(
+                system_prompt=REPORT_SYSTEM_PROMPT,
+                user_prompt=full_prompt,
+                params=params,
+            )
+
+            return result.text
+
         except Exception as e:
             raise Exception(f"Fehler bei der Reportgenerierung: {str(e)}")
 
-    def generate(self, report: Report, template_id: Optional[int] = None) -> str:
+    def generate(self, report: Report, template_id: Optional[int] = None, user=None) -> str:
         """
         Generate a report
 
         Args:
             report: The report to generate content for
             template_id: Optional specific template ID to use
+            user: User object for template access validation
 
         Returns:
             Generated document content
         """
         if template_id:
-            template = DocumentTemplate.objects.get(id=template_id)
+            template = self.get_template(template_id, user=user)
         else:
             template = self.template_service.get_default_template(
                 DocumentTemplate.TemplateType.REPORT
