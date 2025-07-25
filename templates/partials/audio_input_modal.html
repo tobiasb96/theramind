@@ -16,9 +16,7 @@
             </div>
             
             <!-- Modal body -->
-            <form id="audio-upload-form" class="p-6" method="post" enctype="multipart/form-data" action="{% url 'core:add_audio_input' document_type=document_type document_id=document.pk %}">
-                {% csrf_token %}
-                
+            <div class="p-6">
                 <!-- Active Recording Warning -->
                 <div id="active-recording-warning" class="hidden bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
                     <div class="flex items-center">
@@ -28,7 +26,6 @@
                         <span class="text-sm text-amber-800">Aufnahme läuft im Hintergrund</span>
                     </div>
                 </div>
-
 
                 <!-- Permission Error -->
                 <div id="permission-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
@@ -43,156 +40,186 @@
                     </div>
                 </div>
 
-                                <!-- Recording Section -->
-                <div id="record-section" class="text-center">
-                    <!-- Recording Button -->
-                    <button id="record-toggle" type="button" class="relative w-24 h-24 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-all duration-200 flex items-center justify-center group mb-4 mx-auto z-10">
-                        <svg id="record-icon" class="w-10 h-10 text-white transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path id="record-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>
-                        </svg>
-                        <div id="recording-pulse" class="absolute inset-0 rounded-full bg-red-500 opacity-0 animate-ping"></div>
-                    </button>
-
-                    <!-- Recording Status -->
-                    <div id="recording-status" class="mb-6">
-                        <div id="recording-indicator" class="hidden flex items-center justify-center space-x-2 mb-2">
-                            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                            <span id="recording-time" class="text-lg font-mono text-red-600 font-semibold">00:00</span>
-                        </div>
-                        <p id="record-instruction" class="text-sm text-gray-600">Klicken zum Aufnehmen</p>
-                    </div>
-
-                    <!-- Audio Visualizer -->
-                    <div id="audio-visualizer" class="hidden mb-6">
-                        <canvas id="visualizer-canvas" width="300" height="40" class="w-full h-10 bg-gray-50 rounded-lg border"></canvas>
-                    </div>
-
-                    <!-- Live Therapeutic Observations (visible during recording) -->
-                    <div id="live-observations" class="hidden mb-6">
-                        <label for="live-therapeutic-observations" class="block mb-2 text-sm font-medium text-gray-900 text-left">
-                            Notizen während der Aufnahme
-                        </label>
-                        <textarea id="live-therapeutic-observations" rows="3" 
-                                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-                                  placeholder="Therapeutische Beobachtungen..."></textarea>
-                    </div>
-
-                    <!-- Audio Preview -->
-                    <div id="audio-preview" class="hidden mb-6">
-                        <div class="bg-gray-50 rounded-lg p-4 border text-left">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="text-sm font-medium text-gray-900">Aufnahme bereit</h4>
-                                <button type="button" id="delete-recording" class="text-red-600 hover:text-red-800 text-sm">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"/>
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414L7.586 12l-1.293 1.293a1 1 0 101.414 1.414L9 13.414l2.293 2.293a1 1 0 001.414-1.414L11.414 12l1.293-1.293z" clip-rule="evenodd"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <audio id="recorded-audio" controls class="w-full mb-3"></audio>
-                            
-                            <!-- Therapeutic Observations Field -->
-                            <label for="therapeutic-observations" class="block mb-2 text-sm font-medium text-gray-900">Therapeutische Beobachtungen</label>
-                            <textarea id="therapeutic-observations" name="therapeutic_observations" rows="3" 
-                                      class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-                                      placeholder="Zusätzliche Beobachtungen..."></textarea>
-                        </div>
-                    </div>
+                <!-- Tab Navigation -->
+                <div class="mb-4 border-b border-gray-200">
+                    <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="audio-tab" data-tabs-toggle="#audio-tab-content" data-tabs-active-classes="text-blue-600 hover:text-blue-600 border-blue-600" data-tabs-inactive-classes="text-gray-500 hover:text-gray-600 border-gray-100 hover:border-gray-300" role="tablist">
+                        <li class="flex-1 me-2" role="presentation">
+                            <button class="inline-block w-full p-4 border-b-2 rounded-t-lg" id="record-tab" data-tabs-target="#record" type="button" role="tab" aria-controls="record" aria-selected="true">
+                                Aufnehmen
+                            </button>
+                        </li>
+                        <li class="flex-1" role="presentation">
+                            <button class="inline-block w-full p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="upload-tab" data-tabs-target="#upload" type="button" role="tab" aria-controls="upload" aria-selected="false">
+                                Hochladen
+                            </button>
+                        </li>
+                    </ul>
                 </div>
 
-                <!-- Upload Section (simplified) -->
-                <div id="upload-section" class="hidden text-center">
-                    <div class="mb-6">
-                        <label for="modal-audio-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                <svg class="w-8 h-8 mb-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-                                </svg>
-                                <p class="text-sm text-gray-500"><span class="font-semibold">Audio-Datei hochladen</span></p>
-                                <p class="text-xs text-gray-500">MP3, WAV, M4A oder FLAC</p>
+                <!-- Tab Content -->
+                <div id="audio-tab-content">
+                    <!-- Recording Tab -->
+                    <div class="p-4 rounded-lg" id="record" role="tabpanel" aria-labelledby="record-tab">
+                        <form id="audio-upload-form" method="post" enctype="multipart/form-data" action="{% url 'core:add_audio_input' document_type=document_type document_id=document.pk %}">
+                            {% csrf_token %}
+                            
+                            <!-- Recording Section -->
+                            <div id="record-section" class="text-center">
+                                <!-- Recording Button -->
+                                <button id="record-toggle" type="button" class="relative w-24 h-24 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-all duration-200 flex items-center justify-center group mb-4 mx-auto z-10">
+                                    <svg id="record-icon" class="w-10 h-10 text-white transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path id="record-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>
+                                    </svg>
+                                    <div id="recording-pulse" class="absolute inset-0 rounded-full bg-red-500 opacity-0 animate-ping"></div>
+                                </button>
+
+                                <!-- Recording Status -->
+                                <div id="recording-status" class="mb-6">
+                                    <div id="recording-indicator" class="hidden flex items-center justify-center space-x-2 mb-2">
+                                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                                        <span id="recording-time" class="text-lg font-mono text-red-600 font-semibold">00:00</span>
+                                    </div>
+                                    <p id="record-instruction" class="text-sm text-gray-600">Klicken zum Aufnehmen</p>
+                                </div>
+
+                                <!-- Audio Visualizer -->
+                                <div id="audio-visualizer" class="hidden mb-6">
+                                    <canvas id="visualizer-canvas" width="300" height="40" class="w-full h-10 bg-gray-50 rounded-lg border"></canvas>
+                                </div>
+
+                                <!-- Live Therapeutic Observations (visible during recording) -->
+                                <div id="live-observations" class="hidden mb-6">
+                                    <label for="live-therapeutic-observations" class="block mb-2 text-sm font-medium text-gray-900 text-left">
+                                        Notizen während der Aufnahme
+                                    </label>
+                                    <textarea id="live-therapeutic-observations" rows="3" 
+                                              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                                              placeholder="Therapeutische Beobachtungen..."></textarea>
+                                </div>
+
+                                <!-- Audio Preview -->
+                                <div id="audio-preview" class="hidden mb-6">
+                                    <div class="bg-gray-50 rounded-lg p-4 border text-left">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="text-sm font-medium text-gray-900">Aufnahme bereit</h4>
+                                            <button type="button" id="delete-recording" class="text-red-600 hover:text-red-800 text-sm">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd"/>
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414L7.586 12l-1.293 1.293a1 1 0 101.414 1.414L9 13.414l2.293 2.293a1 1 0 001.414-1.414L11.414 12l1.293-1.293z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <audio id="recorded-audio" controls class="w-full mb-3"></audio>
+                                        
+                                        <!-- Therapeutic Observations Field -->
+                                        <label for="therapeutic-observations" class="block mb-2 text-sm font-medium text-gray-900">Therapeutische Beobachtungen</label>
+                                        <textarea id="therapeutic-observations" name="therapeutic_observations" rows="3" 
+                                                  class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                                                  placeholder="Zusätzliche Beobachtungen..."></textarea>
+                                    </div>
+                                </div>
+
+
                             </div>
-                            <input id="modal-audio-upload" name="audio_file" type="file" accept="audio/*" class="hidden" />
-                        </label>
+
+                            <input type="hidden" name="audio_recorded" id="audio-recorded-input">
+                            <input type="hidden" name="audio_type" value="recording">
+                            <input type="file" name="audio_file" id="recording-audio-file" class="hidden">
+                        </form>
                     </div>
-                    <div id="upload-preview" class="hidden mb-4">
-                        <div class="bg-gray-50 rounded-lg p-3 border">
-                            <div class="flex items-center">
-                                <svg class="w-5 h-5 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                                <div>
-                                    <p id="upload-filename" class="text-sm font-medium text-gray-900"></p>
-                                    <p id="upload-filesize" class="text-xs text-gray-500"></p>
+
+                    <!-- Upload Tab -->
+                    <div class="hidden p-4 rounded-lg" id="upload" role="tabpanel" aria-labelledby="upload-tab">
+                        <form id="audio-upload-form-file" method="post" enctype="multipart/form-data" action="{% url 'core:add_audio_input' document_type=document_type document_id=document.pk %}">
+                            {% csrf_token %}
+                            
+                            <!-- Upload Section -->
+                            <div id="upload-section" class="text-center">
+                                <div class="mb-6">
+                                    <label for="modal-audio-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <svg class="w-8 h-8 mb-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                            </svg>
+                                            <p class="text-sm text-gray-500"><span class="font-semibold">Audio-Datei hochladen</span></p>
+                                            <p class="text-xs text-gray-500">MP3, WAV, M4A oder FLAC</p>
+                                        </div>
+                                        <input id="modal-audio-upload" name="audio_file" type="file" accept="audio/*" class="hidden" />
+                                    </label>
+                                </div>
+                                <div id="upload-preview" class="hidden mb-4">
+                                    <div class="bg-gray-50 rounded-lg p-3 border">
+                                        <div class="flex items-center">
+                                            <svg class="w-5 h-5 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <div>
+                                                <p id="upload-filename" class="text-sm font-medium text-gray-900"></p>
+                                                <p id="upload-filesize" class="text-xs text-gray-500"></p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+
+                            <input type="hidden" name="audio_type" value="upload">
+                        </form>
                     </div>
                 </div>
 
-                <!-- Tab Switching (simplified) -->
-                <div class="flex justify-center mb-6">
-                    <div class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
-                        <button type="button" id="tab-record" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white rounded-md shadow-sm">
-                            Aufnehmen
-                        </button>
-                        <button type="button" id="tab-upload" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900">
-                            Hochladen
-                        </button>
-                    </div>
-                </div>
-
+                <!-- Submit Button and Microphone Selection -->
                 <!-- Submit Button -->
-                <div class="flex justify-center">
+                <div class="flex justify-center mt-6">
                     <button type="submit" id="submit-button" class="bg-gray-400 text-white px-8 py-3 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium relative z-10" disabled>
                         Speichern
                     </button>
                 </div>
 
-                <!-- Microphone Selection (compact dropdown) -->
-                <div id="microphone-selection" class="flex justify-end">
-                    <button type="button" id="microphone-dropdown-toggle" class="flex items-center space-x-1 bg-gray-100 hover:bg-gray-200 rounded-lg px-2 py-1 text-xs text-gray-700 transition-colors">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"/>
-                        </svg>
-                        <span id="selected-microphone-name">Standard</span>
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Microphone Dropdown Popup (positioned absolutely relative to modal) -->
-                <div id="microphone-dropdown" class="hidden absolute w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-[99999]">
-                    <div class="p-3">
-                        <h4 class="text-sm font-medium text-gray-900 mb-3">Mikrofon auswählen</h4>
+                <!-- Microphone Selection (bottom right) -->
+                <div class="flex justify-end mt-2">
+                    <!-- Microphone Selection (compact dropdown) -->
+                    <div id="microphone-selection" class="relative">
+                        <button type="button" id="microphone-dropdown-toggle" class="flex items-center space-x-1 bg-gray-100 hover:bg-gray-200 rounded-lg px-2 py-1 text-xs text-gray-700 transition-colors">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"/>
+                            </svg>
+                            <span id="selected-microphone-name">Standard</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
                         
-                        <!-- Microphone Level Indicator -->
-                        <div class="mb-3">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="text-xs text-gray-600">Mikrofonpegel</span>
-                                <button type="button" id="refresh-microphones" class="text-blue-600 hover:text-blue-800 text-xs">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                                    </svg>
-                                </button>
+                        <!-- Microphone Dropdown Popup -->
+                        <div id="microphone-dropdown" class="hidden absolute bottom-full right-0 mb-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-[99999]">
+                            <div class="p-3">
+                                <h4 class="text-sm font-medium text-gray-900 mb-3">Mikrofon auswählen</h4>
+                                
+                                <!-- Microphone Level Indicator -->
+                                <div class="mb-3">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-gray-600">Mikrofonpegel</span>
+                                        <button type="button" id="refresh-microphones" class="text-blue-600 hover:text-blue-800 text-xs">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div id="microphone-level" class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="microphone-level-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-100" style="width: 0%"></div>
+                                    </div>
+                                    <p id="microphone-status" class="text-xs text-gray-500 mt-1">Kein Audio erkannt. Prüfen Sie, ob Ihr Mikrofon stummgeschaltet ist.</p>
+                                </div>
+                                
+                                <!-- Microphone List -->
+                                <div id="microphone-list" class="space-y-1 max-h-32 overflow-y-auto">
+                                    <!-- Microphone options will be populated here -->
+                                </div>
                             </div>
-                            <div id="microphone-level" class="w-full bg-gray-200 rounded-full h-2">
-                                <div id="microphone-level-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-100" style="width: 0%"></div>
-                            </div>
-                            <p id="microphone-status" class="text-xs text-gray-500 mt-1">Kein Audio erkannt. Prüfen Sie, ob Ihr Mikrofon stummgeschaltet ist.</p>
-                        </div>
-                        
-                        <!-- Microphone List -->
-                        <div id="microphone-list" class="space-y-1 max-h-32 overflow-y-auto">
-                            <!-- Microphone options will be populated here -->
                         </div>
                     </div>
+
                 </div>
-
-
-                <input type="hidden" name="audio_recorded" id="audio-recorded-input">
-                <input type="hidden" name="audio_type" value="recording">
-            </form>
+            </div>
         </div>
     </div>
 </div>
@@ -222,10 +249,6 @@
     let permissionChecked = false;
 
     // DOM Elements
-    let recordSection;
-    let uploadSection;
-    let tabRecord;
-    let tabUpload;
     let recordToggle;
     let recordIcon;
     let recordingPulse;
@@ -261,10 +284,6 @@
 
     // Initialize DOM elements
     function initializeDOMElements() {
-        recordSection = document.getElementById('record-section');
-        uploadSection = document.getElementById('upload-section');
-        tabRecord = document.getElementById('tab-record');
-        tabUpload = document.getElementById('tab-upload');
         recordToggle = document.getElementById('record-toggle');
         recordIcon = document.getElementById('record-icon');
         recordingPulse = document.getElementById('recording-pulse');
@@ -558,21 +577,6 @@
     }
 
     function openMicrophoneDropdown() {
-        // Position dropdown relative to the microphone button
-        const button = microphoneDropdownToggle;
-        const buttonRect = button.getBoundingClientRect();
-        const modalBody = document.querySelector('#audio-input-modal .relative.bg-white');
-        const modalRect = modalBody.getBoundingClientRect();
-        
-        // Calculate position relative to modal body
-        const top = buttonRect.bottom - modalRect.top + 8; // 8px gap
-        const right = modalRect.right - buttonRect.right;
-        
-        // Apply positioning
-        microphoneDropdown.style.top = top + 'px';
-        microphoneDropdown.style.right = right + 'px';
-        microphoneDropdown.style.position = 'absolute';
-        
         microphoneDropdown.classList.remove('hidden');
         loadMicrophoneDevices();
         startMicrophoneLevelMonitoring();
@@ -802,13 +806,15 @@
     function updateSaveButton() {
         if (!submitButton) return;
         
+        const currentTab = document.querySelector('#audio-tab [aria-selected="true"]');
+        const isRecordTab = currentTab && currentTab.id === 'record-tab';
+        
         const hasRecordedData = modalRecordedChunks.length > 0;
         const hasUploadedFile = modalAudioUpload && modalAudioUpload.files && modalAudioUpload.files.length > 0;
-        const isInRecordMode = !recordSection.classList.contains('hidden');
         
         let canSave = false;
         
-        if (isInRecordMode) {
+        if (isRecordTab) {
             // In recording mode: can save if not currently recording and has recorded data
             canSave = !isRecording && hasRecordedData;
         } else {
@@ -1063,74 +1069,6 @@
         disableNavigationWarning();
     }
 
-    // Tab switching
-    function setupTabSwitching() {
-        // Wait for elements to be available
-        const maxAttempts = 10;
-        let attempts = 0;
-        
-        function trySetup() {
-            attempts++;
-            
-            // Re-initialize DOM elements
-            tabRecord = document.getElementById('tab-record');
-            tabUpload = document.getElementById('tab-upload');
-            recordSection = document.getElementById('record-section');
-            uploadSection = document.getElementById('upload-section');
-            
-            if (!tabRecord || !tabUpload || !recordSection || !uploadSection) {
-                if (attempts < maxAttempts) {
-                    setTimeout(trySetup, 100);
-                } else {
-                    console.warn('Tab elements not found after', maxAttempts, 'attempts');
-                }
-                return;
-            }
-            
-            // Remove existing event listeners to prevent duplicates
-            const newTabRecord = tabRecord.cloneNode(true);
-            const newTabUpload = tabUpload.cloneNode(true);
-            tabRecord.parentNode.replaceChild(newTabRecord, tabRecord);
-            tabUpload.parentNode.replaceChild(newTabUpload, tabUpload);
-            tabRecord = newTabRecord;
-            tabUpload = newTabUpload;
-            
-            tabRecord.addEventListener('click', function() {
-                recordSection.classList.remove('hidden');
-                uploadSection.classList.add('hidden');
-                
-                this.classList.add('text-gray-900', 'bg-white', 'shadow-sm');
-                this.classList.remove('text-gray-500');
-                
-                tabUpload.classList.remove('text-gray-900', 'bg-white', 'shadow-sm');
-                tabUpload.classList.add('text-gray-500');
-                
-                updateSaveButton();
-            });
-
-            tabUpload.addEventListener('click', function() {
-                if (isRecording && !confirm('Eine Aufnahme läuft gerade. Möchten Sie wirklich zum Upload wechseln?')) {
-                    return;
-                }
-                
-                recordSection.classList.add('hidden');
-                uploadSection.classList.remove('hidden');
-                
-                this.classList.add('text-gray-900', 'bg-white', 'shadow-sm');
-                this.classList.remove('text-gray-500');
-                
-                tabRecord.classList.remove('text-gray-900', 'bg-white', 'shadow-sm');
-                tabRecord.classList.add('text-gray-500');
-                
-                updateSaveButton();
-            });
-            
-
-        }
-        
-        trySetup();
-    }
-
     // File upload handling
     function setupFileUpload() {
         if (!modalAudioUpload) return;
@@ -1160,13 +1098,17 @@
 
     // Form submission
     function setupFormSubmission() {
-        if (!audioUploadForm) return;
+        if (!submitButton) return;
         
-        audioUploadForm.addEventListener('submit', function(e) {
-            if (!recordSection.classList.contains('hidden')) {
+        submitButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const currentTab = document.querySelector('#audio-tab [aria-selected="true"]');
+            const isRecordTab = currentTab && currentTab.id === 'record-tab';
+            
+            if (isRecordTab) {
                 // Recording mode
                 if (modalRecordedChunks.length === 0) {
-                    e.preventDefault();
                     alert('Bitte nehmen Sie zuerst etwas auf.');
                     return;
                 }
@@ -1175,14 +1117,22 @@
                 const file = new File([blob], 'aufnahme.webm', { type: 'audio/webm' });
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
-                modalAudioUpload.files = dataTransfer.files;
+                
+                // Use the recording form's file input
+                const recordingFileInput = document.getElementById('recording-audio-file');
+                recordingFileInput.files = dataTransfer.files;
+                
+                // Submit the recording form
+                audioUploadForm.submit();
             } else {
                 // Upload mode
                 if (!modalAudioUpload.files[0]) {
-                    e.preventDefault();
                     alert('Bitte wählen Sie eine Datei aus.');
                     return;
                 }
+                
+                // Submit the upload form
+                document.getElementById('audio-upload-form-file').submit();
             }
             
             submitButton.disabled = true;
@@ -1252,7 +1202,6 @@
             }
             
             // Setup all components
-            setupTabSwitching();
             setupFileUpload();
             setupFormSubmission();
             setupMicrophoneSelection();
@@ -1275,8 +1224,12 @@
                 liveObservationsTextarea.addEventListener('input', saveState);
             }
             
-            // Initialize default tab
-            if (tabRecord) tabRecord.click();
+            // Listen for tab changes to update save button
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('[data-tabs-target]')) {
+                    setTimeout(updateSaveButton, 100);
+                }
+            });
             
             // Check permissions and load microphones
             checkMicrophonePermission().then(() => {
@@ -1384,7 +1337,6 @@
             window.updateBackgroundRecordingIndicator(savedState);
         }
     }
-
 
 })();
 </script> 
