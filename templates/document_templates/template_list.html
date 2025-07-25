@@ -32,9 +32,9 @@
             <div class="flex-1 min-w-48">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Vorlagentyp</label>
                 <select name="type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
-                    <option value="" {% if template_type == '' %}selected{% endif %}>Alle Typen</option>
-                    <option value="document" {% if template_type == DocumentTemplate.TemplateType.REPORT %}selected{% endif %}>Berichte</option>
-                    <option value="session_notes" {% if template_type == DocumentTemplate.TemplateType.SESSION_NOTES %}selected{% endif %}>Sitzungsnotizen</option>
+                    <option value="" {% if template_type != 'session_notes' and template_type != 'report' %}selected{% endif %}>Alle Typen</option>
+                    <option value="report" {% if template_type == "report" %}selected{% endif %}>Berichte</option>
+                    <option value="session_notes" {% if template_type == "session_notes" %}selected{% endif %}>Sitzungsnotizen</option>
                 </select>
             </div>
 
@@ -52,10 +52,10 @@
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-                    Filtern
+                    Suchen
                 </button>
                 {% if search_query or template_type %}
-                    <a href="{% url 'document_templates:template_list' %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300">
+                    <a href="{% url 'document_templates:template_list' %}" class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-300">
                         Zurücksetzen
                     </a>
                 {% endif %}
@@ -101,7 +101,7 @@
                         <label for="create-template-type" class="block mb-2 text-sm font-medium text-gray-900">Vorlagentyp</label>
                         <select name="template_type" id="create-template-type" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5" required>
                             <option value="">Typ auswählen</option>
-                            <option value="document">Berichte</option>
+                            <option value="report">Reports</option>
                             <option value="session_notes">Sitzungsnotizen</option>
                         </select>
                     </div>
