@@ -14,6 +14,7 @@ from django.shortcuts import render
 from therapy_sessions.models import Session
 from therapy_sessions.forms import SessionForm
 from therapy_sessions.services import get_session_service
+from therapy_sessions.tasks import generate_session_notes_task
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +180,7 @@ class SessionViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
     def generate_notes(self, request, pk=None):
-        """Generate AI session notes from unified inputs"""
+        """Generate AI session notes from unified inputs in background task"""
         session = self.get_object(pk, request)
 
         try:
@@ -189,48 +190,32 @@ class SessionViewSet(viewsets.ViewSet):
                 messages.error(request, "Template ist erforderlich")
                 return self._redirect_to_session_detail(pk)
 
-            # Generate session notes using improved service
             session_service = get_session_service()
-            if not session_service.is_available():
-                messages.error(request, "KI-Service ist nicht verfügbar")
-                return self._redirect_to_session_detail(pk)
-
-            # Validate template access
-            try:
-                template = session_service.get_template(int(template_id), user=request.user)
-            except Exception:
-                messages.error(request, "Template nicht gefunden")
-                return self._redirect_to_session_detail(pk)
-
-            # Check if there are any inputs to process
             context_summary = session_service.get_context_summary(session)
             if context_summary["total_inputs"] == 0:
                 messages.error(request, "Keine Eingaben für diese Sitzung verfügbar")
                 return self._redirect_to_session_detail(pk)
 
-            # Pass existing notes to the AI service
-            existing_notes = session.notes if session.notes else None
+            if session.is_generating:
+                messages.error(request, "Sitzungsnotizen werden bereits generiert")
+                return self._redirect_to_session_detail(pk)
 
-            # Use the new generate_with_template method
-            session_notes = session_service.generate_with_template(
-                session, template, existing_notes
+            existing_notes = session.notes if session.notes else None
+            generate_session_notes_task.delay(
+                session_id=session.id,
+                template_id=int(template_id),
+                user_id=request.user.id,
+                existing_notes=existing_notes,
             )
 
-            if session_notes:
-                try:
-                    summary = session_service.summarize_session_notes(session_notes)
-                    session.summary = summary
-                except Exception as e:
-                    logger.error(f"Fehler bei der Zusammenfassung: {str(e)}")
-
-            session.notes = session_notes
-            session.save()
-
-            messages.success(request, "KI-Notizen wurden erfolgreich generiert!")
+            messages.success(
+                request,
+                "KI-Notizengenerierung wurde gestartet. Die Seite wird automatisch aktualisiert.",
+            )
 
         except Exception as e:
-            logger.error(f"Error generating session notes: {str(e)}")
-            messages.error(request, f"Fehler bei der Generierung: {str(e)}")
+            logger.error(f"Error starting session notes generation: {str(e)}")
+            messages.error(request, f"Fehler beim Starten der Generierung: {str(e)}")
 
         return self._redirect_to_session_detail(pk)
     

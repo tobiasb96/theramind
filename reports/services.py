@@ -134,29 +134,64 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
         except Exception as e:
             raise Exception(f"Fehler bei der Reportgenerierung: {str(e)}")
 
-    def generate(self, report: Report, template_id: Optional[int] = None, user=None) -> str:
+    def generate(self, report_id: int, template_id: int, user_id: Optional[int] = None):
         """
-        Generate a report
+        Generate a report for background tasks
 
         Args:
-            report: The report to generate content for
-            template_id: Optional specific template ID to use
-            user: User object for template access validation
+            report_id: ID of the Report instance
+            template_id: ID of the DocumentTemplate to use
+            user_id: ID of the user for template access validation
 
         Returns:
-            Generated document content
+            Task result dictionary
         """
-        if template_id:
-            template = self.get_template(template_id, user=user)
-        else:
-            template = self.template_service.get_default_template(
-                DocumentTemplate.TemplateType.REPORT
+        from django.core.exceptions import ObjectDoesNotExist
+
+        try:
+            report = Report.objects.get(id=report_id)
+        except ObjectDoesNotExist:
+            logger.error(f"Report with id {report_id} not found")
+            return {"success": False, "error": "Report not found"}
+
+        # Mark as generating at the start
+        report.mark_as_generating()
+
+        try:
+            logger.info(
+                f"Starting report content generation for Report {report_id} ({report.title})"
             )
 
-        if not template:
-            raise ValueError("Kein Template gefunden")
+            # Get user for template validation if provided
+            user = None
+            if user_id:
+                from django.contrib.auth import get_user_model
 
-        return self.generate_with_template(report, template)
+                User = get_user_model()
+                try:
+                    user = User.objects.get(id=user_id)
+                except ObjectDoesNotExist:
+                    logger.warning(
+                        f"User with id {user_id} not found, proceeding without user context"
+                    )
+
+            template = self.get_template(int(template_id), user=user)
+            generated_content = self.generate_with_template(report, template)
+            report.content = generated_content
+            report.mark_as_success()
+
+            logger.info(f"Report content generation completed successfully for Report {report_id}")
+
+            return {
+                "success": True,
+                "report_id": report_id,
+                "content_length": len(generated_content),
+            }
+
+        except Exception as exc:
+            logger.error(f"Error generating report content for Report {report_id}: {str(exc)}")
+            report.mark_as_failed()
+            return {"success": False, "error": str(exc)}
 
     def get_context_summary(self, report: Report) -> Dict[str, Any]:
         """

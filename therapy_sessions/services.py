@@ -179,31 +179,94 @@ wenn es sinnvoll ist.
             raise Exception(f"Fehler bei der Erstellung der Sitzungsnotizen: {str(e)}")
 
     def generate(
-        self, session, template_id: Optional[int] = None, existing_notes: str = None, user=None
-    ) -> str:
+        self,
+        session_id: int,
+        template_id: int,
+        user_id: Optional[int] = None,
+        existing_notes: str = None,
+    ):
         """
-        Generate session notes
+        Generate session notes for background tasks
 
         Args:
-            session: The session to generate notes for
-            template_id: Optional specific template ID to use
+            session_id: ID of the Session instance
+            template_id: ID of the DocumentTemplate to use
+            user_id: ID of the user for template access validation
             existing_notes: Existing session notes (if any)
-            user: User object for template access validation
 
         Returns:
-            Generated session notes
+            Task result dictionary
         """
-        if template_id:
-            template = self.get_template(template_id, user=user)
-        else:
-            template = self.template_service.get_default_template(
-                DocumentTemplate.TemplateType.SESSION_NOTES
+        from django.core.exceptions import ObjectDoesNotExist
+        from .models import Session
+
+        try:
+            session = Session.objects.get(id=session_id)
+        except ObjectDoesNotExist:
+            logger.error(f"Session with id {session_id} not found")
+            return {"success": False, "error": "Session not found"}
+
+        # Mark as generating at the start
+        session.mark_as_generating()
+
+        try:
+            logger.info(
+                f"Starting session notes generation for Session {session_id} ({session.title})"
             )
 
-        if not template:
-            raise ValueError("Kein Template gefunden")
+            # Get user for template validation if provided
+            user = None
+            if user_id:
+                from django.contrib.auth import get_user_model
 
-        return self.generate_with_template(session, template, existing_notes)
+                User = get_user_model()
+                try:
+                    user = User.objects.get(id=user_id)
+                except ObjectDoesNotExist:
+                    logger.warning(
+                        f"User with id {user_id} not found, proceeding without user context"
+                    )
+
+            # Validate service availability
+            if not self.is_available():
+                raise ValueError("LLM connector ist nicht verfügbar")
+
+            # Validate template access
+            try:
+                template = self.get_template(int(template_id), user=user)
+            except Exception as e:
+                raise ValueError(f"Template nicht gefunden: {str(e)}")
+
+            # Generate session notes
+            session_notes = self.generate_with_template(session, template, existing_notes)
+
+            # Generate summary if notes were created
+            summary = None
+            if session_notes:
+                try:
+                    summary = self.summarize_session_notes(session_notes)
+                except Exception as e:
+                    logger.error(f"Fehler bei der Zusammenfassung: {str(e)}")
+
+            # Update session with generated content and mark as successful
+            session.notes = session_notes
+            if summary:
+                session.summary = summary
+            session.mark_as_success()
+
+            logger.info(f"Session notes generation completed successfully for Session {session_id}")
+
+            return {
+                "success": True,
+                "session_id": session_id,
+                "notes_length": len(session_notes) if session_notes else 0,
+                "has_summary": bool(summary),
+            }
+
+        except Exception as exc:
+            logger.error(f"Error generating session notes for Session {session_id}: {str(exc)}")
+            session.mark_as_failed()
+            return {"success": False, "error": str(exc)}
 
     def get_context_summary(self, session):
         """
