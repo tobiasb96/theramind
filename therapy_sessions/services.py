@@ -170,7 +170,7 @@ wenn es sinnvoll ist.
             raise Exception(f"Fehler bei der Erstellung der Sitzungsnotizen: {str(e)}")
 
     def generate(
-        self, session, template_id: Optional[int] = None, existing_notes: str = None
+        self, session, template_id: Optional[int] = None, existing_notes: str = None, user=None
     ) -> str:
         """
         Generate session notes
@@ -179,12 +179,13 @@ wenn es sinnvoll ist.
             session: The session to generate notes for
             template_id: Optional specific template ID to use
             existing_notes: Existing session notes (if any)
+            user: User object for template access validation
 
         Returns:
             Generated session notes
         """
         if template_id:
-            template = DocumentTemplate.objects.get(id=template_id)
+            template = self.get_template(template_id, user=user)
         else:
             template = self.template_service.get_default_template(
                 DocumentTemplate.TemplateType.SESSION_NOTES

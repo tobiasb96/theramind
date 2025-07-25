@@ -134,19 +134,20 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
         except Exception as e:
             raise Exception(f"Fehler bei der Reportgenerierung: {str(e)}")
 
-    def generate(self, report: Report, template_id: Optional[int] = None) -> str:
+    def generate(self, report: Report, template_id: Optional[int] = None, user=None) -> str:
         """
         Generate a report
 
         Args:
             report: The report to generate content for
             template_id: Optional specific template ID to use
+            user: User object for template access validation
 
         Returns:
             Generated document content
         """
         if template_id:
-            template = DocumentTemplate.objects.get(id=template_id)
+            template = self.get_template(template_id, user=user)
         else:
             template = self.template_service.get_default_template(
                 DocumentTemplate.TemplateType.REPORT
