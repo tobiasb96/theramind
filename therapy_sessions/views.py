@@ -63,6 +63,10 @@ class SessionViewSet(viewsets.ViewSet):
         template_service = TemplateService()
         session_notes_templates = template_service.get_session_templates(user=request.user)
 
+        # Get context summary
+        session_service = get_session_service()
+        context_summary = session_service.get_context_summary(session)
+
         return render(
             request,
             "sessions/session_detail.html",
@@ -75,6 +79,7 @@ class SessionViewSet(viewsets.ViewSet):
                 "document_text_form": document_text_form,
                 "session_notes_templates": session_notes_templates,
                 "has_transcribed_recordings": has_transcribed_recordings,
+                "context_summary": context_summary,
             },
         )
 
@@ -174,7 +179,7 @@ class SessionViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
     def generate_notes(self, request, pk=None):
-        """Generate AI session notes from transcriptions"""
+        """Generate AI session notes from unified inputs"""
         session = self.get_object(pk, request)
 
         try:
@@ -184,59 +189,31 @@ class SessionViewSet(viewsets.ViewSet):
                 messages.error(request, "Template ist erforderlich")
                 return self._redirect_to_session_detail(pk)
 
-            # Get the template
-            from document_templates.models import DocumentTemplate
-            from django.db.models import Q
+            # Generate session notes using improved service
+            session_service = get_session_service()
+            if not session_service.is_available():
+                messages.error(request, "KI-Service ist nicht verfügbar")
+                return self._redirect_to_session_detail(pk)
 
+            # Validate template access
             try:
-                template = (
-                    DocumentTemplate.objects.filter(
-                        id=template_id,
-                        template_type=DocumentTemplate.TemplateType.SESSION_NOTES,
-                        is_active=True,
-                    )
-                    .filter(Q(is_predefined=True) | Q(user=request.user))
-                    .get()
-                )
-            except DocumentTemplate.DoesNotExist:
+                template = session_service.get_template(int(template_id), user=request.user)
+            except Exception:
                 messages.error(request, "Template nicht gefunden")
                 return self._redirect_to_session_detail(pk)
 
-            # Get transcriptions from unified audio inputs
-            transcriptions = []
-            for audio_input in session.audio_inputs.filter(processing_successful=True):
-                if audio_input.transcribed_text:
-                    transcriptions.append(audio_input)
-
-            if not transcriptions:
-                messages.error(request, "Keine Transkriptionen für diese Sitzung verfügbar")
-                return self._redirect_to_session_detail(pk)
-
-            # Combine all transcriptions
-            combined_transcript = "\n\n".join([t.transcribed_text for t in transcriptions])
-
-            # Generate session notes using unified service
-            from core.services import UnifiedInputService
-
-            unified_service = UnifiedInputService()
-
-            # Get combined text from all inputs (audio + documents)
-            combined_text = unified_service.get_combined_text(session)
-
-            # Use combined text if available, otherwise fall back to transcriptions only
-            text_for_generation = combined_text if combined_text.strip() else combined_transcript
-
-            # Generate session notes
-            session_service = get_session_service()
-            if not session_service.is_available():
-                messages.error(request, "OpenAI API Key ist nicht konfiguriert")
+            # Check if there are any inputs to process
+            context_summary = session_service.get_context_summary(session)
+            if context_summary["total_inputs"] == 0:
+                messages.error(request, "Keine Eingaben für diese Sitzung verfügbar")
                 return self._redirect_to_session_detail(pk)
 
             # Pass existing notes to the AI service
             existing_notes = session.notes if session.notes else None
 
-            session_notes = session_service.create_session_notes_with_template(
-                text_for_generation, template, existing_notes, session.patient_gender
+            # Use the new generate_with_template method
+            session_notes = session_service.generate_with_template(
+                session, template, existing_notes
             )
 
             if session_notes:
@@ -252,6 +229,7 @@ class SessionViewSet(viewsets.ViewSet):
             messages.success(request, "KI-Notizen wurden erfolgreich generiert!")
 
         except Exception as e:
+            logger.error(f"Error generating session notes: {str(e)}")
             messages.error(request, f"Fehler bei der Generierung: {str(e)}")
 
         return self._redirect_to_session_detail(pk)
@@ -294,19 +272,11 @@ class SessionViewSet(viewsets.ViewSet):
                 messages.error(request, "Template ist erforderlich")
                 return self._redirect_to_session_detail(pk)
 
-            # Get the template
-            from document_templates.models import DocumentTemplate
-            from django.db.models import Q
-
+            # Get the template using service helper
+            session_service = get_session_service()
             try:
-                template = DocumentTemplate.objects.filter(
-                    id=template_id, 
-                    template_type=DocumentTemplate.TemplateType.SESSION_NOTES,
-                    is_active=True
-                ).filter(
-                    Q(is_predefined=True) | Q(user=request.user)
-                ).get()
-            except DocumentTemplate.DoesNotExist:
+                template = session_service.get_template(int(template_id), user=request.user)
+            except Exception:
                 messages.error(request, "Template nicht gefunden")
                 return self._redirect_to_session_detail(pk)
 

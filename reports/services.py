@@ -1,4 +1,5 @@
 from typing import Dict, Any, Optional
+from django.db.models import Q
 from core.ai_connectors import get_llm_connector
 from core.ai_connectors.base.llm import LLMGenerationParams
 from core.utils.ai_helpers import build_gender_context
@@ -23,6 +24,37 @@ class ReportService:
     def is_available(self) -> bool:
         """Check if the report service is available"""
         return self.llm_connector.is_available()
+
+    def reinitialize(self):
+        """Reinitialize the connector (useful after settings change)"""
+        self.llm_connector.reinitialize()
+
+    def get_template(self, template_id: int, user=None) -> DocumentTemplate:
+        """
+        Get and validate template access for reports
+
+        Args:
+            template_id: ID of the template
+            user: User object for access validation
+
+        Returns:
+            DocumentTemplate instance
+
+        Raises:
+            DocumentTemplate.DoesNotExist: If template not found or access denied
+        """
+        query = DocumentTemplate.objects.filter(
+            id=template_id,
+            template_type=DocumentTemplate.TemplateType.REPORT,
+            is_active=True,
+        )
+
+        if user:
+            query = query.filter(Q(is_predefined=True) | Q(user=user))
+        else:
+            query = query.filter(is_predefined=True)
+
+        return query.get()
 
     def _build_context_prefix(self, report: Report) -> str:
         """
