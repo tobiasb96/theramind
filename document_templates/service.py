@@ -1,5 +1,5 @@
 from typing import Dict, Any, List
-from core.connector import get_llm_connector
+from core.ai_connectors import get_llm_connector
 from .models import DocumentTemplate
 
 
@@ -7,11 +7,11 @@ class TemplateService:
     """Service for managing custom templates"""
 
     def __init__(self):
-        self.connector = get_llm_connector()
+        self.llm_connector = get_llm_connector()
 
     def is_available(self) -> bool:
         """Check if the template service is available"""
-        return self.connector.is_available()
+        return self.llm_connector.is_available()
 
     def get_available_templates(self, template_type: str, user=None) -> List[DocumentTemplate]:
         """

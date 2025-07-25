@@ -5,8 +5,8 @@ from fpdf import FPDF
 from django.utils.html import strip_tags
 from html import unescape
 from core.utils.text_extraction import TextExtractionService
-from therapy_sessions.services import get_transcription_service
-from core.connector import get_llm_connector
+from therapy_sessions.services import get_session_service
+from core.ai_connectors import get_transcription_connector
 
 logger = logging.getLogger(__name__)
 
@@ -16,9 +16,8 @@ class UnifiedInputService:
 
     def __init__(self):
         self.text_extraction_service = TextExtractionService()
-        self.transcription_service = get_transcription_service()
-
-        self.llm_connector = get_llm_connector()
+        self.session_service = get_session_service()
+        self.transcription_connector = get_transcription_connector()
 
     def add_audio_input(
         self, document, audio_file, audio_type: str = "upload", therapeutic_observations: str = ""
@@ -129,18 +128,20 @@ class UnifiedInputService:
             return DocumentInput.FileType.TXT  # Default fallback
 
     def _process_audio_transcription(self, audio_input, therapeutic_observations: str = ""):
-        """Process audio transcription and append therapeutic observations"""
+        """Process audio transcription using transcription connector"""
         try:
-            if self.llm_connector.is_available():
+            if self.transcription_connector.is_available():
                 file_path = audio_input.audio_file.path
-                transcribed_text, processing_time = self.llm_connector.transcribe(file_path)
+                result = self.transcription_connector.transcribe(file_path)
+
+                transcribed_text = result.text
 
                 # Append therapeutic observations if provided
                 if therapeutic_observations.strip():
                     transcribed_text += f"\n\nWeitere Notizen: {therapeutic_observations.strip()}"
 
                 audio_input.transcribed_text = transcribed_text
-                audio_input.processing_time_seconds = processing_time
+                audio_input.processing_time_seconds = result.processing_time
                 audio_input.processing_successful = True
                 audio_input.processing_error = ""
             else:

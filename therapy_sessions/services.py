@@ -1,4 +1,5 @@
-from core.connector import get_llm_connector
+from core.ai_connectors import get_transcription_connector, get_llm_connector
+from core.ai_connectors.base.llm import LLMGenerationParams
 from therapy_sessions.prompts import (
     SUMMARY_PROMPT,
     SYSTEM_PROMPT_SUMMARY,
@@ -6,23 +7,49 @@ from therapy_sessions.prompts import (
 )
 
 
-class TranscriptionService:
+class SessionService:
+    """Service for session-specific transcription and notes generation"""
+
     def __init__(self):
-        self.connector = get_llm_connector()
+        self.transcription_connector = get_transcription_connector()
+        self.llm_connector = get_llm_connector()
 
     def is_available(self) -> bool:
-        return self.connector.is_available()
+        """Check if both transcription and LLM services are available"""
+        return self.transcription_connector.is_available() and self.llm_connector.is_available()
 
     def reinitialize(self):
-        """Reinitialize the client (useful after settings change)"""
-        self.connector.reinitialize()
+        """Reinitialize the connectors (useful after settings change)"""
+        self.transcription_connector.reinitialize()
+        self.llm_connector.reinitialize()
 
     def summarize_session_notes(self, session_notes: str) -> str:
-        """
-        Create ultra-short summary using OpenAI GPT
-        """
+        """Create ultra-short summary using LLM"""
         prompt = SUMMARY_PROMPT.format(session_notes=session_notes)
-        return self.connector.generate_text(SYSTEM_PROMPT_SUMMARY, prompt, max_tokens=100)
+        params = LLMGenerationParams(max_tokens=100)
+        result = self.llm_connector.generate_text(SYSTEM_PROMPT_SUMMARY, prompt, params)
+        return result.text
+
+    def _build_gender_context(self, patient_gender: str = None) -> str:
+        """Build gender context for prompts (shared logic)"""
+        if not patient_gender or patient_gender == "not_specified":
+            return ""
+
+        gender_mapping = {"male": "männlich", "female": "weiblich", "diverse": "divers"}
+        gender_display = gender_mapping.get(patient_gender, "nicht angegeben")
+
+        pronouns_mapping = {
+            "male": "er/ihm/sein",
+            "female": "sie/ihr/ihre",
+            "diverse": "sie/dey/deren (verwende geschlechtsneutrale Sprache)",
+        }
+        pronouns = pronouns_mapping.get(patient_gender, "")
+
+        return f"""**PATIENT*INNEN-INFORMATIONEN**
+Das Geschlecht des Patienten ist {gender_display}. Verwende entsprechende Pronomen ({pronouns}) und
+geschlechtsangemessene Sprache in den Notizen. Achte auf eine respektvolle und professionelle Darstellung.
+
+"""
 
     def _build_session_context_prefix(
         self, transcript_text: str, existing_notes: str = None, patient_gender: str = None
@@ -45,22 +72,9 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
 """
 
         # Add patient gender context if provided
-        if patient_gender and patient_gender != "not_specified":
-            gender_mapping = {"male": "männlich", "female": "weiblich", "diverse": "divers"}
-            gender_display = gender_mapping.get(patient_gender, "nicht angegeben")
-
-            pronouns_mapping = {
-                "male": "er/ihm/sein",
-                "female": "sie/ihr/ihre",
-                "diverse": "sie/dey/deren (verwende geschlechtsneutrale Sprache)",
-            }
-            pronouns = pronouns_mapping.get(patient_gender, "")
-
-            context_prefix += f"""**PATIENT*INNEN-INFORMATIONEN**
-Das Geschlecht des Patienten ist {gender_display}. Verwende entsprechende Pronomen ({pronouns}) und
-geschlechtsangemessene Sprache in den Notizen. Achte auf eine respektvolle und professionelle Darstellung.
-
-"""
+        gender_context = self._build_gender_context(patient_gender)
+        if gender_context:
+            context_prefix += gender_context
 
         context_prefix += f"""**TRANSKRIPT DER SITZUNG**
 {transcript_text}
@@ -112,13 +126,19 @@ geschlechtsangemessene Sprache in den Notizen. Achte auf eine respektvolle und p
             # Combine context prefix with template structure
             full_prompt = context_prefix + template.user_prompt
 
-            # Use hardcoded system prompt
-            return self.connector.generate_text(
-                system_prompt=SYSTEM_PROMPT,
-                user_prompt=full_prompt,
+            # Use LLM connector directly
+            params = LLMGenerationParams(
                 max_tokens=template.max_tokens,
                 temperature=template.temperature,
             )
+
+            result = self.llm_connector.generate_text(
+                system_prompt=SYSTEM_PROMPT,
+                user_prompt=full_prompt,
+                params=params,
+            )
+
+            return result.text
 
         except Exception as e:
             raise Exception(f"Fehler bei der Erstellung der Sitzungsnotizen: {str(e)}")
@@ -176,10 +196,17 @@ geschlechtsangemessene Sprache in den Notizen. Achte auf eine respektvolle und p
 
 
 # Singleton instance - lazy initialization
-_transcription_service_instance = None
+_session_service_instance = None
 
+
+def get_session_service():
+    """Get singleton session service instance"""
+    global _session_service_instance
+    if _session_service_instance is None:
+        _session_service_instance = SessionService()
+    return _session_service_instance
+
+# Backward compatibility alias
 def get_transcription_service():
-    global _transcription_service_instance
-    if _transcription_service_instance is None:
-        _transcription_service_instance = TranscriptionService()
-    return _transcription_service_instance
+    """Backward compatibility alias for get_session_service"""
+    return get_session_service()

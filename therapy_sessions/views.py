@@ -13,7 +13,7 @@ import logging
 from django.shortcuts import render
 from therapy_sessions.models import Session
 from therapy_sessions.forms import SessionForm
-from therapy_sessions.services import get_transcription_service
+from therapy_sessions.services import get_session_service
 
 logger = logging.getLogger(__name__)
 
@@ -227,21 +227,21 @@ class SessionViewSet(viewsets.ViewSet):
             text_for_generation = combined_text if combined_text.strip() else combined_transcript
 
             # Generate session notes
-            transcription_service = get_transcription_service()
-            if not transcription_service.is_available():
+            session_service = get_session_service()
+            if not session_service.is_available():
                 messages.error(request, "OpenAI API Key ist nicht konfiguriert")
                 return self._redirect_to_session_detail(pk)
 
             # Pass existing notes to the AI service
             existing_notes = session.notes if session.notes else None
 
-            session_notes = transcription_service.create_session_notes_with_template(
+            session_notes = session_service.create_session_notes_with_template(
                 text_for_generation, template, existing_notes, session.patient_gender
             )
 
             if session_notes:
                 try:
-                    summary = transcription_service.summarize_session_notes(session_notes)
+                    summary = session_service.summarize_session_notes(session_notes)
                     session.summary = summary
                 except Exception as e:
                     logger.error(f"Fehler bei der Zusammenfassung: {str(e)}")

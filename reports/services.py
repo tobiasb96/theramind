@@ -1,5 +1,6 @@
 from typing import Dict, Any, Optional
-from core.connector import get_llm_connector
+from core.ai_connectors import get_llm_connector
+from core.ai_connectors.base.llm import LLMGenerationParams
 from core.services import UnifiedInputService
 from document_templates.models import DocumentTemplate
 from document_templates.service import TemplateService
@@ -14,13 +15,34 @@ class ReportService:
     """Service for generating therapy reports using AI"""
 
     def __init__(self):
-        self.connector = get_llm_connector()
+        self.llm_connector = get_llm_connector()
         self.template_service = TemplateService()
         self.unified_input_service = UnifiedInputService()
 
     def is_available(self) -> bool:
         """Check if the report service is available"""
-        return self.connector.is_available()
+        return self.llm_connector.is_available()
+
+    def _build_gender_context(self, patient_gender: str = None) -> str:
+        """Build gender context for prompts (shared logic)"""
+        if not patient_gender or patient_gender == "not_specified":
+            return ""
+
+        gender_mapping = {"male": "männlich", "female": "weiblich", "diverse": "divers"}
+        gender_display = gender_mapping.get(patient_gender, "nicht angegeben")
+
+        pronouns_mapping = {
+            "male": "er/ihm/sein",
+            "female": "sie/ihr/ihre",
+            "diverse": "sie/dey/deren (verwende geschlechtsneutrale Sprache)",
+        }
+        pronouns = pronouns_mapping.get(patient_gender, "")
+
+        return f"""**PATIENT*INNEN-INFORMATIONEN**
+Das Geschlecht des Patienten ist {gender_display}. Verwende entsprechende Pronomen ({pronouns}) und 
+geschlechtsangemessene Sprache im Bericht. Achte auf eine respektvolle und professionelle Darstellung.
+
+"""
 
     def _build_context_prefix(self, report: Report) -> str:
         """
@@ -43,22 +65,9 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
 """
 
         # Add patient gender context if provided
-        if report.patient_gender and report.patient_gender != "not_specified":
-            gender_mapping = {"male": "männlich", "female": "weiblich", "diverse": "divers"}
-            gender_display = gender_mapping.get(report.patient_gender, "nicht angegeben")
-
-            pronouns_mapping = {
-                "male": "er/ihm/sein",
-                "female": "sie/ihr/ihre",
-                "diverse": "sie/dey/deren (verwende geschlechtsneutrale Sprache)",
-            }
-            pronouns = pronouns_mapping.get(report.patient_gender, "")
-
-            context_prefix += f"""**PATIENT*INNEN-INFORMATIONEN**
-Das Geschlecht des Patienten ist {gender_display}. Verwende entsprechende Pronomen ({pronouns}) und 
-geschlechtsangemessene Sprache im Bericht. Achte auf eine respektvolle und professionelle Darstellung.
-
-"""
+        gender_context = self._build_gender_context(report.patient_gender)
+        if gender_context:
+            context_prefix += gender_context
 
         if not combined_text.strip():
             context_prefix += """**HINWEIS:** Keine Kontextdateien verfügbar. Erstelle einen generischen Bericht basierend auf der Vorlage.
@@ -88,7 +97,7 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
             Generated report content
         """
         if not self.is_available():
-            raise ValueError("OpenAI API key ist nicht konfiguriert")
+            raise ValueError("LLM connector ist nicht verfügbar")
 
         try:
             context_prefix = self._build_context_prefix(report)
@@ -96,13 +105,19 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
             # Combine context prefix with template structure
             full_prompt = context_prefix + template.user_prompt
 
-            # Generate the document using hardcoded system prompt
-            return self.connector.generate_text(
-                system_prompt=REPORT_SYSTEM_PROMPT,
-                user_prompt=full_prompt,
+            # Generate the document using LLM connector
+            params = LLMGenerationParams(
                 max_tokens=template.max_tokens,
                 temperature=template.temperature,
             )
+
+            result = self.llm_connector.generate_text(
+                system_prompt=REPORT_SYSTEM_PROMPT,
+                user_prompt=full_prompt,
+                params=params,
+            )
+
+            return result.text
 
         except Exception as e:
             raise Exception(f"Fehler bei der Reportgenerierung: {str(e)}")
@@ -157,4 +172,5 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
             ),
         }
 
+        return summary
         return summary
