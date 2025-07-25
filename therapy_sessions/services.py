@@ -146,7 +146,7 @@ wenn es sinnvoll ist.
             Erstelle strukturierte Sitzungsnotizen basierend auf Informationen zu einer Therapiesitzung.
             
         
-            **ALLGMEINE ANWEISUNGEN FÜR DIE ERSTELLUNG DER SITZUNGSNOTIZEN**
+            **ALLGEMEINE ANWEISUNGEN FÜR DIE ERSTELLUNG DER SITZUNGSNOTIZEN**
             {template.general_instructions}
             
             
