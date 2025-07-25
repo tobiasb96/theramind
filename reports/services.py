@@ -1,5 +1,6 @@
 from typing import Dict, Any, Optional
 from django.db.models import Q
+from django.contrib.auth import get_user_model
 from core.ai_connectors import get_llm_connector
 from core.ai_connectors.base.llm import LLMGenerationParams
 from core.utils.ai_helpers import build_gender_context
@@ -165,8 +166,6 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
             # Get user for template validation if provided
             user = None
             if user_id:
-                from django.contrib.auth import get_user_model
-
                 User = get_user_model()
                 try:
                     user = User.objects.get(id=user_id)

@@ -86,10 +86,7 @@ class UnifiedInputService:
 
     def _determine_audio_format(self, filename: str) -> str:
         """Determine audio format based on filename"""
-        from core.models import AudioInput
-
         extension = filename.lower().split(".")[-1] if "." in filename else ""
-
         format_mapping = {
             "mp3": AudioInput.FileFormat.MP3,
             "wav": AudioInput.FileFormat.WAV,
@@ -97,7 +94,6 @@ class UnifiedInputService:
             "webm": AudioInput.FileFormat.WEBM,
             "flac": AudioInput.FileFormat.FLAC,
         }
-
         return format_mapping.get(extension, AudioInput.FileFormat.MP3)
 
     def _determine_document_file_type(self, filename: str) -> str:
