@@ -1,5 +1,49 @@
 from django.db import models
 from django.conf import settings
+from django.db.models import Q
+
+
+class DocumentTemplateQuerySet(models.QuerySet):
+    """Custom queryset for DocumentTemplate with filtering methods"""
+
+    def get_template(self, template_id: int, template_type: str, user=None):
+        """
+        Get and validate template access for a specific template type
+
+        Args:
+            template_id: ID of the template
+            template_type: Type of template (REPORT or SESSION_NOTES)
+            user: User object for access validation
+
+        Returns:
+            DocumentTemplate instance
+
+        Raises:
+            DocumentTemplate.DoesNotExist: If template not found or access denied
+        """
+        query = self.filter(
+            id=template_id,
+            template_type=template_type,
+            is_active=True,
+        )
+
+        if user:
+            query = query.filter(Q(is_predefined=True) | Q(user=user))
+        else:
+            query = query.filter(is_predefined=True)
+
+        return query.get()
+
+
+class DocumentTemplateManager(models.Manager):
+    """Custom manager for DocumentTemplate"""
+
+    def get_queryset(self):
+        return DocumentTemplateQuerySet(self.model, using=self._db)
+
+    def get_template(self, template_id: int, template_type: str, user=None):
+        """Delegate to queryset method"""
+        return self.get_queryset().get_template(template_id, template_type, user)
 
 
 class DocumentTemplate(models.Model):
@@ -59,6 +103,9 @@ class DocumentTemplate(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Aktualisiert am")
+
+    # Custom manager
+    objects = DocumentTemplateManager()
 
     class Meta:
         verbose_name = "Dokument Template"

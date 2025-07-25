@@ -219,10 +219,11 @@ class ReportViewSet(viewsets.ViewSet):
                 messages.error(request, "Template ist erforderlich")
                 return redirect("reports:report_detail", pk=report.pk)
 
-            # Get the template using service helper
-            report_service = ReportService()
+            # Get the template using model method
             try:
-                template = report_service.get_template(int(template_id), user=request.user)
+                template = DocumentTemplate.objects.get_template(
+                    int(template_id), DocumentTemplate.TemplateType.REPORT, user=request.user
+                )
             except Exception:
                 messages.error(request, "Template nicht gefunden")
                 return redirect("reports:report_detail", pk=report.pk)

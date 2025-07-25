@@ -1,5 +1,4 @@
 from typing import Dict, Any, Optional
-from django.db.models import Q
 from django.contrib.auth import get_user_model
 from core.ai_connectors import get_llm_connector
 from core.ai_connectors.base.llm import LLMGenerationParams
@@ -29,33 +28,6 @@ class ReportService:
     def reinitialize(self):
         """Reinitialize the connector (useful after settings change)"""
         self.llm_connector.reinitialize()
-
-    def get_template(self, template_id: int, user=None) -> DocumentTemplate:
-        """
-        Get and validate template access for reports
-
-        Args:
-            template_id: ID of the template
-            user: User object for access validation
-
-        Returns:
-            DocumentTemplate instance
-
-        Raises:
-            DocumentTemplate.DoesNotExist: If template not found or access denied
-        """
-        query = DocumentTemplate.objects.filter(
-            id=template_id,
-            template_type=DocumentTemplate.TemplateType.REPORT,
-            is_active=True,
-        )
-
-        if user:
-            query = query.filter(Q(is_predefined=True) | Q(user=user))
-        else:
-            query = query.filter(is_predefined=True)
-
-        return query.get()
 
     def _build_context_prefix(self, report: Report) -> str:
         """
@@ -174,7 +146,9 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
                         f"User with id {user_id} not found, proceeding without user context"
                     )
 
-            template = self.get_template(int(template_id), user=user)
+            template = DocumentTemplate.objects.get_template(
+                int(template_id), DocumentTemplate.TemplateType.REPORT, user=user
+            )
             generated_content = self.generate_with_template(report, template)
             report.content = generated_content
             report.mark_as_success()

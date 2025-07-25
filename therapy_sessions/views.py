@@ -15,6 +15,7 @@ from therapy_sessions.models import Session
 from therapy_sessions.forms import SessionForm
 from therapy_sessions.services import get_session_service
 from therapy_sessions.tasks import generate_session_notes_task
+from document_templates.models import DocumentTemplate
 
 logger = logging.getLogger(__name__)
 
@@ -257,16 +258,14 @@ class SessionViewSet(viewsets.ViewSet):
                 messages.error(request, "Template ist erforderlich")
                 return self._redirect_to_session_detail(pk)
 
-            # Get the template using service helper
-            session_service = get_session_service()
             try:
-                template = session_service.get_template(int(template_id), user=request.user)
+                template = DocumentTemplate.objects.get_template(
+                    int(template_id), DocumentTemplate.TemplateType.SESSION_NOTES, user=request.user
+                )
             except Exception:
                 messages.error(request, "Template nicht gefunden")
                 return self._redirect_to_session_detail(pk)
 
-            # Use the template's user_prompt as the structure for session notes
-            # This is the template structure that will be filled out manually
             session.notes = template.user_prompt
             session.save()
 

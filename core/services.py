@@ -112,23 +112,19 @@ class UnifiedInputService:
     ):
         """Process audio transcription using transcription connector"""
         try:
-            if self.transcription_connector.is_available():
-                file_path = audio_input.audio_file.path
-                result = self.transcription_connector.transcribe(file_path)
+            file_path = audio_input.audio_file.path
+            result = self.transcription_connector.transcribe(file_path)
 
-                transcribed_text = result.text
+            transcribed_text = result.text
 
-                # Append therapeutic observations if provided
-                if therapeutic_observations.strip():
-                    transcribed_text += f"\n\nWeitere Notizen: {therapeutic_observations.strip()}"
+            # Append therapeutic observations if provided
+            if therapeutic_observations.strip():
+                transcribed_text += f"\n\nWeitere Notizen: {therapeutic_observations.strip()}"
 
-                audio_input.mark_as_successful()
-                audio_input.add_transcription(
-                    transcribed_text, processing_time=result.processing_time
-                )
-            else:
-                audio_input.mark_as_failed("Transkriptions-Service nicht verfügbar")
-
+            audio_input.mark_as_successful()
+            audio_input.add_transcription(
+                transcribed_text, processing_time=result.processing_time
+            )
         except Exception as e:
             logger.error(f"Error transcribing audio {audio_input.name}: {str(e)}")
             audio_input.mark_as_failed(str(e))
