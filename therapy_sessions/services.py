@@ -225,57 +225,6 @@ wenn es sinnvoll ist.
 
         return summary
 
-    # Legacy method for backwards compatibility - deprecated
-    def create_session_notes_with_template(
-        self, transcript_text: str, template, existing_notes: str = None, patient_gender: str = None
-    ) -> str:
-        """
-        DEPRECATED: Use generate_with_template instead
-        Legacy method for backwards compatibility
-        """
-        logger.warning(
-            "create_session_notes_with_template is deprecated, use generate_with_template instead"
-        )
-
-        # This is a temporary bridge - in a real refactor, views should be updated
-        # For now, we'll create a minimal session-like object
-        class LegacySessionAdapter:
-            def __init__(self, transcript_text, patient_gender):
-                self.patient_gender = patient_gender
-                self._transcript_text = transcript_text
-
-            @property
-            def audio_inputs(self):
-                class MockQuerySet:
-                    def all(self):
-                        return []
-
-                return MockQuerySet()
-
-            @property
-            def document_inputs(self):
-                class MockQuerySet:
-                    def all(self):
-                        return []
-
-                return MockQuerySet()
-
-        # Override the unified input service method for this legacy case
-        original_get_combined_text = self.unified_input_service.get_combined_text
-
-        def mock_get_combined_text(session, include_audio=True, include_documents=True):
-            return session._transcript_text if hasattr(session, "_transcript_text") else ""
-
-        self.unified_input_service.get_combined_text = mock_get_combined_text
-
-        try:
-            session_adapter = LegacySessionAdapter(transcript_text, patient_gender)
-            result = self.generate_with_template(session_adapter, template, existing_notes)
-            return result
-        finally:
-            # Restore original method
-            self.unified_input_service.get_combined_text = original_get_combined_text
-
 
 # Singleton instance - lazy initialization
 _session_service_instance = None
