@@ -46,7 +46,8 @@ class BaseDocument(models.Model):
         verbose_name="Geschlecht des Patienten",
         help_text="Geschlecht des Patienten für geschlechtsspezifische KI-Generierung",
     )
-    
+    is_generating = models.BooleanField(default=False)
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Aktualisiert am")
@@ -102,8 +103,8 @@ class BaseInput(models.Model):
     description = models.TextField(blank=True, verbose_name="Beschreibung")
 
     # Processing status
-    processing_successful = models.BooleanField(default=False)
-    processing_error = models.TextField(blank=True)
+    processing_successful = models.BooleanField(default=None, null=True, blank=True)
+    processing_error = models.TextField(blank=True, null=True)
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
