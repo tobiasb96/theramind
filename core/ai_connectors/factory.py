@@ -1,6 +1,5 @@
 """Factory for creating AI connectors with singleton management"""
 
-from typing import Type
 from django.conf import settings
 
 from .base.transcription import GenericTranscriptionConnector
