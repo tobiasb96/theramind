@@ -15,6 +15,7 @@ from django.shortcuts import render
 from itertools import chain
 from core.models import AudioInput, DocumentInput
 from core.services import UnifiedInputService
+from core.tasks import process_audio_transcription_task, process_document_extraction_task
 from reports.models import Report
 from therapy_sessions.models import Session
 from core.tables import BaseDocumentTable
@@ -49,10 +50,13 @@ class UnifiedInputViewSet(viewsets.ViewSet):
 
         try:
             service = UnifiedInputService()
-            service.add_audio_input(
+            audio_input = service.add_audio_input(
                 document=document,
                 audio_file=request.FILES["audio_file"],
                 audio_type=request.POST.get("audio_type", "upload"),
+            )
+            process_audio_transcription_task.delay(
+                audio_input.id,
                 therapeutic_observations=request.POST.get("therapeutic_observations", ""),
             )
 
@@ -76,7 +80,11 @@ class UnifiedInputViewSet(viewsets.ViewSet):
 
         try:
             service = UnifiedInputService()
-            service.add_document_input(document=document, file=request.FILES["document_file"])
+            document_input = service.add_document_input(
+                document=document, file=request.FILES["document_file"]
+            )
+            process_document_extraction_task.delay(document_input.id)
+
             message = "Dokument wurde erfolgreich hinzugefügt und wird verarbeitet."
             messages.success(request, message)
 

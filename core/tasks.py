@@ -25,7 +25,7 @@ def process_audio_transcription_task(self, audio_input_id, therapeutic_observati
     try:
         logger.info(f"Starting audio transcription for AudioInput {audio_input_id} ({audio_input.name})")
         service = UnifiedInputService()
-        service._process_audio_transcription(audio_input, therapeutic_observations)
+        service.process_audio_transcription(audio_input, therapeutic_observations)
         logger.info(f"Audio transcription completed for AudioInput {audio_input_id} with result: {audio_input.processing_successful}")
         
         return {
@@ -58,7 +58,7 @@ def process_document_extraction_task(self, document_input_id):
     try:
         logger.info(f"Starting document extraction for DocumentInput {document_input_id} ({document_input.name})")
         service = UnifiedInputService()
-        service._process_document_extraction(document_input)
+        service.process_document_extraction(document_input)
         logger.info(f"Document extraction completed for DocumentInput {document_input_id} with result: {document_input.processing_successful}")
         return {
             "success": True,

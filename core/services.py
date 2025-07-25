@@ -18,9 +18,7 @@ class UnifiedInputService:
         self.text_extraction_service = TextExtractionService()
         self.transcription_connector = get_transcription_connector()
 
-    def add_audio_input(
-        self, document, audio_file, audio_type: str = "upload", therapeutic_observations: str = ""
-    ):
+    def add_audio_input(self, document, audio_file, audio_type: str = "upload") -> AudioInput:
         """Add audio input and process transcription"""
 
         file_format = self._determine_audio_format(audio_file.name)
@@ -32,17 +30,16 @@ class UnifiedInputService:
         audio_input = AudioInput.objects.create(
             document=document,
             name=name,
-            description="",  # No longer store therapeutic observations in description
+            description="",
             audio_type=audio_type,
             file_format=file_format,
             audio_file=audio_file,
             file_size=audio_file.size,
         )
 
-        self._process_audio_transcription(audio_input, therapeutic_observations)
         return audio_input
 
-    def add_document_input(self, document, file=None, text=None):
+    def add_document_input(self, document, file=None, text: str = "") -> DocumentInput:
         """Add document input and process extraction"""
 
         if file:
@@ -56,7 +53,6 @@ class UnifiedInputService:
                 file_size=file.size,
                 extracted_text="",
             )
-            self._process_document_extraction(document_input)
         else:
             # Manual text - generate name with timestamp
             name = f"Text vom {datetime.datetime.now().strftime('%d.%m.%Y %H:%M')}"
@@ -67,11 +63,12 @@ class UnifiedInputService:
                 file_type=DocumentInput.FileType.MANUAL,
                 extracted_text=text or "",
             )
-            self._process_document_extraction(document_input)
 
         return document_input
 
-    def get_combined_text(self, document, include_audio=True, include_documents=True) -> str:
+    def get_combined_text(
+        self, document, include_audio: bool = True, include_documents: bool = True
+    ) -> str:
         """Get combined text from all inputs"""
         texts = []
 
@@ -114,7 +111,9 @@ class UnifiedInputService:
         }
         return format_mapping.get(extension, DocumentInput.FileType.TXT)
 
-    def _process_audio_transcription(self, audio_input, therapeutic_observations: str = ""):
+    def process_audio_transcription(
+        self, audio_input: AudioInput, therapeutic_observations: str = ""
+    ):
         """Process audio transcription using transcription connector"""
         try:
             if self.transcription_connector.is_available():
@@ -138,7 +137,7 @@ class UnifiedInputService:
             logger.error(f"Error transcribing audio {audio_input.name}: {str(e)}")
             audio_input.mark_as_failed(str(e))
 
-    def _process_document_extraction(self, document_input):
+    def process_document_extraction(self, document_input: DocumentInput):
         """Process document text extraction"""
         try:
             extracted_text = self.text_extraction_service.extract_text_from_file(
