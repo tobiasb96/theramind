@@ -68,11 +68,30 @@ class SessionViewSet(viewsets.ViewSet):
         session_service = get_session_service()
         context_summary = session_service.get_context_summary(session)
 
+        # Check if any audio or document inputs are being processed
+        any_inputs_processing = (
+            audio_inputs.filter(processing_successful=None).exists()
+            or document_inputs.filter(processing_successful=None).exists()
+        )
+
+        if request.headers.get("HX-Request") and bool(request.GET.get("update_session_material", False)):
+            return render(
+                request,
+        "partials/input_display.html",
+                {
+                    "session": session,
+                    "any_inputs_processing": any_inputs_processing,
+                    "audio_inputs": audio_inputs,
+                    "document_inputs": document_inputs,
+                },
+            )
+
         return render(
             request,
             "sessions/session_detail.html",
             {
                 "session": session,
+                "any_inputs_processing": any_inputs_processing,
                 "audio_inputs": audio_inputs,
                 "document_inputs": document_inputs,
                 "audio_form": audio_form,
