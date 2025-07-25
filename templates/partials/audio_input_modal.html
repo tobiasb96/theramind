@@ -257,6 +257,7 @@
     let microphoneLevelDataArray;
     let microphoneLevelAnimationId;
     let microphoneLevelStream;
+    let microphoneLevelAudioContext;
 
     // Initialize DOM elements
     function initializeDOMElements() {
@@ -535,12 +536,14 @@
                 }
             });
             
-            refreshMicrophones.addEventListener('click', function(e) {
-                e.stopPropagation();
-                loadMicrophoneDevices();
-            });
-            
-            console.log('Microphone selection setup completed successfully');
+            // Re-get the refresh button reference after DOM replacement
+            const newRefreshButton = document.getElementById('refresh-microphones');
+            if (newRefreshButton) {
+                newRefreshButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    loadMicrophoneDevices();
+                });
+            }
         }
         
         trySetup();
@@ -594,9 +597,9 @@
                 }
             });
             
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            microphoneLevelAnalyser = audioContext.createAnalyser();
-            const source = audioContext.createMediaStreamSource(stream);
+            microphoneLevelAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+            microphoneLevelAnalyser = microphoneLevelAudioContext.createAnalyser();
+            const source = microphoneLevelAudioContext.createMediaStreamSource(stream);
             source.connect(microphoneLevelAnalyser);
             
             microphoneLevelAnalyser.fftSize = 256;
@@ -627,6 +630,12 @@
         
         if (microphoneLevelAnalyser) {
             microphoneLevelAnalyser = null;
+        }
+        
+        // Close the audio context to prevent memory leaks
+        if (microphoneLevelAudioContext && microphoneLevelAudioContext.state !== 'closed') {
+            microphoneLevelAudioContext.close();
+            microphoneLevelAudioContext = null;
         }
         
         // Reset level bar
@@ -1116,7 +1125,7 @@
                 updateSaveButton();
             });
             
-            console.log('Tab switching setup completed successfully');
+
         }
         
         trySetup();
@@ -1283,7 +1292,6 @@
             }
             
             isInitialized = true;
-            console.log('Modal initialization completed successfully');
         }
         
         tryInitialize();
@@ -1304,7 +1312,6 @@
             if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                 const modal = document.getElementById('audio-input-modal');
                 if (modal && !modal.classList.contains('hidden') && !isInitialized) {
-                    console.log('Modal detected as visible, initializing...');
                     setTimeout(initializeModal, 50);
                 }
             }
@@ -1323,11 +1330,9 @@
             e.target.closest('[data-modal-toggle="audio-input-modal"]')) {
             // If recording is active, stop recording and save
             if (isRecording) {
-                console.log('Modal closed while recording - stopping and saving');
                 stopRecording();
             } else if (modalRecordedChunks.length > 0) {
                 // If stopped recording with data, keep it for later
-                console.log('Modal closed with recorded data - keeping for later');
             }
         }
     });
@@ -1349,7 +1354,7 @@
     window.getAudioRecordingStatus = function() {
         const savedState = loadState();
         return {
-            isRecording: false, // We no longer continue recording in background
+            isRecording: isRecording, // Return actual recording state
             hasUnsavedData: savedState ? savedState.hasRecordedData : false,
             recordingTime: savedState ? savedState.recordingSeconds : 0
         };
@@ -1375,7 +1380,6 @@
     // Check for saved state on page load
     const savedState = loadState();
     if (savedState && savedState.hasRecordedData) {
-        console.log('Found saved audio recording state');
         if (window.updateBackgroundRecordingIndicator) {
             window.updateBackgroundRecordingIndicator(savedState);
         }
