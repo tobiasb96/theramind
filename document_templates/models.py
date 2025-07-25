@@ -33,6 +33,10 @@ class DocumentTemplate(models.Model):
         verbose_name="User Prompt Template",
         help_text="Das Prompt-Template mit Platzhaltern wie {session_info}, etc.",
     )
+    general_instructions = models.TextField(
+        verbose_name="General Instructions",
+        help_text="Allgemeine Anweisungen für den Prompt",
+    )
 
     # Template settings
     max_tokens = models.PositiveIntegerField(default=2000, verbose_name="Max Tokens")

@@ -84,11 +84,7 @@ class SessionService:
         combined_text = self.unified_input_service.get_combined_text(session)
 
         # Start building the context prefix
-        context_prefix = """Erstelle strukturierte Sitzungsnotizen basierend auf dem folgenden Transkript einer Therapiesitzung.
-
-Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
-
-"""
+        context_prefix = ""
 
         # Add patient gender context if provided
         gender_context = build_gender_context(session.patient_gender)
@@ -122,11 +118,6 @@ wenn es sinnvoll ist.
 
 """
 
-        context_prefix += """Verwende diese Informationen aus den Eingaben, um strukturierte und professionelle Sitzungsnotizen zu erstellen.
-
-**SITZUNGSNOTIZEN**
-
-"""
         return context_prefix
 
     def generate_with_template(
@@ -150,7 +141,25 @@ wenn es sinnvoll ist.
             context_prefix = self._build_context_prefix(session, existing_notes)
 
             # Combine context prefix with template structure
-            full_prompt = context_prefix + template.user_prompt
+            full_prompt = f"""
+            **AUFGABE** 
+            Erstelle strukturierte Sitzungsnotizen basierend auf Informationen zu einer Therapiesitzung.
+            
+        
+            **ALLGMEINE ANWEISUNGEN FÜR DIE ERSTELLUNG DER SITZUNGSNOTIZEN**
+            {template.general_instructions}
+            
+            
+            **STRUKTUR FÜR DIE ERSTELLUNG DER SITZUNGSNOTIZEN**
+            {template.user_prompt}
+            
+        
+            {context_prefix}
+        
+            
+            **ANTWORTFORMAT**
+            Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>, <li>
+            """
 
             # Generate the notes using LLM connector
             params = LLMGenerationParams(
