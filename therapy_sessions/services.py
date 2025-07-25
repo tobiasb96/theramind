@@ -1,4 +1,4 @@
-from core.ai_connectors import get_transcription_connector, get_llm_connector
+from core.ai_connectors import get_llm_connector
 from core.ai_connectors.base.llm import LLMGenerationParams
 from core.utils.ai_helpers import build_gender_context
 from therapy_sessions.prompts import (
@@ -9,19 +9,17 @@ from therapy_sessions.prompts import (
 
 
 class SessionService:
-    """Service for session-specific transcription and notes generation"""
+    """Service for session-specific notes generation"""
 
     def __init__(self):
-        self.transcription_connector = get_transcription_connector()
         self.llm_connector = get_llm_connector()
 
     def is_available(self) -> bool:
-        """Check if both transcription and LLM services are available"""
-        return self.transcription_connector.is_available() and self.llm_connector.is_available()
+        """Check if LLM service is available"""
+        return self.llm_connector.is_available()
 
     def reinitialize(self):
-        """Reinitialize the connectors (useful after settings change)"""
-        self.transcription_connector.reinitialize()
+        """Reinitialize the connector (useful after settings change)"""
         self.llm_connector.reinitialize()
 
     def summarize_session_notes(self, session_notes: str) -> str:
