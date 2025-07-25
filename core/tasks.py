@@ -21,24 +21,21 @@ def process_audio_transcription_task(self, audio_input_id, therapeutic_observati
     except ObjectDoesNotExist:
         logger.error(f"AudioInput with id {audio_input_id} not found")
         return {"success": False, "error": "AudioInput not found"}
-    
-    try:
-        logger.info(f"Starting audio transcription for AudioInput {audio_input_id} ({audio_input.name})")
-        service = UnifiedInputService()
-        service.process_audio_transcription(audio_input, therapeutic_observations)
-        logger.info(f"Audio transcription completed for AudioInput {audio_input_id} with result: {audio_input.processing_successful}")
-        
-        return {
-            "success": True, 
-            "audio_input_id": audio_input_id,
-            "processing_successful": audio_input.processing_successful,
-            "error": audio_input.processing_error if not audio_input.processing_successful else None
-        }
-        
-    except Exception as exc:
-        logger.error(f"Error processing audio transcription for AudioInput {audio_input_id}: {str(exc)}")
-        audio_input.mark_as_failed(str(exc))    
-        return {"success": False, "error": str(exc)}
+
+    logger.info(
+        f"Starting audio transcription for AudioInput {audio_input_id} ({audio_input.name})"
+    )
+    service = UnifiedInputService()
+    service.process_audio_transcription(audio_input, therapeutic_observations)
+    audio_input.refresh_from_db()
+    logger.info(
+        f"Audio transcription completed for AudioInput {audio_input_id} with result: {audio_input.processing_successful}"
+    )
+    return {
+        "success": True,
+        "audio_input_id": audio_input_id,
+        "processing_successful": audio_input.processing_successful,
+    }
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
@@ -54,20 +51,15 @@ def process_document_extraction_task(self, document_input_id):
     except ObjectDoesNotExist:
         logger.error(f"DocumentInput with id {document_input_id} not found")
         return {"success": False, "error": "DocumentInput not found"}
-    
-    try:
-        logger.info(f"Starting document extraction for DocumentInput {document_input_id} ({document_input.name})")
-        service = UnifiedInputService()
-        service.process_document_extraction(document_input)
-        logger.info(f"Document extraction completed for DocumentInput {document_input_id} with result: {document_input.processing_successful}")
-        return {
-            "success": True,
-            "document_input_id": document_input_id,
-            "processing_successful": document_input.processing_successful,
-            "error": document_input.processing_error if not document_input.processing_successful else None
-        }
-        
-    except Exception as exc:
-        logger.error(f"Error processing document extraction for DocumentInput {document_input_id}: {str(exc)}")
-        document_input.mark_as_failed(str(exc))
-        return {"success": False, "error": str(exc)}
+
+    service = UnifiedInputService()
+    service.process_document_extraction(document_input)
+    document_input.refresh_from_db()
+    logger.info(
+        f"Document extraction completed for DocumentInput {document_input_id} with result: {document_input.processing_successful}"
+    )
+    return {
+        "success": True,
+        "document_input_id": document_input_id,
+        "processing_successful": document_input.processing_successful,
+    }

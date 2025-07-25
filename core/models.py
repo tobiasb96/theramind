@@ -87,6 +87,21 @@ class BaseDocument(models.Model):
         self.is_exported = True
         self.save()
 
+    def mark_as_generating(self):
+        """Mark the document as currently generating content"""
+        self.is_generating = True
+        self.save()
+
+    def mark_as_success(self):
+        """Mark the document as successfully generated"""
+        self.is_generating = False
+        self.save()
+
+    def mark_as_failed(self):
+        """Mark the document as failed generation"""
+        self.is_generating = False
+        self.save()
+
 
 class BaseInput(models.Model):
     """
