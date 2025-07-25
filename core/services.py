@@ -6,6 +6,7 @@ from django.utils.html import strip_tags
 from html import unescape
 from core.utils.text_extraction import TextExtractionService
 from core.ai_connectors import get_transcription_connector
+from core.models import DocumentInput, AudioInput
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +22,10 @@ class UnifiedInputService:
         self, document, audio_file, audio_type: str = "upload", therapeutic_observations: str = ""
     ):
         """Add audio input and process transcription"""
-        from core.models import AudioInput
-        from django.utils import timezone
 
-        # Determine file format from filename
         file_format = self._determine_audio_format(audio_file.name)
-
-        # Generate a name based on audio type and timestamp
         if audio_type == "recording":
-            name = f"Aufnahme vom {timezone.now().strftime('%d.%m.%Y %H:%M')}"
+            name = f"Aufnahme vom {datetime.datetime.now().strftime('%d.%m.%Y %H:%M')}"
         else:
             name = audio_file.name
 
@@ -43,14 +39,11 @@ class UnifiedInputService:
             file_size=audio_file.size,
         )
 
-        # Process transcription asynchronously, passing therapeutic observations
         self._process_audio_transcription(audio_input, therapeutic_observations)
         return audio_input
 
     def add_document_input(self, document, file=None, text=None):
-        """Add document input and extract text"""
-        from core.models import DocumentInput
-        from django.utils import timezone
+        """Add document input and process extraction"""
 
         if file:
             # File upload - use original filename
@@ -66,15 +59,15 @@ class UnifiedInputService:
             self._process_document_extraction(document_input)
         else:
             # Manual text - generate name with timestamp
-            name = f"Text vom {timezone.now().strftime('%d.%m.%Y %H:%M')}"
+            name = f"Text vom {datetime.datetime.now().strftime('%d.%m.%Y %H:%M')}"
             document_input = DocumentInput.objects.create(
                 document=document,
                 name=name,
                 input_type=DocumentInput.InputType.MANUAL_TEXT,
                 file_type=DocumentInput.FileType.MANUAL,
                 extracted_text=text or "",
-                processing_successful=True,
             )
+            self._process_document_extraction(document_input)
 
         return document_input
 
@@ -112,18 +105,14 @@ class UnifiedInputService:
 
     def _determine_document_file_type(self, filename: str) -> str:
         """Determine document file type based on filename"""
-        from core.models import DocumentInput
-
         extension = filename.lower().split(".")[-1] if "." in filename else ""
-
-        if extension == "pdf":
-            return DocumentInput.FileType.PDF
-        elif extension in ["docx", "doc"]:
-            return DocumentInput.FileType.WORD
-        elif extension == "txt":
-            return DocumentInput.FileType.TXT
-        else:
-            return DocumentInput.FileType.TXT  # Default fallback
+        format_mapping = {
+            "pdf": DocumentInput.FileType.PDF,
+            "docx": DocumentInput.FileType.WORD,
+            "doc": DocumentInput.FileType.WORD,
+            "txt": DocumentInput.FileType.TXT,
+        }
+        return format_mapping.get(extension, DocumentInput.FileType.TXT)
 
     def _process_audio_transcription(self, audio_input, therapeutic_observations: str = ""):
         """Process audio transcription using transcription connector"""
@@ -138,18 +127,16 @@ class UnifiedInputService:
                 if therapeutic_observations.strip():
                     transcribed_text += f"\n\nWeitere Notizen: {therapeutic_observations.strip()}"
 
-                audio_input.transcribed_text = transcribed_text
-                audio_input.processing_time_seconds = result.processing_time
-                audio_input.processing_successful = True
-                audio_input.processing_error = ""
+                audio_input.mark_as_successful()
+                audio_input.add_transcription(
+                    transcribed_text, processing_time=result.processing_time
+                )
             else:
-                audio_input.processing_error = "Transkriptions-Service nicht verfügbar"
+                audio_input.mark_as_failed("Transkriptions-Service nicht verfügbar")
 
         except Exception as e:
             logger.error(f"Error transcribing audio {audio_input.name}: {str(e)}")
-            audio_input.processing_error = str(e)
-
-        audio_input.save()
+            audio_input.mark_as_failed(str(e))
 
     def _process_document_extraction(self, document_input):
         """Process document text extraction"""
@@ -160,16 +147,13 @@ class UnifiedInputService:
 
             if extracted_text:
                 document_input.extracted_text = extracted_text
-                document_input.processing_successful = True
-                document_input.processing_error = ""
+                document_input.mark_as_successful()
             else:
-                document_input.processing_error = "Textextraktion fehlgeschlagen"
+                document_input.mark_as_failed("Textextraktion fehlgeschlagen")
 
         except Exception as e:
             logger.error(f"Error extracting text from {document_input.name}: {str(e)}")
-            document_input.processing_error = str(e)
-
-        document_input.save()
+            document_input.mark_as_failed(str(e))
 
 
 class PDFExportService:
@@ -185,21 +169,12 @@ class PDFExportService:
         """Export notes to PDF with given title, date and content"""
         if not content:
             raise ValueError("Keine Notizen zum Export verfügbar.")
-            
+
         try:
-            # Add a page
             self.pdf.add_page()
-            
-            # Add title
             self._add_title(title, date)
-            
-            # Add content using HTML rendering
             self._add_html_content(content)
-            
-            # Generate filename
             filename = self._generate_filename(filename_prefix, date, title)
-            
-            # Generate PDF output - use dest='S' to get bytes
             pdf_output = self.pdf.output(dest='S')
             logger.info(f"PDF generated successfully, size: {len(pdf_output)} bytes")
             

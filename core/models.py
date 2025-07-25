@@ -113,6 +113,18 @@ class BaseInput(models.Model):
         abstract = True
         ordering = ["-created_at"]
 
+    def mark_as_failed(self, error_message: str):
+        """Mark the input as failed and set the error message"""
+        self.processing_successful = False
+        self.processing_error = error_message
+        self.save()
+
+    def mark_as_successful(self):
+        """Mark the input as successful"""
+        self.processing_successful = True
+        self.processing_error = ""
+        self.save()
+
 
 class AudioInput(BaseInput):
     """
@@ -171,6 +183,12 @@ class AudioInput(BaseInput):
             if default_storage.exists(self.audio_file.name):
                 default_storage.delete(self.audio_file.name)
         super().delete(*args, **kwargs)
+
+    def add_transcription(self, transcribed_text: str, processing_time: float):
+        """Mark the input as successful and add the transcription"""
+        self.transcribed_text = transcribed_text
+        self.processing_time_seconds = processing_time
+        self.save()
 
 
 class DocumentInput(BaseInput):
