@@ -5,7 +5,6 @@ from fpdf import FPDF
 from django.utils.html import strip_tags
 from html import unescape
 from core.utils.text_extraction import TextExtractionService
-from therapy_sessions.services import get_session_service
 from core.ai_connectors import get_transcription_connector
 
 logger = logging.getLogger(__name__)
@@ -16,7 +15,6 @@ class UnifiedInputService:
 
     def __init__(self):
         self.text_extraction_service = TextExtractionService()
-        self.session_service = get_session_service()
         self.transcription_connector = get_transcription_connector()
 
     def add_audio_input(

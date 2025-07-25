@@ -1,5 +1,6 @@
 from core.ai_connectors import get_transcription_connector, get_llm_connector
 from core.ai_connectors.base.llm import LLMGenerationParams
+from core.utils.ai_helpers import build_gender_context
 from therapy_sessions.prompts import (
     SUMMARY_PROMPT,
     SYSTEM_PROMPT_SUMMARY,
@@ -30,27 +31,6 @@ class SessionService:
         result = self.llm_connector.generate_text(SYSTEM_PROMPT_SUMMARY, prompt, params)
         return result.text
 
-    def _build_gender_context(self, patient_gender: str = None) -> str:
-        """Build gender context for prompts (shared logic)"""
-        if not patient_gender or patient_gender == "not_specified":
-            return ""
-
-        gender_mapping = {"male": "männlich", "female": "weiblich", "diverse": "divers"}
-        gender_display = gender_mapping.get(patient_gender, "nicht angegeben")
-
-        pronouns_mapping = {
-            "male": "er/ihm/sein",
-            "female": "sie/ihr/ihre",
-            "diverse": "sie/dey/deren (verwende geschlechtsneutrale Sprache)",
-        }
-        pronouns = pronouns_mapping.get(patient_gender, "")
-
-        return f"""**PATIENT*INNEN-INFORMATIONEN**
-Das Geschlecht des Patienten ist {gender_display}. Verwende entsprechende Pronomen ({pronouns}) und
-geschlechtsangemessene Sprache in den Notizen. Achte auf eine respektvolle und professionelle Darstellung.
-
-"""
-
     def _build_session_context_prefix(
         self, transcript_text: str, existing_notes: str = None, patient_gender: str = None
     ) -> str:
@@ -72,7 +52,7 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
 """
 
         # Add patient gender context if provided
-        gender_context = self._build_gender_context(patient_gender)
+        gender_context = build_gender_context(patient_gender)
         if gender_context:
             context_prefix += gender_context
 
@@ -205,8 +185,3 @@ def get_session_service():
     if _session_service_instance is None:
         _session_service_instance = SessionService()
     return _session_service_instance
-
-# Backward compatibility alias
-def get_transcription_service():
-    """Backward compatibility alias for get_session_service"""
-    return get_session_service()

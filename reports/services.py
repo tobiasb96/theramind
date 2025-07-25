@@ -1,6 +1,7 @@
 from typing import Dict, Any, Optional
 from core.ai_connectors import get_llm_connector
 from core.ai_connectors.base.llm import LLMGenerationParams
+from core.utils.ai_helpers import build_gender_context
 from core.services import UnifiedInputService
 from document_templates.models import DocumentTemplate
 from document_templates.service import TemplateService
@@ -23,27 +24,6 @@ class ReportService:
         """Check if the report service is available"""
         return self.llm_connector.is_available()
 
-    def _build_gender_context(self, patient_gender: str = None) -> str:
-        """Build gender context for prompts (shared logic)"""
-        if not patient_gender or patient_gender == "not_specified":
-            return ""
-
-        gender_mapping = {"male": "männlich", "female": "weiblich", "diverse": "divers"}
-        gender_display = gender_mapping.get(patient_gender, "nicht angegeben")
-
-        pronouns_mapping = {
-            "male": "er/ihm/sein",
-            "female": "sie/ihr/ihre",
-            "diverse": "sie/dey/deren (verwende geschlechtsneutrale Sprache)",
-        }
-        pronouns = pronouns_mapping.get(patient_gender, "")
-
-        return f"""**PATIENT*INNEN-INFORMATIONEN**
-Das Geschlecht des Patienten ist {gender_display}. Verwende entsprechende Pronomen ({pronouns}) und 
-geschlechtsangemessene Sprache im Bericht. Achte auf eine respektvolle und professionelle Darstellung.
-
-"""
-
     def _build_context_prefix(self, report: Report) -> str:
         """
         Build the context prefix from unified inputs
@@ -65,7 +45,7 @@ Antworte in HTML-Format mit folgenden erlaubten Tags: <p>, <strong>, <ul>, <ol>,
 """
 
         # Add patient gender context if provided
-        gender_context = self._build_gender_context(report.patient_gender)
+        gender_context = build_gender_context(report.patient_gender)
         if gender_context:
             context_prefix += gender_context
 
@@ -172,5 +152,4 @@ Verwende diese Informationen aus den Eingaben, um einen strukturierten und profe
             ),
         }
 
-        return summary
         return summary

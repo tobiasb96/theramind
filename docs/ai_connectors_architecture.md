@@ -167,7 +167,6 @@ report_content = report_service.generate_with_template(report, template)
 
 ### Backward Compatibility
 
-- `get_transcription_service()` still works as an alias to `get_session_service()`
 - All existing method signatures remain the same
 - No changes required in templates or views
 
