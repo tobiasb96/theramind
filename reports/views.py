@@ -219,7 +219,6 @@ class ReportViewSet(viewsets.ViewSet):
                 messages.error(request, "Template ist erforderlich")
                 return redirect("reports:report_detail", pk=report.pk)
 
-            # Get the template using model method
             try:
                 template = DocumentTemplate.objects.get_template(
                     int(template_id), DocumentTemplate.TemplateType.REPORT, user=request.user

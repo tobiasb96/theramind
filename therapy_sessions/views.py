@@ -10,12 +10,17 @@ from rest_framework.permissions import IsAuthenticated
 import json
 import re
 import logging
+from core.forms import AudioInputForm, DocumentFileInputForm, DocumentTextInputForm
+
 from django.shortcuts import render
+from core.services import PDFExportService
 from therapy_sessions.models import Session
 from therapy_sessions.forms import SessionForm
 from therapy_sessions.services import get_session_service
 from therapy_sessions.tasks import generate_session_notes_task
 from document_templates.models import DocumentTemplate
+from document_templates.service import TemplateService
+
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +52,6 @@ class SessionViewSet(viewsets.ViewSet):
         # Get unified inputs
         audio_inputs = session.audio_inputs.order_by("-created_at")
         document_inputs = session.document_inputs.order_by("-created_at")
-
-        from core.forms import AudioInputForm, DocumentFileInputForm, DocumentTextInputForm
-
         audio_form = AudioInputForm()
         document_file_form = DocumentFileInputForm()
         document_text_form = DocumentTextInputForm()
@@ -58,9 +60,6 @@ class SessionViewSet(viewsets.ViewSet):
         has_transcribed_recordings = any(
             audio_input.transcribed_text for audio_input in audio_inputs
         )
-
-        # Get session notes templates from TemplateService
-        from document_templates.service import TemplateService
 
         template_service = TemplateService()
         session_notes_templates = template_service.get_session_templates(user=request.user)
@@ -219,13 +218,13 @@ class SessionViewSet(viewsets.ViewSet):
             messages.error(request, f"Fehler beim Starten der Generierung: {str(e)}")
 
         return self._redirect_to_session_detail(pk)
-    
-    @action(detail=True, methods=['post'])
+
+    @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
     def save_notes(self, request, pk=None):
         """Save session notes with HTML sanitization"""
         session = self.get_object(pk, request)
-        
+
         try:
             session_notes = request.POST.get("session_notes", "")
             session.notes = self._sanitize_html(session_notes)
@@ -284,12 +283,8 @@ class SessionViewSet(viewsets.ViewSet):
         session = self.get_object(pk, request)
 
         try:
-            # Use the export service with database content
-            from core.services import PDFExportService
-
             export_service = PDFExportService()
 
-            # Prepare title
             title = "Sitzungsnotizen"
             if session.title:
                 title += f" - {session.title}"
@@ -302,8 +297,6 @@ class SessionViewSet(viewsets.ViewSet):
             )
 
             session.mark_as_exported()
-
-            # Create Django response
             response = HttpResponse(pdf_data["content"], content_type=pdf_data["content_type"])
             response["Content-Disposition"] = f"attachment; filename={pdf_data['filename']}"
 
