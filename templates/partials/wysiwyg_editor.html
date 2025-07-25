@@ -48,34 +48,31 @@
                         </svg>
                         <span class="sr-only">Toggle ordered list</span>
                     </button>
-                </div>
-            </div>
-            
-            <!-- Format Dropdown Row -->
-            <div class="flex items-center gap-2 pt-2 flex-wrap">
-                <button id="typographyDropdownButton-{{ editor_id }}" data-dropdown-toggle="typographyDropdown-{{ editor_id }}" class="flex items-center justify-center rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-500 hover:bg-gray-200 hover:text-gray-900 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-50" type="button">
-                    Format
-                    <svg class="-me-0.5 ms-1.5 h-3.5 w-3.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
-                    </svg>
-                </button>
-                
-                <!-- Heading Dropdown -->
-                <div id="typographyDropdown-{{ editor_id }}" class="z-10 hidden w-72 rounded-sm bg-white p-2 shadow-sm border border-gray-200">
-                    <ul class="space-y-1 text-sm font-medium" aria-labelledby="typographyDropdownButton-{{ editor_id }}">
-                        <li>
-                            <button id="toggleParagraphButton-{{ editor_id }}" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900">Paragraph</button>
-                        </li>
-                        <li>
-                            <button data-heading-level="1" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900 heading-button-{{ editor_id }}">Heading 1</button>
-                        </li>
-                        <li>
-                            <button data-heading-level="2" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900 heading-button-{{ editor_id }}">Heading 2</button>
-                        </li>
-                        <li>
-                            <button data-heading-level="3" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900 heading-button-{{ editor_id }}">Heading 3</button>
-                        </li>
-                    </ul>
+
+                    <button id="typographyDropdownButton-{{ editor_id }}" data-dropdown-toggle="typographyDropdown-{{ editor_id }}" class="flex items-center justify-center rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-500 hover:bg-gray-200 hover:text-gray-900 focus:z-10 focus:outline-none focus:ring-4 focus:ring-gray-50" type="button">
+                        Format
+                        <svg class="-me-0.5 ms-1.5 h-3.5 w-3.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7" />
+                        </svg>
+                    </button>
+                    
+                    <!-- Heading Dropdown -->
+                    <div id="typographyDropdown-{{ editor_id }}" class="z-50 hidden w-72 rounded-sm bg-white p-2 shadow-sm border border-gray-200">
+                        <ul class="space-y-1 text-sm font-medium" aria-labelledby="typographyDropdownButton-{{ editor_id }}">
+                            <li>
+                                <button id="toggleParagraphButton-{{ editor_id }}" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900">Paragraph</button>
+                            </li>
+                            <li>
+                                <button data-heading-level="1" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900 heading-button-{{ editor_id }}">Heading 1</button>
+                            </li>
+                            <li>
+                                <button data-heading-level="2" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900 heading-button-{{ editor_id }}">Heading 2</button>
+                            </li>
+                            <li>
+                                <button data-heading-level="3" type="button" class="flex justify-between items-center w-full text-base rounded-sm px-3 py-2 hover:bg-gray-100 text-gray-900 heading-button-{{ editor_id }}">Heading 3</button>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>

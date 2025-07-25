@@ -15,85 +15,81 @@
                 </button>
             </div>
             
-            <!-- Modal body with tabs -->
-            <div class="p-4 md:p-5">
+            <!-- Modal body -->
+            <div class="p-6">
                 <!-- Tab Navigation -->
-                <div class="text-sm font-medium text-center text-gray-500 border-b border-gray-200 mb-4">
-                    <ul class="flex flex-wrap -mb-px">
-                        <li class="mr-2">
-                            <button class="document-tab-btn inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300" 
-                                    data-tab="file" onclick="switchDocumentTab('file')">
-                                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                                </svg>
+                <div class="mb-4 border-b border-gray-200">
+                    <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="document-tab" data-tabs-toggle="#document-tab-content" data-tabs-active-classes="text-blue-600 hover:text-blue-600 border-blue-600" data-tabs-inactive-classes="text-gray-500 hover:text-gray-600 border-gray-100 hover:border-gray-300" role="tablist">
+                        <li class="flex-1 me-2" role="presentation">
+                            <button class="inline-block w-full p-4 border-b-2 rounded-t-lg" id="file-tab" data-tabs-target="#file" type="button" role="tab" aria-controls="file" aria-selected="true">
                                 Datei hochladen
                             </button>
                         </li>
-                        <li class="mr-2">
-                            <button class="document-tab-btn inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300" 
-                                    data-tab="text" onclick="switchDocumentTab('text')">
-                                <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
+                        <li class="flex-1" role="presentation">
+                            <button class="inline-block w-full p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="text-tab" data-tabs-target="#text" type="button" role="tab" aria-controls="text" aria-selected="false">
                                 Text eingeben
                             </button>
                         </li>
                     </ul>
                 </div>
-                
-                <!-- File Upload Tab Content -->
-                <div id="document-file-tab" class="document-tab-content">
-                                         <form method="post" enctype="multipart/form-data" action="{% url 'core:add_document_file_input' document_type=document_type document_id=document.pk %}">
-                        {% csrf_token %}
-                        
-                        <div class="mb-4">
-                            <label for="document-file-upload" class="block mb-2 text-sm font-medium text-gray-900">Datei auswählen</label>
-                            <input type="file" name="document_file" id="document-file-upload" accept=".pdf,.docx,.doc,.txt" 
-                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" 
-                                   required>
-                            <p class="mt-1 text-sm text-gray-500">Unterstützte Formate: PDF, Word (.docx, .doc), Text (.txt)</p>
-                        </div>
-                        
 
-                        
-                        <div class="flex justify-end space-x-2">
-                            <button type="button" data-modal-toggle="document-input-modal" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-300">
-                                Abbrechen
-                            </button>
-                            <button type="submit" class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300">
-                                Datei hochladen
-                            </button>
-                        </div>
-                    </form>
+                <!-- Tab Content -->
+                <div id="document-tab-content">
+                    <!-- File Upload Tab -->
+                    <div class="p-4 rounded-lg" id="file" role="tabpanel" aria-labelledby="file-tab">
+                        <form id="document-file-form" method="post" enctype="multipart/form-data" action="{% url 'core:add_document_file_input' document_type=document_type document_id=document.pk %}">
+                            {% csrf_token %}
+                            
+                            <div class="mb-6">
+                                <label for="document-file-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <svg class="w-8 h-8 mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                        </svg>
+                                        <p class="text-sm text-gray-500"><span class="font-semibold">Dokument hochladen</span></p>
+                                        <p class="text-xs text-gray-500">PDF, Word (.docx, .doc), Text (.txt)</p>
+                                    </div>
+                                    <input type="file" name="document_file" id="document-file-upload" accept=".pdf,.docx,.doc,.txt" class="hidden" />
+                                </label>
+                            </div>
+
+                            <div id="file-preview" class="hidden mb-4">
+                                <div class="bg-gray-50 rounded-lg p-3 border">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <div>
+                                            <p id="file-filename" class="text-sm font-medium text-gray-900"></p>
+                                            <p id="file-filesize" class="text-xs text-gray-500"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Text Input Tab -->
+                    <div class="hidden p-4 rounded-lg" id="text" role="tabpanel" aria-labelledby="text-tab">
+                        <form id="document-text-form" method="post" action="{% url 'core:add_document_text_input' document_type=document_type document_id=document.pk %}">
+                            {% csrf_token %}
+                            
+                            <div class="mb-6">
+                                <label for="document-text-content" class="block mb-2 text-sm font-medium text-gray-900">Text-Inhalt</label>
+                                <textarea name="text_content" id="document-text-content" rows="12" 
+                                          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                                          placeholder="Gib hier den Text ein, der als Kontext verwendet werden soll..." 
+                                          required></textarea>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                
-                <!-- Text Input Tab Content -->
-                <div id="document-text-tab" class="document-tab-content hidden">
-                                         <form method="post" action="{% url 'core:add_document_text_input' document_type=document_type document_id=document.pk %}">
-                        {% csrf_token %}
-                        
 
-                        
-                        <div class="mb-4">
-                            <label for="document-text-content" class="block mb-2 text-sm font-medium text-gray-900">Text-Inhalt</label>
-                            <textarea name="text_content" id="document-text-content" rows="12" 
-                                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-                                      placeholder="Gib hier den Text ein, der als Kontext verwendet werden soll..." 
-                                      required></textarea>
-                            <p class="mt-1 text-sm text-gray-500">Gib den Text direkt ein, der verarbeitet werden soll.</p>
-                        </div>
-                        
-
-                        
-                        <div class="flex justify-end space-x-2">
-                            <button type="button" data-modal-toggle="document-input-modal" class="py-2 px-3 text-sm font-medium text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-300">
-                                Abbrechen
-                            </button>
-                            <button type="submit" class="bg-blue-700 text-white px-5 py-2 rounded hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300">
-                                Text hinzufügen
-                            </button>
-                        </div>
-                    </form>
+                <!-- Submit Button -->
+                <div class="flex justify-center mt-6">
+                    <button type="submit" id="document-submit-button" class="bg-gray-400 text-white px-8 py-3 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium" disabled>
+                        Speichern
+                    </button>
                 </div>
             </div>
         </div>
@@ -101,53 +97,193 @@
 </div>
 
 <script>
-// Tab switching functionality for document modal
-function switchDocumentTab(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('.document-tab-content').forEach(tab => {
-        tab.classList.add('hidden');
-    });
-    
-    // Remove active state from all tab buttons
-    document.querySelectorAll('.document-tab-btn').forEach(btn => {
-        btn.classList.remove('border-blue-600', 'text-blue-600');
-        btn.classList.add('border-transparent');
-    });
-    
-    // Show selected tab content
-    document.getElementById(`document-${tabName}-tab`).classList.remove('hidden');
-    
-    // Add active state to selected tab button
-    const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
-    activeBtn.classList.add('border-blue-600', 'text-blue-600');
-    activeBtn.classList.remove('border-transparent');
-}
+// Document Input Modal functionality
+(function() {
+    let isInitialized = false;
+    let documentFileUpload;
+    let documentTextContent;
+    let documentSubmitButton;
+    let filePreview;
+    let fileFilename;
+    let fileFilesize;
 
-// Initialize with file tab active
-document.addEventListener('DOMContentLoaded', function() {
-    switchDocumentTab('file');
-    
-    // Auto-fill name field when text tab is selected
-    document.querySelector('[data-tab="text"]').addEventListener('click', function() {
-        setTimeout(() => {
-            const nameField = document.getElementById('document-name-text');
-            if (!nameField.value) {
-                const now = new Date();
-                nameField.value = `Manueller Text vom ${now.toLocaleDateString('de-DE')}`;
-            }
-        }, 100);
-    });
-});
-
-// Auto-fill file name based on selected file
-document.getElementById('document-file-upload').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    const nameField = document.getElementById('document-name-file');
-    
-    if (file && !nameField.value) {
-        // Remove file extension and use as name
-        const fileName = file.name.replace(/\.[^/.]+$/, "");
-        nameField.value = fileName;
+    // Initialize DOM elements
+    function initializeDOMElements() {
+        documentFileUpload = document.getElementById('document-file-upload');
+        documentTextContent = document.getElementById('document-text-content');
+        documentSubmitButton = document.getElementById('document-submit-button');
+        filePreview = document.getElementById('file-preview');
+        fileFilename = document.getElementById('file-filename');
+        fileFilesize = document.getElementById('file-filesize');
     }
-});
+
+    // Update save button based on current tab and input
+    function updateSaveButton() {
+        if (!documentSubmitButton) return;
+        
+        const currentTab = document.querySelector('#document-tab [aria-selected="true"]');
+        const isFileTab = currentTab && currentTab.id === 'file-tab';
+        
+        let canSave = false;
+        
+        if (isFileTab) {
+            // File tab: can save if file is selected
+            canSave = documentFileUpload && documentFileUpload.files && documentFileUpload.files.length > 0;
+        } else {
+            // Text tab: can save if text content is not empty
+            canSave = documentTextContent && documentTextContent.value.trim().length > 0;
+        }
+        
+        if (canSave) {
+            documentSubmitButton.disabled = false;
+            documentSubmitButton.classList.remove('bg-gray-400');
+            documentSubmitButton.classList.add('bg-blue-600', 'hover:bg-blue-700', 'focus:ring-blue-300');
+        } else {
+            documentSubmitButton.disabled = true;
+            documentSubmitButton.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'focus:ring-blue-300');
+            documentSubmitButton.classList.add('bg-gray-400');
+        }
+    }
+
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Setup file upload handling
+    function setupFileUpload() {
+        if (!documentFileUpload) return;
+        
+        documentFileUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileFilename.textContent = file.name;
+                fileFilesize.textContent = formatFileSize(file.size);
+                filePreview.classList.remove('hidden');
+            } else {
+                filePreview.classList.add('hidden');
+            }
+            updateSaveButton();
+        });
+    }
+
+    // Setup text input handling
+    function setupTextInput() {
+        if (!documentTextContent) return;
+        
+        documentTextContent.addEventListener('input', function() {
+            updateSaveButton();
+        });
+    }
+
+    // Setup form submission
+    function setupFormSubmission() {
+        if (!documentSubmitButton) return;
+        
+        documentSubmitButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const currentTab = document.querySelector('#document-tab [aria-selected="true"]');
+            const isFileTab = currentTab && currentTab.id === 'file-tab';
+            
+            if (isFileTab) {
+                // File mode
+                if (!documentFileUpload.files[0]) {
+                    alert('Bitte wählen Sie eine Datei aus.');
+                    return;
+                }
+                
+                // Submit the file form
+                document.getElementById('document-file-form').submit();
+            } else {
+                // Text mode
+                if (!documentTextContent.value.trim()) {
+                    alert('Bitte geben Sie Text ein.');
+                    return;
+                }
+                
+                // Submit the text form
+                document.getElementById('document-text-form').submit();
+            }
+            
+            documentSubmitButton.disabled = true;
+            documentSubmitButton.textContent = 'Wird verarbeitet...';
+        });
+    }
+
+    // Initialize modal
+    function initializeModal() {
+        if (isInitialized) return;
+        
+        // Wait for DOM elements to be available
+        const maxAttempts = 10;
+        let attempts = 0;
+        
+        function tryInitialize() {
+            attempts++;
+            
+            initializeDOMElements();
+            
+            if (!documentSubmitButton) {
+                if (attempts < maxAttempts) {
+                    setTimeout(tryInitialize, 100);
+                } else {
+                    console.warn('Document modal elements not found after', maxAttempts, 'attempts');
+                }
+                return;
+            }
+            
+            // Setup all components
+            setupFileUpload();
+            setupTextInput();
+            setupFormSubmission();
+            
+            // Listen for tab changes to update save button
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('[data-tabs-target]')) {
+                    setTimeout(updateSaveButton, 100);
+                }
+            });
+            
+            // Initial save button state
+            updateSaveButton();
+            
+            isInitialized = true;
+        }
+        
+        tryInitialize();
+    }
+
+    // Modal event handling
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-modal-target="document-input-modal"]')) {
+            // Reset initialization flag to allow re-initialization
+            isInitialized = false;
+            setTimeout(initializeModal, 100);
+        }
+    });
+
+    // Additional modal detection using MutationObserver
+    const modalObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                const modal = document.getElementById('document-input-modal');
+                if (modal && !modal.classList.contains('hidden') && !isInitialized) {
+                    setTimeout(initializeModal, 50);
+                }
+            }
+        });
+    });
+
+    // Start observing the modal
+    const modal = document.getElementById('document-input-modal');
+    if (modal) {
+        modalObserver.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    }
+
+})();
 </script> 
