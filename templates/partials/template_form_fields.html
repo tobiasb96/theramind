@@ -1,0 +1,342 @@
+<!-- Template Form Fields Partial -->
+<div class="grid gap-6 mb-6">
+    <!-- Name and Template Type (side by side) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Name -->
+        <div>
+            <label for="{{ name_field_id|default:'name' }}" class="block mb-2 text-sm font-medium text-gray-900">
+                Name der Vorlage *
+            </label>
+            <input type="text" name="name" id="{{ name_field_id|default:'name' }}" 
+                   value="{% if template %}{{ template.name }}{% endif %}"
+                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Gib einen Namen für die Vorlage ein" required>
+        </div>
+
+        <!-- Template Type -->
+        <div>
+            <label for="{{ type_field_id|default:'template_type' }}" class="block mb-2 text-sm font-medium text-gray-900">
+                Vorlage Typ
+                <button data-tooltip-target="tooltip-template-type-{{ form_id|default:'main' }}" type="button" class="ml-1 text-gray-400 hover:text-gray-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </label>
+            <select name="template_type" id="{{ type_field_id|default:'template_type' }}" 
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                <option value="">Typ auswählen</option>
+                {% if template_types %}
+                    {% for value, label in template_types %}
+                        <option value="{{ value }}" 
+                                {% if template and template.template_type == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                {% else %}
+                    <!-- Fallback options -->
+                    <option value="report" {% if template and template.template_type == 'report' %}selected{% endif %}>Reports</option>
+                    <option value="session_notes" {% if template and template.template_type == 'session_notes' %}selected{% endif %}>Sitzungsnotizen</option>
+                {% endif %}
+            </select>
+            <p class="mt-1 text-sm text-gray-500">Reports oder Sitzungsnotizen</p>
+        </div>
+    </div>
+
+    <div id="tooltip-template-type-{{ form_id|default:'main' }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
+        <strong>Reports:</strong> Für Reports wie Abschlussberichte, Verlaufsberichte, etc.<br>
+        <strong>Sitzungsnotizen:</strong> Für Notizen während oder nach Therapiesitzungen
+        <div class="tooltip-arrow" data-popper-arrow></div>
+    </div>
+
+    <!-- Description -->
+    <div>
+        <label for="{{ description_field_id|default:'description' }}" class="block mb-2 text-sm font-medium text-gray-900">
+            Beschreibung der Vorlage
+        </label>
+        <textarea name="description" id="{{ description_field_id|default:'description' }}" rows="3"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Optionale Beschreibung des Templates">{% if template %}{{ template.description }}{% endif %}</textarea>
+    </div>
+
+    <!-- Template Sections -->
+    <div>
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <span class="text-sm font-medium text-gray-900">Template Abschnitte *</span>
+                <button data-tooltip-target="tooltip-sections-{{ form_id|default:'main' }}" type="button" class="ml-1 text-gray-400 hover:text-gray-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+            <button type="button" id="add-section-btn-{{ form_id|default:'main' }}" 
+                    class="text-blue-600 hover:text-blue-700 font-medium text-sm inline-flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Abschnitt hinzufügen
+            </button>
+        </div>
+
+        <div id="tooltip-sections-{{ form_id|default:'main' }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
+            Erstelle modulare Abschnitte für dein Template.<br>
+            <strong>Ziehen & Ablegen:</strong> Ändere die Reihenfolge durch Drag & Drop<br>
+            <strong>Beispiele:</strong> "Diagnose", "Therapieverlauf", "Empfehlungen"
+            <div class="tooltip-arrow" data-popper-arrow></div>
+        </div>
+
+        <!-- Sections Container -->
+        <div id="sections-container-{{ form_id|default:'main' }}" class="space-y-4 min-h-[200px] border-2 border-dashed border-gray-200 rounded-lg p-4">
+            <!-- Sections will be dynamically added here -->
+            <div id="empty-sections-message-{{ form_id|default:'main' }}" class="text-center text-gray-500 py-8">
+                <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p class="text-lg font-medium mb-2">Noch keine Abschnitte</p>
+                <p class="text-sm">Klicke auf "Abschnitt hinzufügen" um zu beginnen</p>
+            </div>
+        </div>
+
+        <!-- Hidden input to store serialized sections -->
+        <input type="hidden" name="user_prompt" id="user_prompt-{{ form_id|default:'main' }}" value="{% if template %}{{ template.user_prompt }}{% endif %}">
+
+        <div class="mt-2 p-3 bg-blue-50 rounded-lg">
+            <p class="text-sm text-blue-800">
+                <strong>💡 Tipp:</strong> Verwende diese Abschnitte nur für die Struktur und Formatierung Deiner Dokumente. Das System fügt automatisch relevante Informationen wie Patientendaten, Therapieverlauf und Sitzungsnotizen hinzu.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Section Template (Hidden) -->
+<template id="section-template-{{ form_id|default:'main' }}">
+    <div class="section-item bg-gray-50 border border-gray-200 rounded-lg p-4 relative group" data-section-id="">
+        <!-- Drag Handle -->
+        <div class="drag-handle absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 cursor-move opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-200 rounded-full p-2 shadow-sm">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+            </svg>
+        </div>
+        
+        <!-- Remove Button -->
+        <button type="button" class="remove-section absolute right-2 top-2 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <div class="ml-8 mr-8 space-y-3">
+            <!-- Section Title -->
+            <input type="text" class="section-title w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" 
+                   placeholder="Abschnitt Titel (z.B. Diagnose, Therapieverlauf, Empfehlungen...)">
+
+            <!-- Section Content -->
+            <textarea class="section-content w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" 
+                      rows="4" 
+                      placeholder="Abschnittsbeschreibung:&#10;- Inhalt: Beschreibe was in diesem Abschnitt stehen soll&#10;- Format: Wie soll der Inhalt strukturiert werden&#10;- Beispiele: Konkrete Beispiele für diesen Abschnitt"></textarea>
+        </div>
+    </div>
+</template>
+
+<script>
+function initializeTemplateForm(formId) {
+    const formIdSuffix = formId || 'main';
+    let sectionCounter = 0;
+    const sectionsContainer = document.getElementById('sections-container-' + formIdSuffix);
+    const addSectionBtn = document.getElementById('add-section-btn-' + formIdSuffix);
+    const emptyMessage = document.getElementById('empty-sections-message-' + formIdSuffix);
+    const userPromptInput = document.getElementById('user_prompt-' + formIdSuffix);
+
+    if (!sectionsContainer || !addSectionBtn || !emptyMessage || !userPromptInput) {
+        console.warn('Template form elements not found for form ID:', formIdSuffix);
+        return;
+    }
+
+    // Initialize sortable functionality
+    function initializeSortable() {
+        if (typeof Sortable !== 'undefined') {
+            new Sortable(sectionsContainer, {
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                filter: '#empty-sections-message-' + formIdSuffix,
+                onEnd: function() {
+                    updateEmptyMessage();
+                    serializeSections();
+                }
+            });
+        }
+    }
+
+    // Add section
+    function addSection(title = '', content = '') {
+        const template = document.getElementById('section-template-' + formIdSuffix);
+        if (!template) return;
+        
+        const clone = template.content.cloneNode(true);
+        const sectionItem = clone.querySelector('.section-item');
+        
+        sectionCounter++;
+        const sectionId = 'section-' + formIdSuffix + '-' + sectionCounter;
+        sectionItem.setAttribute('data-section-id', sectionId);
+        
+        // Set values
+        const titleInput = clone.querySelector('.section-title');
+        titleInput.value = title;
+        titleInput.addEventListener('input', serializeSections);
+        
+        // Set content and add event listener
+        const contentTextarea = clone.querySelector('.section-content');
+        contentTextarea.value = content;
+        contentTextarea.addEventListener('input', serializeSections);
+        
+        // Add remove functionality
+        const removeBtn = clone.querySelector('.remove-section');
+        removeBtn.addEventListener('click', function() {
+            sectionItem.remove();
+            updateEmptyMessage();
+            serializeSections();
+        });
+        
+        sectionsContainer.appendChild(clone);
+        updateEmptyMessage();
+        serializeSections();
+        
+        // Focus on title input
+        titleInput.focus();
+    }
+
+    // Update empty message visibility
+    function updateEmptyMessage() {
+        const sections = sectionsContainer.querySelectorAll('.section-item');
+        emptyMessage.style.display = sections.length === 0 ? 'block' : 'none';
+    }
+
+    // Serialize sections to hidden input
+    function serializeSections() {
+        const sections = sectionsContainer.querySelectorAll('.section-item');
+        let serialized = '';
+        
+        sections.forEach(section => {
+            const title = section.querySelector('.section-title').value.trim();
+            const content = section.querySelector('.section-content').value.trim();
+            
+            if (title || content) {
+                if (title) {
+                    serialized += `<h3>${title}</h3>\n`;
+                }
+                if (content) {
+                    serialized += `${content}\n\n`;
+                }
+            }
+        });
+        
+        userPromptInput.value = serialized.trim();
+    }
+
+    // Parse existing content into sections (if editing)
+    function parseExistingContent() {
+        const existingContent = userPromptInput.value.trim();
+        if (!existingContent) return;
+        
+        // Simple parsing - split by h3 tags
+        const parts = existingContent.split(/<h3[^>]*>/);
+        
+        if (parts.length > 1) {
+            // First part might be content without title
+            if (parts[0].trim()) {
+                addSection('', parts[0].trim());
+            }
+            
+            // Process titled sections
+            for (let i = 1; i < parts.length; i++) {
+                const part = parts[i];
+                const titleEnd = part.indexOf('</h3>');
+                if (titleEnd !== -1) {
+                    const title = part.substring(0, titleEnd);
+                    const content = part.substring(titleEnd + 5).trim();
+                    addSection(title, content);
+                }
+            }
+        } else if (existingContent) {
+            // No structured content, add as single section
+            addSection('', existingContent);
+        }
+    }
+
+    // Event listeners
+    addSectionBtn.addEventListener('click', function() {
+        addSection();
+    });
+
+    // Form submission handler - find the parent form
+    const parentForm = sectionsContainer.closest('form');
+    if (parentForm) {
+        parentForm.addEventListener('submit', function() {
+            serializeSections();
+        });
+    }
+
+    // Initialize
+    updateEmptyMessage();
+    parseExistingContent();
+    
+    // Load Sortable.js if not already loaded
+    if (typeof Sortable === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
+        script.onload = initializeSortable;
+        document.head.appendChild(script);
+    } else {
+        initializeSortable();
+    }
+
+    // Return public API for external access
+    return {
+        addSection,
+        serializeSections,
+        parseExistingContent
+    };
+}
+
+// Auto-initialize if DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize main form if it exists
+    if (document.getElementById('sections-container-main')) {
+        initializeTemplateForm('main');
+    }
+});
+</script>
+
+<style>
+.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-chosen {
+    background-color: #f3f4f6;
+}
+
+.sortable-drag {
+    transform: rotate(5deg);
+}
+
+/* Drag handle hover effect */
+.drag-handle:hover {
+    background-color: #f9fafb !important;
+    border-color: #d1d5db !important;
+}
+
+.drag-handle:hover svg {
+    color: #374151 !important;
+}
+
+/* Remove button hover effect */
+.remove-section:hover {
+    background-color: #fee2e2;
+    border-radius: 4px;
+}
+</style> 
