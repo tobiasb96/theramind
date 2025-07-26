@@ -79,7 +79,7 @@ class SessionViewSet(viewsets.ViewSet):
         if request.headers.get("HX-Request") and bool(request.GET.get("update_generation_status", False)):
             return render(
                 request,
-                "partials/session_notes_card.html",
+                "partials/session_notes_card_with_session_summary.html",
                 {
                     "session": session,
                     "session_notes": session.notes,
