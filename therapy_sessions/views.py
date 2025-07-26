@@ -90,7 +90,7 @@ class SessionViewSet(viewsets.ViewSet):
         if request.headers.get("HX-Request") and bool(request.GET.get("update_session_material", False)):
             return render(
                 request,
-                "partials/input_display_with_material_ready.html",
+                "partials/input_display_with_material_session_ready.html",
                 {
                     "session": session,
                     "any_inputs_processing": any_inputs_processing,
