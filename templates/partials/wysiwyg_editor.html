@@ -87,7 +87,7 @@
 </div>
 
 
-<script type="module" src="{% static 'wysiwyg_editor.js' %}"></script>
+<script type="module" src="{% static 'js/wysiwyg_editor.js' %}"></script>
 <script>
 (function() {
     function init() {
@@ -97,6 +97,7 @@
                 `{{ content|safe|escapejs }}`,
                 `{{ placeholder|default:'Text eingeben...'|escapejs }}`
             );
+            window.initSessionNotesExtras();
         }
     }
     if (document.readyState === 'loading') {
