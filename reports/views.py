@@ -58,11 +58,45 @@ class ReportViewSet(viewsets.ViewSet):
         report_service = ReportService()
         context_summary = report_service.get_context_summary(report)
 
+        # Check if session notes are being generated
+        update_generation_status = report.is_generating
+
+        # Check if any audio or document inputs are being processed
+        any_inputs_processing = (
+                audio_inputs.filter(processing_successful=None).exists()
+                or document_inputs.filter(processing_successful=None).exists()
+        )
+
+        if request.headers.get("HX-Request") and bool(request.GET.get("update_generation_status", False)):
+            return render(
+                request,
+                "partials/report_card.html",
+                {
+                    "report": report,
+                    "report_content": report.content,
+                    "update_generation_status": update_generation_status,
+                },
+            )
+
+        if request.headers.get("HX-Request") and bool(request.GET.get("update_session_material", False)):
+            return render(
+                request,
+                "partials/input_display_with_material_report_ready.html",
+                {
+                    "session": report,
+                    "any_inputs_processing": any_inputs_processing,
+                    "audio_inputs": audio_inputs,
+                    "document_inputs": document_inputs,
+                },
+            )
+
         return render(
             request,
             "reports/report_detail.html",
             {
                 "report": report,
+                "update_generation_status": update_generation_status,
+                "any_inputs_processing": any_inputs_processing,
                 "audio_inputs": audio_inputs,
                 "document_inputs": document_inputs,
                 "report_templates": report_templates,

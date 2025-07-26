@@ -617,10 +617,33 @@
   </div>
 
   <script type="module"
-          src="{% static 'js/wysiwyg_editor.js' %}"></script>
+          src="{% static 'js/wysiwyg_editor.js' %}">
+  </script>
+
+  <script>
+    // Initialize WYSIWYG editor and extras on page load
+    (function () {
+      function init() {
+        if (window.initWysiwygEditor) {
+          window.initWysiwygEditor(
+              'session-notes-editor',
+              `{{ session.notes|safe|escapejs }}`,
+              `{{ placeholder|default:'Text eingeben...'|escapejs }}`
+          );
+          window.initSessionNotesExtras();
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+
   <script>
     // Reinitialize WYSIWYG editor and extras after HTMX swaps content
-    // (initial page load init is handled in wysiwyg_editor.html template)
     document.body.addEventListener('htmx:afterSwap', function (evt) {
       const editorElement = document.getElementById('session-notes-editor');
       if (editorElement && typeof window.initWysiwygEditor === 'function') {
