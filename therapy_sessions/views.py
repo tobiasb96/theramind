@@ -253,7 +253,6 @@ class SessionViewSet(viewsets.ViewSet):
         return self._redirect_to_session_detail(pk)
 
     @action(detail=True, methods=["post"])
-    @method_decorator(csrf_exempt)
     def save_notes(self, request, pk=None):
         """Save session notes with HTML sanitization"""
         session = self.get_object(pk, request)

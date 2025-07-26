@@ -214,7 +214,7 @@ class ReportViewSet(viewsets.ViewSet):
             )
 
     @action(detail=True, methods=["post"])
-    @method_decorator(csrf_exempt)
+    # @method_decorator(csrf_exempt)
     def save_content(self, request, pk=None):
         """Save report content"""
         # CRITICAL SECURITY: Only allow access to user's own reports
