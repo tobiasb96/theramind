@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block title %}{{ template.name }} - Vorlagen {% endblock %}
 
 {% block content %}
@@ -180,6 +182,32 @@
         </div>
     </div>
 </div>
+
+    <script type="module"
+            src="{% static 'js/wysiwyg_editor.js' %}">
+    </script>
+
+    <script>
+      // Initialize WYSIWYG editor and extras on page load
+      (function () {
+        function init() {
+          if (window.initWysiwygEditor) {
+            window.initWysiwygEditor(
+                'edit-user-prompt-editor',
+                `{{ template.user_prompt|safe|escapejs }}`,
+                `{{ placeholder|default:'Text für Vorlage eingeben...'|escapejs }}`
+            );
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', init);
+        } else {
+          init();
+        }
+      })();
+    </script>
+
 {% endif %}
 
 <!-- Clone Template Modal -->
