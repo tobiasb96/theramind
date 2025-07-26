@@ -132,7 +132,7 @@
         {% if not any_inputs_processing %}
           {% if session.all_processed_inputs.audio_count > 0 or session.all_processed_inputs.document_count > 0 %}
             <div class="mb-8">
-              {% include "partials/material_ready.html" %}
+              {% include "partials/material_session_ready.html" %}
 
               <div class="flex justify-center mt-6">
                 <div class="text-center">
@@ -161,7 +161,7 @@
         {% else %}
           <!-- Step 2b: Has inputs but not processed yet -->
           <div class="mb-8">
-            {% include "partials/material_not_ready.html" %}
+            {% include "partials/material_session_not_ready.html" %}
 
             <div class="text-center">
               <p class="text-sm text-gray-600 mb-4">Oder starte bereits mit einer Vorlage:</p>
