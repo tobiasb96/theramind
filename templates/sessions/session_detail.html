@@ -453,7 +453,12 @@ document.addEventListener('DOMContentLoaded', function() {
 document.body.addEventListener('htmx:afterSwap', function(evt) {
     const editorElement = document.getElementById('session-notes-editor');
     if (editorElement && typeof window.initWysiwygEditor === 'function') {
-        window.initWysiwygEditor('session-notes-editor', `{{ session.notes|safe|escapejs }}`,
+        const contentElement = document.getElementById('session-notes-content-hidden');
+        let content = ``
+        if (contentElement) {
+          content = contentElement.innerHTML;
+        }
+        window.initWysiwygEditor('session-notes-editor', content,
                 `{{ placeholder|default:'Text eingeben...'|escapejs }}`);
     }
     if (editorElement && typeof window.initSessionNotesExtras === 'function') {

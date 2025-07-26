@@ -82,6 +82,17 @@ class BaseDocument(models.Model):
             "total_count": self.audio_inputs.count() + self.document_inputs.count(),
         }
 
+    @property
+    def all_processed_inputs(self):
+        audio_count = self.audio_inputs.filter(processing_successful=True).count()
+        document_count = self.document_inputs.filter(processing_successful=True).count()
+        total_count = audio_count + document_count
+        return {
+            "audio_count": audio_count,
+            "document_count": document_count,
+            "total_count": total_count,
+        }
+
     def mark_as_exported(self):
         """Mark the document as exported"""
         self.is_exported = True

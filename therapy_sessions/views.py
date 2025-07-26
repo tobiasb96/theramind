@@ -21,7 +21,6 @@ from therapy_sessions.tasks import generate_session_notes_task
 from document_templates.models import DocumentTemplate
 from document_templates.service import TemplateService
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -73,17 +72,17 @@ class SessionViewSet(viewsets.ViewSet):
 
         # Check if any audio or document inputs are being processed
         any_inputs_processing = (
-            audio_inputs.filter(processing_successful=None).exists()
-            or document_inputs.filter(processing_successful=None).exists()
+                audio_inputs.filter(processing_successful=None).exists()
+                or document_inputs.filter(processing_successful=None).exists()
         )
 
         if request.headers.get("HX-Request") and bool(request.GET.get("update_generation_status", False)):
-
             return render(
                 request,
-        "partials/session_notes_card.html",
+                "partials/session_notes_card.html",
                 {
                     "session": session,
+                    "session_notes": session.notes,
                     "update_generation_status": update_generation_status,
                 },
             )
@@ -91,9 +90,10 @@ class SessionViewSet(viewsets.ViewSet):
         if request.headers.get("HX-Request") and bool(request.GET.get("update_session_material", False)):
             return render(
                 request,
-        "partials/input_display.html",
+                "partials/input_display_with_material_ready.html",
                 {
                     "session": session,
+                    "any_inputs_processing": any_inputs_processing,
                     "audio_inputs": audio_inputs,
                     "document_inputs": document_inputs,
                 },

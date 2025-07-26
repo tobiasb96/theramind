@@ -83,15 +83,8 @@
     </div>
   </div>
 
-  {% if any_inputs_processing %}
-  <div hx-get="?update_session_material=true" hx-trigger="every 5s" hx-swap="outerHTML">
-    <!-- Input Display -->
-    {% include 'partials/input_display.html' %}
-  </div>
-  {% else %}
-    <!-- Input Display -->
-    {% include 'partials/input_display.html' %}
-  {% endif %}
+  <!-- Input Display -->
+  {% include 'partials/input_display.html' %}
 
 </div>
 
