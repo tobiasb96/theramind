@@ -62,6 +62,7 @@ class UnifiedInputService:
                 input_type=DocumentInput.InputType.MANUAL_TEXT,
                 file_type=DocumentInput.FileType.MANUAL,
                 extracted_text=text or "",
+                processing_successful=True,
             )
 
         return document_input
