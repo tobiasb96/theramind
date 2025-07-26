@@ -86,91 +86,25 @@
     </div>
 </div>
 
-<script type="module">
-import { Editor } from 'https://esm.sh/@tiptap/core@2.6.6';
-import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.6.6';
-import Underline from 'https://esm.sh/@tiptap/extension-underline@2.6.6';
 
-window.addEventListener('load', function() {
-    const editorElement = document.getElementById('{{ editor_id }}');
-    const hiddenInput = document.getElementById('{{ editor_id }}-input');
-    
-    if (editorElement && !editorElement.hasAttribute('data-editor-initialized')) {
-        editorElement.setAttribute('data-editor-initialized', 'true');
-        
-        // Initialize TipTap editor
-        const editor = new Editor({
-            element: editorElement,
-            extensions: [
-                StarterKit,
-                Underline,
-            ],
-            content: `{{ content|safe|escapejs }}` || `<p>{{ placeholder|default:"Text eingeben..."|escapejs }}</p>`,
-            editorProps: {
-                attributes: {
-                    class: 'format format-sm focus:outline-none format-blue max-w-none',
-                },
-            },
-            onUpdate: ({ editor }) => {
-                // Update hidden input with current content
-                hiddenInput.value = editor.getHTML();
-            },
-        });
-
-        // Toolbar button event listeners with proper event handling
-        document.getElementById('toggleBoldButton-{{ editor_id }}')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            editor.chain().focus().toggleBold().run();
-        });
-
-        document.getElementById('toggleItalicButton-{{ editor_id }}')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            editor.chain().focus().toggleItalic().run();
-        });
-
-        document.getElementById('toggleUnderlineButton-{{ editor_id }}')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            editor.chain().focus().toggleUnderline().run();
-        });
-
-        document.getElementById('toggleListButton-{{ editor_id }}')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            editor.chain().focus().toggleBulletList().run();
-        });
-
-        document.getElementById('toggleOrderedListButton-{{ editor_id }}')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            editor.chain().focus().toggleOrderedList().run();
-        });
-
-        document.getElementById('toggleParagraphButton-{{ editor_id }}')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            editor.chain().focus().setParagraph().run();
-            // Hide dropdown using Flowbite instance
-            const typographyDropdown = FlowbiteInstances.getInstance('Dropdown', 'typographyDropdown-{{ editor_id }}');
-            if (typographyDropdown) {
-                typographyDropdown.hide();
-            }
-        });
-
-        // Heading buttons
-        document.querySelectorAll('.heading-button-{{ editor_id }}').forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                const level = parseInt(button.getAttribute('data-heading-level'));
-                editor.chain().focus().toggleHeading({ level }).run();
-                // Hide dropdown using Flowbite instance
-                const typographyDropdown = FlowbiteInstances.getInstance('Dropdown', 'typographyDropdown-{{ editor_id }}');
-                if (typographyDropdown) {
-                    typographyDropdown.hide();
-                }
-            });
-        });
-
-        // Initialize hidden input with current content
-        hiddenInput.value = editor.getHTML();
+<script type="module" src="{% static 'wysiwyg_editor.js' %}"></script>
+<script>
+(function() {
+    function init() {
+        if (window.initWysiwygEditor) {
+            window.initWysiwygEditor(
+                '{{ editor_id }}',
+                `{{ content|safe|escapejs }}`,
+                `{{ placeholder|default:'Text eingeben...'|escapejs }}`
+            );
+        }
     }
-});
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
 </script>
 
 <style>

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ session.patient.full_name }} - {{ session.date|date:"d.m.Y" }} - Theramind{% endblock %}
 
@@ -573,11 +574,11 @@ if (copyNotesBtn) {
     copyNotesBtn.addEventListener('click', function() {
     // Get the content from the WYSIWYG editor
     const editorElement = document.getElementById('session-notes-editor');
-    
+
     if (editorElement) {
         // Get formatted text content preserving line breaks and structure
         let textContent = '';
-        
+
         // Process the content to preserve formatting
         const processNode = (node) => {
             if (node.nodeType === Node.TEXT_NODE) {
@@ -585,17 +586,17 @@ if (copyNotesBtn) {
             } else if (node.nodeType === Node.ELEMENT_NODE) {
                 let result = '';
                 const tagName = node.tagName.toLowerCase();
-                
+
                 // Add line breaks for block elements
                 if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
                     if (result.length > 0) result += '\n';
                 }
-                
+
                 // Process child nodes
                 for (let child of node.childNodes) {
                     result += processNode(child);
                 }
-                
+
                 // Add line breaks after block elements
                 if (['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
                     result += '\n';
@@ -604,23 +605,23 @@ if (copyNotesBtn) {
                 } else if (tagName === 'li') {
                     result = '• ' + result + '\n';
                 }
-                
+
                 return result;
             }
             return '';
         };
-        
+
         textContent = processNode(editorElement);
-        
+
         // Clean up multiple line breaks and trim
         textContent = textContent.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
-        
+
         // Check if there's content to copy
         if (!textContent.trim()) {
             alert('Kein Inhalt zum Kopieren verfügbar.');
             return;
         }
-        
+
         // Use modern clipboard API if available, fallback to old method
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(textContent).then(() => {
@@ -667,6 +668,22 @@ if (copyNotesBtn) {
 
 </script>
 </div>
+
+<script type="module" src="{% static 'wysiwyg_editor.js' %}"></script>
+<script>
+// Reinitialize the WYSIWYG editor after HTMX swaps content
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    console.log("htmx:afterSwap event triggered");
+    // Check if the swapped content contains the editor
+    const editorElement = document.getElementById('session-notes-editor');
+    console.log("Editor Element:", editorElement);
+    console.log("typeof window.initWysiwygEditor: ", typeof window.initWysiwygEditor)
+    if (editorElement && typeof window.initWysiwygEditor === 'function') {
+        window.initWysiwygEditor('session-notes-editor', `{{ session.notes|safe|escapejs }}`,
+                `{{ placeholder|default:'Text eingeben...'|escapejs }}`);
+    }
+});
+</script>
 
 <!-- Include Audio Input Modal -->
 {% with document_type='session' document=session %}
