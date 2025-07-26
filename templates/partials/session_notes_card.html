@@ -2,6 +2,8 @@
 
 {% if update_generation_status %}
 
+  <div hx-get="?update_generation_status=true" hx-trigger="every 5s" hx-swap="outerHTML">
+
   <div class="bg-white rounded-lg shadow p-6 mb-6">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-lg font-semibold text-gray-900">Sitzungsnotizen</h2>
@@ -28,6 +30,8 @@
     </div>
   </div>
 </div>
+
+  </div>
 
 {% else %}
 

@@ -137,15 +137,8 @@
         </div>
     </div>
 
-    {% if update_generation_status %}
-      <div hx-get="?update_generation_status=true" hx-trigger="every 5s" hx-swap="outerHTML">
-      <!-- Session Notes Card with Workflow -->
-      {% include "partials/session_notes_card.html" %}
-      </div>
-    {% else %}
     <!-- Session Notes Card with Workflow -->
     {% include "partials/session_notes_card.html" %}
-    {% endif %}
 
     <!-- Unified Multimodal Input Section - Only show when inputs exist -->
     {% if session.all_inputs.total_count > 0 %}
