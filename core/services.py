@@ -6,6 +6,7 @@ from django.utils.html import strip_tags
 from html import unescape
 from core.utils.text_extraction import TextExtractionService
 from core.ai_connectors import get_transcription_connector
+from core.models import DocumentInput, AudioInput
 
 logger = logging.getLogger(__name__)
 
@@ -17,40 +18,29 @@ class UnifiedInputService:
         self.text_extraction_service = TextExtractionService()
         self.transcription_connector = get_transcription_connector()
 
-    def add_audio_input(
-        self, document, audio_file, audio_type: str = "upload", therapeutic_observations: str = ""
-    ):
+    def add_audio_input(self, document, audio_file, audio_type: str = "upload") -> AudioInput:
         """Add audio input and process transcription"""
-        from core.models import AudioInput
-        from django.utils import timezone
 
-        # Determine file format from filename
         file_format = self._determine_audio_format(audio_file.name)
-
-        # Generate a name based on audio type and timestamp
         if audio_type == "recording":
-            name = f"Aufnahme vom {timezone.now().strftime('%d.%m.%Y %H:%M')}"
+            name = f"Aufnahme vom {datetime.datetime.now().strftime('%d.%m.%Y %H:%M')}"
         else:
             name = audio_file.name
 
         audio_input = AudioInput.objects.create(
             document=document,
             name=name,
-            description="",  # No longer store therapeutic observations in description
+            description="",
             audio_type=audio_type,
             file_format=file_format,
             audio_file=audio_file,
             file_size=audio_file.size,
         )
 
-        # Process transcription asynchronously, passing therapeutic observations
-        self._process_audio_transcription(audio_input, therapeutic_observations)
         return audio_input
 
-    def add_document_input(self, document, file=None, text=None):
-        """Add document input and extract text"""
-        from core.models import DocumentInput
-        from django.utils import timezone
+    def add_document_input(self, document, file=None, text: str = "") -> DocumentInput:
+        """Add document input and process extraction"""
 
         if file:
             # File upload - use original filename
@@ -63,10 +53,9 @@ class UnifiedInputService:
                 file_size=file.size,
                 extracted_text="",
             )
-            self._process_document_extraction(document_input)
         else:
             # Manual text - generate name with timestamp
-            name = f"Text vom {timezone.now().strftime('%d.%m.%Y %H:%M')}"
+            name = f"Text vom {datetime.datetime.now().strftime('%d.%m.%Y %H:%M')}"
             document_input = DocumentInput.objects.create(
                 document=document,
                 name=name,
@@ -78,7 +67,9 @@ class UnifiedInputService:
 
         return document_input
 
-    def get_combined_text(self, document, include_audio=True, include_documents=True) -> str:
+    def get_combined_text(
+        self, document, include_audio: bool = True, include_documents: bool = True
+    ) -> str:
         """Get combined text from all inputs"""
         texts = []
 
@@ -96,10 +87,7 @@ class UnifiedInputService:
 
     def _determine_audio_format(self, filename: str) -> str:
         """Determine audio format based on filename"""
-        from core.models import AudioInput
-
         extension = filename.lower().split(".")[-1] if "." in filename else ""
-
         format_mapping = {
             "mp3": AudioInput.FileFormat.MP3,
             "wav": AudioInput.FileFormat.WAV,
@@ -107,51 +95,42 @@ class UnifiedInputService:
             "webm": AudioInput.FileFormat.WEBM,
             "flac": AudioInput.FileFormat.FLAC,
         }
-
         return format_mapping.get(extension, AudioInput.FileFormat.MP3)
 
     def _determine_document_file_type(self, filename: str) -> str:
         """Determine document file type based on filename"""
-        from core.models import DocumentInput
-
         extension = filename.lower().split(".")[-1] if "." in filename else ""
+        format_mapping = {
+            "pdf": DocumentInput.FileType.PDF,
+            "docx": DocumentInput.FileType.WORD,
+            "doc": DocumentInput.FileType.WORD,
+            "txt": DocumentInput.FileType.TXT,
+        }
+        return format_mapping.get(extension, DocumentInput.FileType.TXT)
 
-        if extension == "pdf":
-            return DocumentInput.FileType.PDF
-        elif extension in ["docx", "doc"]:
-            return DocumentInput.FileType.WORD
-        elif extension == "txt":
-            return DocumentInput.FileType.TXT
-        else:
-            return DocumentInput.FileType.TXT  # Default fallback
-
-    def _process_audio_transcription(self, audio_input, therapeutic_observations: str = ""):
+    def process_audio_transcription(
+        self, audio_input: AudioInput, therapeutic_observations: str = ""
+    ):
         """Process audio transcription using transcription connector"""
         try:
-            if self.transcription_connector.is_available():
-                file_path = audio_input.audio_file.path
-                result = self.transcription_connector.transcribe(file_path)
+            file_path = audio_input.audio_file.path
+            result = self.transcription_connector.transcribe(file_path)
 
-                transcribed_text = result.text
+            transcribed_text = result.text
 
-                # Append therapeutic observations if provided
-                if therapeutic_observations.strip():
-                    transcribed_text += f"\n\nWeitere Notizen: {therapeutic_observations.strip()}"
+            # Append therapeutic observations if provided
+            if therapeutic_observations.strip():
+                transcribed_text += f"\n\nWeitere Notizen: {therapeutic_observations.strip()}"
 
-                audio_input.transcribed_text = transcribed_text
-                audio_input.processing_time_seconds = result.processing_time
-                audio_input.processing_successful = True
-                audio_input.processing_error = ""
-            else:
-                audio_input.processing_error = "Transkriptions-Service nicht verfügbar"
-
+            audio_input.mark_as_successful()
+            audio_input.add_transcription(
+                transcribed_text, processing_time=result.processing_time
+            )
         except Exception as e:
             logger.error(f"Error transcribing audio {audio_input.name}: {str(e)}")
-            audio_input.processing_error = str(e)
+            audio_input.mark_as_failed(str(e))
 
-        audio_input.save()
-
-    def _process_document_extraction(self, document_input):
+    def process_document_extraction(self, document_input: DocumentInput):
         """Process document text extraction"""
         try:
             extracted_text = self.text_extraction_service.extract_text_from_file(
@@ -160,16 +139,13 @@ class UnifiedInputService:
 
             if extracted_text:
                 document_input.extracted_text = extracted_text
-                document_input.processing_successful = True
-                document_input.processing_error = ""
+                document_input.mark_as_successful()
             else:
-                document_input.processing_error = "Textextraktion fehlgeschlagen"
+                document_input.mark_as_failed("Textextraktion fehlgeschlagen")
 
         except Exception as e:
             logger.error(f"Error extracting text from {document_input.name}: {str(e)}")
-            document_input.processing_error = str(e)
-
-        document_input.save()
+            document_input.mark_as_failed(str(e))
 
 
 class PDFExportService:
@@ -185,21 +161,12 @@ class PDFExportService:
         """Export notes to PDF with given title, date and content"""
         if not content:
             raise ValueError("Keine Notizen zum Export verfügbar.")
-            
+
         try:
-            # Add a page
             self.pdf.add_page()
-            
-            # Add title
             self._add_title(title, date)
-            
-            # Add content using HTML rendering
             self._add_html_content(content)
-            
-            # Generate filename
             filename = self._generate_filename(filename_prefix, date, title)
-            
-            # Generate PDF output - use dest='S' to get bytes
             pdf_output = self.pdf.output(dest='S')
             logger.info(f"PDF generated successfully, size: {len(pdf_output)} bytes")
             

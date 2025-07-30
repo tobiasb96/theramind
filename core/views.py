@@ -15,6 +15,7 @@ from django.shortcuts import render
 from itertools import chain
 from core.models import AudioInput, DocumentInput
 from core.services import UnifiedInputService
+from core.tasks import process_audio_transcription_task, process_document_extraction_task
 from reports.models import Report
 from therapy_sessions.models import Session
 from core.tables import BaseDocumentTable
@@ -42,86 +43,80 @@ class UnifiedInputViewSet(viewsets.ViewSet):
     def add_audio(self, request, document_type=None, document_id=None):
         """Add audio input (recording or upload)"""
         document = self.get_document(document_type, document_id, request)
-        
-        if 'audio_file' not in request.FILES:
+
+        if "audio_file" not in request.FILES:
             messages.error(request, "Keine Audio-Datei hochgeladen")
             return redirect(f"{document_type}s:{document_type}_detail", pk=document.pk)
-        
+
         try:
             service = UnifiedInputService()
             audio_input = service.add_audio_input(
                 document=document,
-                audio_file=request.FILES['audio_file'],
-                audio_type=request.POST.get('audio_type', 'upload'),
-                therapeutic_observations=request.POST.get('therapeutic_observations', '')
+                audio_file=request.FILES["audio_file"],
+                audio_type=request.POST.get("audio_type", "upload"),
             )
-            
-            if audio_input.processing_successful:
-                messages.success(request, f"Audio '{audio_input.name}' wurde erfolgreich hinzugefügt und verarbeitet.")
-            else:
-                messages.warning(request, f"Audio '{audio_input.name}' wurde hinzugefügt, aber die Verarbeitung fehlgeschlagen: {audio_input.processing_error}")
-            
+            process_audio_transcription_task.delay(
+                audio_input.id,
+                therapeutic_observations=request.POST.get("therapeutic_observations", ""),
+            )
+
+            messages.success(request, "Audio erfolgreich hinzugefügt und wird verarbeitet.")
+
         except Exception as e:
             logger.error(f"Error adding audio input: {str(e)}")
             messages.error(request, f"Fehler beim Hinzufügen der Audio-Datei: {str(e)}")
-        
+
         return redirect(f"{document_type}s:{document_type}_detail", pk=document.pk)
-    
-    @action(detail=False, methods=['post'])
+
+    @action(detail=False, methods=["post"])
     @method_decorator(csrf_exempt)
     def add_document_file(self, request, document_type=None, document_id=None):
         """Add document file input"""
         document = self.get_document(document_type, document_id, request)
-        
-        if 'document_file' not in request.FILES:
+
+        if "document_file" not in request.FILES:
             messages.error(request, "Keine Datei hochgeladen")
             return redirect(f"{document_type}s:{document_type}_detail", pk=document.pk)
-        
+
         try:
             service = UnifiedInputService()
             document_input = service.add_document_input(
-                document=document,
-                file=request.FILES['document_file']
+                document=document, file=request.FILES["document_file"]
             )
-            
-            if document_input.processing_successful:
-                messages.success(request, f"Dokument '{document_input.name}' wurde erfolgreich hinzugefügt und verarbeitet.")
-            else:
-                messages.warning(request, f"Dokument '{document_input.name}' wurde hinzugefügt, aber die Verarbeitung fehlgeschlagen: {document_input.processing_error}")
-            
+            process_document_extraction_task.delay(document_input.id)
+
+            message = "Dokument wurde erfolgreich hinzugefügt und wird verarbeitet."
+            messages.success(request, message)
+
         except Exception as e:
             logger.error(f"Error adding document file: {str(e)}")
             messages.error(request, f"Fehler beim Hinzufügen der Datei: {str(e)}")
-        
+
         return redirect(f"{document_type}s:{document_type}_detail", pk=document.pk)
-    
-    @action(detail=False, methods=['post'])
+
+    @action(detail=False, methods=["post"])
     @method_decorator(csrf_exempt)
     def add_document_text(self, request, document_type=None, document_id=None):
         """Add manual text input"""
         document = self.get_document(document_type, document_id, request)
-        
-        text_content = request.POST.get('text_content', '').strip()
+
+        text_content = request.POST.get("text_content", "").strip()
         if not text_content:
             messages.error(request, "Kein Text eingegeben")
             return redirect(f"{document_type}s:{document_type}_detail", pk=document.pk)
-        
+
         try:
             service = UnifiedInputService()
-            document_input = service.add_document_input(
-                document=document,
-                text=text_content
-            )
-            
-            messages.success(request, f"Text '{document_input.name}' wurde erfolgreich hinzugefügt.")
-            
+            service.add_document_input(document=document, text=text_content)
+            messages.success(request, "Text wurde erfolgreich hinzugefügt.")
+
         except Exception as e:
             logger.error(f"Error adding document text: {str(e)}")
             messages.error(request, f"Fehler beim Hinzufügen des Texts: {str(e)}")
-        
+
         return redirect(f"{document_type}s:{document_type}_detail", pk=document.pk)
-    
-    @action(detail=True, methods=['post'])
+
+    @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
     def delete_audio(self, request, pk=None):
         """Delete an audio input"""
@@ -134,22 +129,22 @@ class UnifiedInputViewSet(viewsets.ViewSet):
         # Security check: ensure the document belongs to the user
         if not hasattr(document, "user") or document.user != request.user:
             raise Http404("Audio input not found")
-        
+
         try:
             input_name = audio_input.name
-            document_type = 'session' if isinstance(document, Session) else 'report'
+            document_type = "session" if isinstance(document, Session) else "report"
             document_id = document.pk
-            
+
             audio_input.delete()
             messages.success(request, f"Audio '{input_name}' wurde erfolgreich gelöscht.")
-            
+
         except Exception as e:
             logger.error(f"Error deleting audio input: {str(e)}")
             messages.error(request, f"Fehler beim Löschen: {str(e)}")
-        
+
         return redirect(f"{document_type}s:{document_type}_detail", pk=document_id)
-    
-    @action(detail=True, methods=['post'])
+
+    @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
     def delete_document(self, request, pk=None):
         """Delete a document input"""
@@ -165,7 +160,7 @@ class UnifiedInputViewSet(viewsets.ViewSet):
         
         try:
             input_name = document_input.name
-            document_type = 'session' if isinstance(document, Session) else 'report'
+            document_type = "session" if isinstance(document, Session) else "report"
             document_id = document.pk
             
             document_input.delete()

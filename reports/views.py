@@ -8,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 import json
 import logging
+from .tasks import generate_report_content_task
 
 from document_templates.models import DocumentTemplate
 from document_templates.service import TemplateService
@@ -57,11 +58,45 @@ class ReportViewSet(viewsets.ViewSet):
         report_service = ReportService()
         context_summary = report_service.get_context_summary(report)
 
+        # Check if session notes are being generated
+        update_generation_status = report.is_generating
+
+        # Check if any audio or document inputs are being processed
+        any_inputs_processing = (
+                audio_inputs.filter(processing_successful=None).exists()
+                or document_inputs.filter(processing_successful=None).exists()
+        )
+
+        if request.headers.get("HX-Request") and bool(request.GET.get("update_generation_status", False)):
+            return render(
+                request,
+                "partials/report_card.html",
+                {
+                    "report": report,
+                    "report_content": report.content,
+                    "update_generation_status": update_generation_status,
+                },
+            )
+
+        if request.headers.get("HX-Request") and bool(request.GET.get("update_session_material", False)):
+            return render(
+                request,
+                "partials/input_display_with_material_report_ready.html",
+                {
+                    "session": report,
+                    "any_inputs_processing": any_inputs_processing,
+                    "audio_inputs": audio_inputs,
+                    "document_inputs": document_inputs,
+                },
+            )
+
         return render(
             request,
             "reports/report_detail.html",
             {
                 "report": report,
+                "update_generation_status": update_generation_status,
+                "any_inputs_processing": any_inputs_processing,
                 "audio_inputs": audio_inputs,
                 "document_inputs": document_inputs,
                 "report_templates": report_templates,
@@ -147,7 +182,7 @@ class ReportViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
     def generate_content(self, request, pk=None):
-        """Generate report content using AI"""
+        """Generate report content using AI in background task"""
         # CRITICAL SECURITY: Only allow access to user's own reports
         report = get_object_or_404(Report, pk=pk, user=request.user)
         
@@ -158,40 +193,28 @@ class ReportViewSet(viewsets.ViewSet):
             if not template_id:
                 return JsonResponse({'error': 'Template-ID ist erforderlich'}, status=400)
 
-            # Initialize ReportService
-            report_service = ReportService()
-            if not report_service.is_available():
-                return JsonResponse({"error": "KI-Service ist nicht verfügbar"}, status=400)
+            if report.is_generating:
+                return JsonResponse({"error": "Bericht wird bereits generiert"}, status=400)
 
-            # Validate template access
-            try:
-                template = report_service.get_template(int(template_id), user=request.user)
-            except Exception:
-                return JsonResponse({"error": "Template nicht gefunden"}, status=400)
+            generate_report_content_task.delay(
+                report_id=report.id, template_id=int(template_id), user_id=request.user.id
+            )
 
-            # Check if there are any inputs to process
-            context_summary = report_service.get_context_summary(report)
-            if context_summary["total_inputs"] == 0:
-                logger.warning(f"Generating report {report.id} without context inputs")
-
-            generated_content = report_service.generate_with_template(report, template)
-            
-            # Update report content
-            report.content = generated_content
-            report.save()
-            
-            return JsonResponse({
-                'success': True,
-                'content': generated_content,
-                'message': 'Berichtinhalt wurde erfolgreich generiert.'
-            })
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Berichtgenerierung wurde gestartet. Die Seite wird automatisch aktualisiert.",
+                }
+            )
             
         except Exception as e:
-            logger.error(f"Error generating report content: {str(e)}")
-            return JsonResponse({'error': f'Fehler bei der Generierung: {str(e)}'}, status=500)
+            logger.error(f"Error starting report content generation: {str(e)}")
+            return JsonResponse(
+                {"error": f"Fehler beim Starten der Generierung: {str(e)}"}, status=500
+            )
 
     @action(detail=True, methods=["post"])
-    @method_decorator(csrf_exempt)
+    # @method_decorator(csrf_exempt)
     def save_content(self, request, pk=None):
         """Save report content"""
         # CRITICAL SECURITY: Only allow access to user's own reports
@@ -230,10 +253,10 @@ class ReportViewSet(viewsets.ViewSet):
                 messages.error(request, "Template ist erforderlich")
                 return redirect("reports:report_detail", pk=report.pk)
 
-            # Get the template using service helper
-            report_service = ReportService()
             try:
-                template = report_service.get_template(int(template_id), user=request.user)
+                template = DocumentTemplate.objects.get_template(
+                    int(template_id), DocumentTemplate.TemplateType.REPORT, user=request.user
+                )
             except Exception:
                 messages.error(request, "Template nicht gefunden")
                 return redirect("reports:report_detail", pk=report.pk)

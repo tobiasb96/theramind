@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load render_table from django_tables2 %}
+{% load static %}
 
 {% block title %}Vorlagen {% endblock %}
 
@@ -10,7 +11,7 @@
         <div class="flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Vorlagen</h1>
-                <p class="text-gray-600 mt-1">Verwalte Deine Berichts- und Sitzungsnotizen-Vorlagen</p>
+                <p class="text-gray-600 mt-1 hidden sm:block">Verwalte Deine Berichts- und Sitzungsnotizen-Vorlagen</p>
             </div>
             <div class="flex space-x-3">
                 <button data-modal-target="create-template-modal" data-modal-toggle="create-template-modal" 
@@ -118,4 +119,31 @@
         </div>
     </div>
 </div>
+
+
+  <script type="module"
+          src="{% static 'js/wysiwyg_editor.js' %}">
+  </script>
+
+  <script>
+    // Initialize WYSIWYG editor and extras on page load
+    (function () {
+      function init() {
+        if (window.initWysiwygEditor) {
+          window.initWysiwygEditor(
+              'create-user-prompt-editor',
+              `{{ template.user_prompt|safe|escapejs }}`,
+              `{{ placeholder|default:'Text für Vorlage eingeben...'|escapejs }}`
+          );
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+
 {% endblock %} 

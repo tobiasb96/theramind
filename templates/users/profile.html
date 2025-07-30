@@ -8,9 +8,9 @@
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Benutzerprofil</h1>
-            <p class="text-gray-600 mt-1">Verwalte deine persönlichen Informationen und Einstellungen</p>
+            <p class="text-gray-600 mt-1 hidden sm:block">Verwalte deine persönlichen Informationen und Einstellungen</p>
         </div>
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-3 hidden sm:block">
             <div class="text-sm text-gray-500">
                 Mitglied seit {{ user.created_at|date:"d.m.Y" }}
             </div>
@@ -21,7 +21,7 @@
 <!-- Main Content Card with Tabs -->
 <div class="bg-white rounded-lg shadow">
     <!-- Tab Navigation -->
-    <div class="mb-4 border-b border-gray-200">
+    <div class="mb-2 border-b border-gray-200">
         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab" data-tabs-toggle="#default-tab-content" role="tablist">
             <li class="me-2" role="presentation">
                 <button class="inline-block p-4 border-b-2 rounded-t-lg {% if not show_settings_tab %}text-blue-600 border-blue-600{% else %}border-transparent hover:text-gray-600 hover:border-gray-300{% endif %}" 
@@ -47,7 +47,7 @@
     <!-- Tab Content -->
     <div id="default-tab-content">
         <!-- Profile Tab -->
-        <div class="{% if show_settings_tab %}hidden{% endif %} p-8" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+        <div class="{% if show_settings_tab %}hidden{% endif %} p-4" id="profile" role="tabpanel" aria-labelledby="profile-tab">
             <!-- Profile Information Cards -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 <!-- Personal Information Card -->
@@ -132,7 +132,7 @@
         </div>
 
         <!-- Settings Tab -->
-        <div class="{% if not show_settings_tab %}hidden{% endif %} p-8" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+        <div class="{% if not show_settings_tab %}hidden{% endif %} p-4" id="settings" role="tabpanel" aria-labelledby="settings-tab">
             <form method="post" action="{% url 'users:update_settings' %}">
                 {% csrf_token %}
                 

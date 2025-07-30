@@ -10,10 +10,16 @@ from rest_framework.permissions import IsAuthenticated
 import json
 import re
 import logging
+from core.forms import AudioInputForm, DocumentFileInputForm, DocumentTextInputForm
+
 from django.shortcuts import render
+from core.services import PDFExportService
 from therapy_sessions.models import Session
 from therapy_sessions.forms import SessionForm
 from therapy_sessions.services import get_session_service
+from therapy_sessions.tasks import generate_session_notes_task
+from document_templates.models import DocumentTemplate
+from document_templates.service import TemplateService
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +51,6 @@ class SessionViewSet(viewsets.ViewSet):
         # Get unified inputs
         audio_inputs = session.audio_inputs.order_by("-created_at")
         document_inputs = session.document_inputs.order_by("-created_at")
-
-        from core.forms import AudioInputForm, DocumentFileInputForm, DocumentTextInputForm
-
         audio_form = AudioInputForm()
         document_file_form = DocumentFileInputForm()
         document_text_form = DocumentTextInputForm()
@@ -57,9 +60,6 @@ class SessionViewSet(viewsets.ViewSet):
             audio_input.transcribed_text for audio_input in audio_inputs
         )
 
-        # Get session notes templates from TemplateService
-        from document_templates.service import TemplateService
-
         template_service = TemplateService()
         session_notes_templates = template_service.get_session_templates(user=request.user)
 
@@ -67,11 +67,45 @@ class SessionViewSet(viewsets.ViewSet):
         session_service = get_session_service()
         context_summary = session_service.get_context_summary(session)
 
+        # Check if session notes are being generated
+        update_generation_status = session.is_generating
+
+        # Check if any audio or document inputs are being processed
+        any_inputs_processing = (
+                audio_inputs.filter(processing_successful=None).exists()
+                or document_inputs.filter(processing_successful=None).exists()
+        )
+
+        if request.headers.get("HX-Request") and bool(request.GET.get("update_generation_status", False)):
+            return render(
+                request,
+                "partials/session_notes_card_with_session_summary.html",
+                {
+                    "session": session,
+                    "session_notes": session.notes,
+                    "update_generation_status": update_generation_status,
+                },
+            )
+
+        if request.headers.get("HX-Request") and bool(request.GET.get("update_session_material", False)):
+            return render(
+                request,
+                "partials/input_display_with_material_session_ready.html",
+                {
+                    "session": session,
+                    "any_inputs_processing": any_inputs_processing,
+                    "audio_inputs": audio_inputs,
+                    "document_inputs": document_inputs,
+                },
+            )
+
         return render(
             request,
             "sessions/session_detail.html",
             {
                 "session": session,
+                "update_generation_status": update_generation_status,
+                "any_inputs_processing": any_inputs_processing,
                 "audio_inputs": audio_inputs,
                 "document_inputs": document_inputs,
                 "audio_form": audio_form,
@@ -179,7 +213,7 @@ class SessionViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["post"])
     @method_decorator(csrf_exempt)
     def generate_notes(self, request, pk=None):
-        """Generate AI session notes from unified inputs"""
+        """Generate AI session notes from unified inputs in background task"""
         session = self.get_object(pk, request)
 
         try:
@@ -189,57 +223,40 @@ class SessionViewSet(viewsets.ViewSet):
                 messages.error(request, "Template ist erforderlich")
                 return self._redirect_to_session_detail(pk)
 
-            # Generate session notes using improved service
             session_service = get_session_service()
-            if not session_service.is_available():
-                messages.error(request, "KI-Service ist nicht verfügbar")
-                return self._redirect_to_session_detail(pk)
-
-            # Validate template access
-            try:
-                template = session_service.get_template(int(template_id), user=request.user)
-            except Exception:
-                messages.error(request, "Template nicht gefunden")
-                return self._redirect_to_session_detail(pk)
-
-            # Check if there are any inputs to process
             context_summary = session_service.get_context_summary(session)
             if context_summary["total_inputs"] == 0:
                 messages.error(request, "Keine Eingaben für diese Sitzung verfügbar")
                 return self._redirect_to_session_detail(pk)
 
-            # Pass existing notes to the AI service
-            existing_notes = session.notes if session.notes else None
+            if session.is_generating:
+                messages.error(request, "Sitzungsnotizen werden bereits generiert")
+                return self._redirect_to_session_detail(pk)
 
-            # Use the new generate_with_template method
-            session_notes = session_service.generate_with_template(
-                session, template, existing_notes
+            existing_notes = session.notes if session.notes else None
+            generate_session_notes_task.delay(
+                session_id=session.id,
+                template_id=int(template_id),
+                user_id=request.user.id,
+                existing_notes=existing_notes,
             )
 
-            if session_notes:
-                try:
-                    summary = session_service.summarize_session_notes(session_notes)
-                    session.summary = summary
-                except Exception as e:
-                    logger.error(f"Fehler bei der Zusammenfassung: {str(e)}")
-
-            session.notes = session_notes
-            session.save()
-
-            messages.success(request, "KI-Notizen wurden erfolgreich generiert!")
+            messages.success(
+                request,
+                "KI-Notizengenerierung wurde gestartet. Die Seite wird automatisch aktualisiert.",
+            )
 
         except Exception as e:
-            logger.error(f"Error generating session notes: {str(e)}")
-            messages.error(request, f"Fehler bei der Generierung: {str(e)}")
+            logger.error(f"Error starting session notes generation: {str(e)}")
+            messages.error(request, f"Fehler beim Starten der Generierung: {str(e)}")
 
         return self._redirect_to_session_detail(pk)
-    
-    @action(detail=True, methods=['post'])
-    @method_decorator(csrf_exempt)
+
+    @action(detail=True, methods=["post"])
     def save_notes(self, request, pk=None):
         """Save session notes with HTML sanitization"""
         session = self.get_object(pk, request)
-        
+
         try:
             session_notes = request.POST.get("session_notes", "")
             session.notes = self._sanitize_html(session_notes)
@@ -272,16 +289,14 @@ class SessionViewSet(viewsets.ViewSet):
                 messages.error(request, "Template ist erforderlich")
                 return self._redirect_to_session_detail(pk)
 
-            # Get the template using service helper
-            session_service = get_session_service()
             try:
-                template = session_service.get_template(int(template_id), user=request.user)
+                template = DocumentTemplate.objects.get_template(
+                    int(template_id), DocumentTemplate.TemplateType.SESSION_NOTES, user=request.user
+                )
             except Exception:
                 messages.error(request, "Template nicht gefunden")
                 return self._redirect_to_session_detail(pk)
 
-            # Use the template's user_prompt as the structure for session notes
-            # This is the template structure that will be filled out manually
             session.notes = template.user_prompt
             session.save()
 
@@ -300,12 +315,8 @@ class SessionViewSet(viewsets.ViewSet):
         session = self.get_object(pk, request)
 
         try:
-            # Use the export service with database content
-            from core.services import PDFExportService
-
             export_service = PDFExportService()
 
-            # Prepare title
             title = "Sitzungsnotizen"
             if session.title:
                 title += f" - {session.title}"
@@ -318,8 +329,6 @@ class SessionViewSet(viewsets.ViewSet):
             )
 
             session.mark_as_exported()
-
-            # Create Django response
             response = HttpResponse(pdf_data["content"], content_type=pdf_data["content_type"])
             response["Content-Disposition"] = f"attachment; filename={pdf_data['filename']}"
 

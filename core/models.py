@@ -46,7 +46,8 @@ class BaseDocument(models.Model):
         verbose_name="Geschlecht des Patienten",
         help_text="Geschlecht des Patienten für geschlechtsspezifische KI-Generierung",
     )
-    
+    is_generating = models.BooleanField(default=False)
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Aktualisiert am")
@@ -81,9 +82,35 @@ class BaseDocument(models.Model):
             "total_count": self.audio_inputs.count() + self.document_inputs.count(),
         }
 
+    @property
+    def all_processed_inputs(self):
+        audio_count = self.audio_inputs.filter(processing_successful=True).count()
+        document_count = self.document_inputs.filter(processing_successful=True).count()
+        total_count = audio_count + document_count
+        return {
+            "audio_count": audio_count,
+            "document_count": document_count,
+            "total_count": total_count,
+        }
+
     def mark_as_exported(self):
         """Mark the document as exported"""
         self.is_exported = True
+        self.save()
+
+    def mark_as_generating(self):
+        """Mark the document as currently generating content"""
+        self.is_generating = True
+        self.save()
+
+    def mark_as_success(self):
+        """Mark the document as successfully generated"""
+        self.is_generating = False
+        self.save()
+
+    def mark_as_failed(self):
+        """Mark the document as failed generation"""
+        self.is_generating = False
         self.save()
 
 
@@ -102,8 +129,8 @@ class BaseInput(models.Model):
     description = models.TextField(blank=True, verbose_name="Beschreibung")
 
     # Processing status
-    processing_successful = models.BooleanField(default=False)
-    processing_error = models.TextField(blank=True)
+    processing_successful = models.BooleanField(default=None, null=True, blank=True)
+    processing_error = models.TextField(blank=True, null=True)
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -112,6 +139,18 @@ class BaseInput(models.Model):
     class Meta:
         abstract = True
         ordering = ["-created_at"]
+
+    def mark_as_failed(self, error_message: str):
+        """Mark the input as failed and set the error message"""
+        self.processing_successful = False
+        self.processing_error = error_message
+        self.save()
+
+    def mark_as_successful(self):
+        """Mark the input as successful"""
+        self.processing_successful = True
+        self.processing_error = ""
+        self.save()
 
 
 class AudioInput(BaseInput):
@@ -171,6 +210,12 @@ class AudioInput(BaseInput):
             if default_storage.exists(self.audio_file.name):
                 default_storage.delete(self.audio_file.name)
         super().delete(*args, **kwargs)
+
+    def add_transcription(self, transcribed_text: str, processing_time: float):
+        """Mark the input as successful and add the transcription"""
+        self.transcribed_text = transcribed_text
+        self.processing_time_seconds = processing_time
+        self.save()
 
 
 class DocumentInput(BaseInput):
