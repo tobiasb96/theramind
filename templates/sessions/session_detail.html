@@ -187,9 +187,6 @@
       </div>
     </div>
 
-    <!-- Session Notes Card with Workflow -->
-    {% include "partials/session_notes_card.html" %}
-
     <!-- Unified Multimodal Input Section - Only show when inputs exist -->
     {% if session.all_inputs.total_count > 0 %}
       {% with document_type='session' audio_inputs=session.audio_inputs.all document_inputs=session.document_inputs.all document=session %}
@@ -197,6 +194,8 @@
       {% endwith %}
     {% endif %}
 
+    <!-- Session Notes Card with Workflow -->
+    {% include "partials/session_notes_card.html" %}
 
     <!-- Template Selection Modal -->
     <div id="template-selection-modal"
