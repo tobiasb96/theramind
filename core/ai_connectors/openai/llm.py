@@ -72,7 +72,7 @@ class OpenAILLMConnector(GenericLLMConnector):
     
     def get_available_models(self) -> list[str]:
         """Get list of available OpenAI models"""
-        return ["gpt-4.1-nano", "gpt-4", "gpt-3.5-turbo"]
+        return ["gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1"]
     
     def reinitialize(self) -> None:
         """Reinitialize the OpenAI client"""

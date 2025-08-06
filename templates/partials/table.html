@@ -4,7 +4,8 @@
 {% block table-wrapper %}
     <div class="table-container">
         {% block table %}
-            <div class="overflow-x-auto">
+            <!-- Desktop Table View (hidden on mobile) -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full table-auto text-md text-left rounded text-gray-900 bg-white">
                     {% block table.thead %}
                         {% if table.show_header %}
@@ -74,6 +75,53 @@
                         {% endif %}
                     {% endblock table.tfoot %}
                 </table>
+            </div>
+
+            <!-- Mobile Card View (visible only on mobile) -->
+            <div class="block md:hidden space-y-4">
+                {% for row in table.paginated_rows %}
+                    {% block mobile.card %}
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+                            {% for column, cell in row.items %}
+                                {% if column.header != "Aktionen" %}
+                                    <div class="flex justify-between items-start mb-2 last:mb-0">
+                                        <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                            {{ column.header }}
+                                        </span>
+                                        <div class="text-sm text-gray-900 text-right ml-4 flex-1">
+                                            {% if column.localize == None %}{{ cell }}{% else %}
+                                                {% if column.localize %}
+                                                    {{ cell|localize }}{% else %}{{ cell|unlocalize }}
+                                                {% endif %}{% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <!-- Actions at the bottom of each card -->
+                            {% for column, cell in row.items %}
+                                {% if column.header == "Aktionen" %}
+                                    <div class="mt-3 pt-3 border-t border-gray-100">
+                                        <div class="flex justify-end">
+                                            {% if column.localize == None %}{{ cell }}{% else %}
+                                                {% if column.localize %}
+                                                    {{ cell|localize }}{% else %}{{ cell|unlocalize }}
+                                                {% endif %}{% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endblock mobile.card %}
+                    {% empty %}
+                    {% if table.empty_text %}
+                        {% block mobile.empty_text %}
+                            <div class="bg-white border border-gray-200 rounded-lg p-8 text-center">
+                                <p class="text-sm text-gray-500">{{ table.empty_text }}</p>
+                            </div>
+                        {% endblock mobile.empty_text %}
+                    {% endif %}
+                {% endfor %}
             </div>
         {% endblock table %}
 

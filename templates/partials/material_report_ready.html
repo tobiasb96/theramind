@@ -1,0 +1,38 @@
+<div id="material-ready-card"
+     hx-swap-oob="true">
+  <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4 text-white"
+               fill="currentColor"
+               viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
+      <div class="ml-2 flex-1">
+        <h3 class="text-lg font-medium text-green-900">Material ist bereit</h3>
+        <p class="text-green-700 text-sm mt-1">{{ session.all_processed_inputs.audio_count }} Audio
+          + {{ session.all_processed_inputs.document_count }} Dokumente bereit für KI-Berichtgenerierung</p>
+      </div>
+      <div class="ml-4">
+        <button data-modal-target="report-generation-modal"
+                data-modal-toggle="report-generation-modal"
+                type="button"
+                class="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-6 py-3 text-center inline-flex items-center">
+          <svg class="w-4 h-4 mr-2"
+               fill="currentColor"
+               viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+                  d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                  clip-rule="evenodd"></path>
+          </svg>
+          Bericht generieren
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

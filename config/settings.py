@@ -176,3 +176,13 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
+
+
+# TASK MANAGEMENT (Celery)
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_TASK_SERIALIZER = "json"
+CELERY_DEFAULT_QUEUE = os.getenv("CELERY_DEFAULT_QUEUE", "standard")
+CELERYD_TIME_LIMIT = os.getenv("CELERYD_TIME_LIMIT", 3600)
+CELERYD_SOFT_TIME_LIMIT = os.getenv("CELERYD_SOFT_TIME_LIMIT", 3600)
+CELERY_TASK_TRACK_STARTED = os.getenv("CELERY_TASK_TRACK_STARTED", True)
+CELERY_CACHE_BACKEND = "django-cache"
