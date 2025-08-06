@@ -117,8 +117,6 @@ class UnifiedInputService:
             result = self.transcription_connector.transcribe(file_path)
 
             transcribed_text = result.text
-
-            # Append therapeutic observations if provided
             if therapeutic_observations.strip():
                 transcribed_text += f"\n\nWeitere Notizen: {therapeutic_observations.strip()}"
 
@@ -127,7 +125,7 @@ class UnifiedInputService:
                 transcribed_text, processing_time=result.processing_time
             )
         except Exception as e:
-            logger.error(f"Error transcribing audio {audio_input.name}: {str(e)}")
+            logger.error(f"Transcription failed for {audio_input.name}: {e}")
             audio_input.mark_as_failed(str(e))
 
     def process_document_extraction(self, document_input: DocumentInput):
@@ -136,15 +134,13 @@ class UnifiedInputService:
             extracted_text = self.text_extraction_service.extract_text_from_file(
                 document_input.document_file.path, document_input.name
             )
-
             if extracted_text:
                 document_input.extracted_text = extracted_text
                 document_input.mark_as_successful()
             else:
                 document_input.mark_as_failed("Textextraktion fehlgeschlagen")
-
         except Exception as e:
-            logger.error(f"Error extracting text from {document_input.name}: {str(e)}")
+            logger.error(f"Text extraction failed for {document_input.name}: {e}")
             document_input.mark_as_failed(str(e))
 
 

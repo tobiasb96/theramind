@@ -221,13 +221,10 @@ class AudioInput(BaseInput):
             try:
                 if default_storage.exists(self.audio_file.name):
                     default_storage.delete(self.audio_file.name)
-                # Clear the file field reference
                 self.audio_file = None
             except Exception as e:
-                # Log the error but don't fail the transcription process
                 import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Could not delete audio file for AudioInput {self.id}: {str(e)}")
+                logging.getLogger(__name__).warning(f"Could not delete audio file for AudioInput {self.id}: {e}")
         
         self.save()
 
