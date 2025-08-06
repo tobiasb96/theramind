@@ -25,17 +25,55 @@ def process_audio_transcription_task(self, audio_input_id, therapeutic_observati
     logger.info(
         f"Starting audio transcription for AudioInput {audio_input_id} ({audio_input.name})"
     )
-    service = UnifiedInputService()
-    service.process_audio_transcription(audio_input, therapeutic_observations)
-    audio_input.refresh_from_db()
-    logger.info(
-        f"Audio transcription completed for AudioInput {audio_input_id} with result: {audio_input.processing_successful}"
-    )
-    return {
-        "success": True,
-        "audio_input_id": audio_input_id,
-        "processing_successful": audio_input.processing_successful,
-    }
+    
+    try:
+        service = UnifiedInputService()
+        service.process_audio_transcription(audio_input, therapeutic_observations)
+        audio_input.refresh_from_db()
+        
+        if audio_input.processing_successful:
+            logger.info(
+                f"Audio transcription completed successfully for AudioInput {audio_input_id}"
+            )
+            return {
+                "success": True,
+                "audio_input_id": audio_input_id,
+                "processing_successful": audio_input.processing_successful,
+            }
+        else:
+            # If processing failed, check if we should retry
+            error_msg = f"Transcription failed for AudioInput {audio_input_id}"
+            if self.request.retries < self.max_retries:
+                logger.warning(f"{error_msg}. Retrying... (attempt {self.request.retries + 1}/{self.max_retries})")
+                raise self.retry(countdown=60)
+            else:
+                # Final failure - log and return error, but keep audio file for manual inspection
+                logger.error(f"{error_msg}. All retries exhausted. Audio file preserved for manual review.")
+                return {
+                    "success": False,
+                    "audio_input_id": audio_input_id,
+                    "processing_successful": False,
+                    "error": "All transcription attempts failed"
+                }
+    except Exception as exc:
+        # Unexpected error during transcription processing
+        error_msg = f"Unexpected error processing AudioInput {audio_input_id}: {str(exc)}"
+        if self.request.retries < self.max_retries:
+            logger.warning(f"{error_msg}. Retrying... (attempt {self.request.retries + 1}/{self.max_retries})")
+            raise self.retry(exc=exc, countdown=60)
+        else:
+            # Final failure - log and mark as failed, but keep audio file for manual inspection
+            logger.error(f"{error_msg}. All retries exhausted.")
+            try:
+                audio_input.mark_as_failed(str(exc))
+            except:
+                pass  # Don't fail if we can't update the record
+            return {
+                "success": False,
+                "audio_input_id": audio_input_id,
+                "processing_successful": False,
+                "error": str(exc)
+            }
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
