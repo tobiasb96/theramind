@@ -6,6 +6,8 @@ A Django-based therapy session management system with AI-powered transcription a
 
 TheraMind streamlines therapy session documentation by automatically transcribing audio recordings and generating structured session notes using AI. It helps therapists focus on their clients while maintaining comprehensive documentation.
 
+![theramind](https://github.com/user-attachments/assets/bcb0076c-3740-41f3-9b0b-0b5254ef8e64)
+
 ## ✨ Features
 
 - **Audio Recording & Transcription**: Record therapy sessions and automatically transcribe them using OpenAI Whisper
@@ -30,13 +32,6 @@ theramind/
 ├── static/            # Static files (CSS, JS)
 └── media/             # User uploads (audio files)
 ```
-
-### Key Apps
-
-- **therapy_sessions**: Handles session creation, audio uploads, transcription, and AI-generated notes
-- **reports**: Manages report creation and generation with AI assistance
-- **document_templates**: Provides customizable templates for AI content generation
-- **dashboard**: Central hub for quick access to all features
 
 ## 🚀 Developer Setup
 
