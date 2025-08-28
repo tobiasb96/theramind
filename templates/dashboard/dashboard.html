@@ -106,7 +106,7 @@
                 <!-- Modal body - loaded via HTMX -->
                 <div id="session-form-content"
                      hx-get="{% url 'sessions:session_create' %}?modal=1"
-                     hx-trigger="intersect once"
+                     hx-trigger="revealed"
                      hx-swap="innerHTML">
                     <!-- Loading state -->
                     <div class="p-4 text-center">
@@ -138,7 +138,7 @@
                 <!-- Modal body - loaded via HTMX -->
                 <div id="report-form-content"
                      hx-get="{% url 'reports:report_create' %}?modal=1"
-                     hx-trigger="intersect once"
+                     hx-trigger="revealed"
                      hx-swap="innerHTML">
                     <!-- Loading state -->
                     <div class="p-4 text-center">
