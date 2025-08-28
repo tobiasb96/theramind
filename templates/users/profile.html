@@ -118,13 +118,16 @@
                         </div>
                         
                         <div class="pt-4 border-t border-gray-200">
-                            <a href="{% url 'users:logout' %}" 
-                               class="inline-flex items-center px-3 py-2 border border-red-600 text-sm font-medium rounded-md text-red-600 bg-white hover:bg-red-50">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H8m12 0-4 4m4-4-4-4M9 4H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h2"/>
-                                </svg>
-                                Abmelden
-                            </a>
+                            <form method="post" action="{% url 'users:logout' %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                       class="inline-flex items-center px-3 py-2 border border-red-600 text-sm font-medium rounded-md text-red-600 bg-white hover:bg-red-50">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H8m12 0-4 4m4-4-4-4M9 4H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h2"/>
+                                    </svg>
+                                    Abmelden
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
