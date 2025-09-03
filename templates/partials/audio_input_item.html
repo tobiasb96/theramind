@@ -26,10 +26,10 @@
         {% endif %}
       </div>
       <div class="flex space-x-2">
-        {% if audio.audio_file %}
+        {% if audio.processing_successful and audio.transcribed_text %}
           <button type="button"
                   class="text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center"
-                  onclick="toggleAudioPreview({{ audio.id }})">
+                  onclick="toggleTranscriptionPreview({{ audio.id }})">
             <svg class="w-4 h-4 mr-2"
                  fill="none"
                  stroke="currentColor"
@@ -37,9 +37,9 @@
               <path stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H15M9 10V9a4 4 0 118 0v2.25"></path>
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            Anhören
+            Transkript anzeigen
           </button>
         {% endif %}
         <form method="post"
@@ -63,27 +63,16 @@
         </form>
       </div>
     </div>
-    <!-- Hidden audio preview -->
-    <div id="audio-preview-{{ audio.id }}"
-         class="mt-4 hidden">
-      <div class="bg-white p-4 rounded border">
-        <h4 class="font-medium text-gray-900 mb-2">Audio-Wiedergabe:</h4>
-        {% if audio.audio_file %}
-          <audio controls
-                 class="w-full">
-            <source src="{{ audio.audio_file.url }}"
-                    type="audio/mpeg">
-            Dein Browser unterstützt leider keine Audio-Wiedergabe.
-          </audio>
-        {% endif %}
-        {% if audio.transcribed_text and audio.processing_successful %}
-          <div class="mt-4">
-            <h4 class="font-medium text-gray-900 mb-2">Vollständiges Transkript:</h4>
-            <div class="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded">{{ audio.transcribed_text }}</div>
-          </div>
-        {% endif %}
+    <!-- Hidden transcription preview -->
+    {% if audio.processing_successful and audio.transcribed_text %}
+      <div id="transcription-preview-{{ audio.id }}"
+           class="mt-4 hidden">
+        <div class="bg-white p-4 rounded border">
+          <h4 class="font-medium text-gray-900 mb-2">Vollständiges Transkript:</h4>
+          <div class="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded">{{ audio.transcribed_text }}</div>
+        </div>
       </div>
-    </div>
+    {% endif %}
   </div>
 
 {% else %}
@@ -119,20 +108,6 @@
     </div>
     <div class="flex space-x-2">
       <button type="button"
-              class="text-gray-400 bg-gray-200 border border-gray-200 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center cursor-not-allowed"
-              disabled>
-        <svg class="w-4 h-4 mr-2"
-             fill="none"
-             stroke="currentColor"
-             viewBox="0 0 24 24">
-          <path stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H15M9 10V9a4 4 0 118 0v2.25"></path>
-        </svg>
-        Anhören
-      </button>
-      <button type="button"
               class="text-white bg-gray-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center cursor-not-allowed"
               disabled>
         <svg class="w-4 h-4 mr-2"
@@ -143,7 +118,7 @@
                 stroke-linejoin="round"
                 stroke-width="2"
                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-        </svg>
+          </svg>
         Löschen
       </button>
     </div>
@@ -153,8 +128,8 @@
 {% endif %}
 
 <script>
-  function toggleAudioPreview(audioId) {
-    const preview = document.getElementById(`audio-preview-${audioId}`);
+  function toggleTranscriptionPreview(audioId) {
+    const preview = document.getElementById(`transcription-preview-${audioId}`);
     preview.classList.toggle('hidden');
   }
 </script> 
