@@ -212,3 +212,9 @@ media/*
 !media/.gitkeep
 
 .docker/
+
+# JS
+node_modules/
+
+# Collected static files
+staticfiles/
