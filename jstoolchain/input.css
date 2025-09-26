@@ -1,0 +1,14 @@
+/* Tailwind v4 does not use a config file anymore */
+
+/* Auto detection of source files starting from */
+/* project root because of source("../") */
+@import "tailwindcss" source("../");
+@import "flowbite/src/themes/default";
+
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/forms";
+@plugin "flowbite/plugin";
+
+/* Node modules are excluded by default, so relevant ones */
+/* need to  be manually added */
+@source "./node_modules/flowbite";
