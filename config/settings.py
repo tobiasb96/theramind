@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_cotton",
-    "django_tailwind_cli",
     "django_tables2",
     "core",
     "dashboard",
