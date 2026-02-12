@@ -51,6 +51,14 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         return context
 
 
+class ImprintView(LoginRequiredMixin, TemplateView):
+    template_name = "users/imprint.html"
+
+
+class DataSecurityView(LoginRequiredMixin, TemplateView):
+    template_name = "users/data_security.html"
+
+
 @method_decorator(login_required, name='dispatch')
 class ChangePasswordView(View):
     """View for changing user password"""
