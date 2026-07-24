@@ -293,6 +293,7 @@
             </h3>
             <button type="button"
                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                    data-modal-target="ai-notes-modal"
                     data-modal-toggle="ai-notes-modal">
               <svg class="w-3 h-3"
                    aria-hidden="true"
@@ -510,10 +511,6 @@
           evt.detail.headers['X-CSRFToken'] = csrfToken;
         });
 
-        // Initialize Flowbite modals manually if needed
-        if (typeof window.initFlowbite === 'function') {
-          window.initFlowbite();
-        }
       });
 
       // Background Recording Indicator Management

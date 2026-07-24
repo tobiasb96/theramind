@@ -245,7 +245,7 @@
     let isInitialized = false;
     let currentStream = null;
     let selectedDeviceId = null;
-    let hasPermission = false;
+    let microphonePermissionState = 'prompt';
     let permissionChecked = false;
 
     // DOM Elements
@@ -399,22 +399,23 @@
     async function checkMicrophonePermission() {
         try {
             const result = await navigator.permissions.query({ name: 'microphone' });
-            hasPermission = result.state === 'granted';
+            microphonePermissionState = result.state;
             permissionChecked = true;
             updatePermissionUI();
             
             // Listen for permission changes
             result.addEventListener('change', () => {
-                hasPermission = result.state === 'granted';
+                microphonePermissionState = result.state;
                 updatePermissionUI();
-                if (hasPermission) {
+                if (microphonePermissionState === 'granted') {
                     loadMicrophoneDevices();
                 }
             });
             
-            return hasPermission;
+            return microphonePermissionState;
         } catch (e) {
             console.warn('Permission API not supported, will check on recording attempt');
+            microphonePermissionState = 'unknown';
             permissionChecked = false;
             return null;
         }
@@ -423,7 +424,7 @@
     function updatePermissionUI() {
         if (!permissionError || !recordToggle) return;
         
-        if (hasPermission === false) {
+        if (microphonePermissionState === 'denied') {
             permissionError.classList.remove('hidden');
             recordToggle.disabled = true;
             recordToggle.classList.add('opacity-50', 'cursor-not-allowed');
@@ -884,21 +885,6 @@
     // Enhanced recording functionality
     async function toggleRecording() {
         if (!isRecording) {
-            // Check if we have permission before starting
-            if (hasPermission === false) {
-                // Try to request permission again
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    stream.getTracks().forEach(track => track.stop()); // Stop immediately
-                    hasPermission = true;
-                    permissionChecked = true;
-                    updatePermissionUI();
-                    loadMicrophoneDevices();
-                } catch (e) {
-                    console.error('Permission still denied:', e);
-                    return;
-                }
-            }
             await startRecording();
         } else {
             stopRecording();
@@ -912,7 +898,7 @@
                 await checkMicrophonePermission();
             }
             
-            if (hasPermission === false) {
+            if (microphonePermissionState === 'denied') {
                 throw new Error('Microphone permission denied');
             }
             
@@ -963,7 +949,10 @@
             }
             
             isRecording = true;
-            hasPermission = true; // Update permission state after successful recording
+            microphonePermissionState = 'granted';
+            permissionChecked = true;
+            updatePermissionUI();
+            loadMicrophoneDevices();
             
             // Setup event handlers
             modalMediaRecorder.ondataavailable = event => {
@@ -1007,7 +996,8 @@
             isRecording = false;
             
             if (error.name === 'NotAllowedError') {
-                hasPermission = false;
+                microphonePermissionState = 'denied';
+                permissionChecked = true;
                 updatePermissionUI();
             } else if (error.name === 'NotFoundError') {
                 alert('Kein Mikrofon gefunden. Bitte überprüfen Sie Ihre Hardware.');
@@ -1339,4 +1329,4 @@
     }
 
 })();
-</script> 
+</script>
