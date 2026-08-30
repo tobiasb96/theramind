@@ -174,7 +174,7 @@ class AudioInput(BaseInput):
     file_format = models.CharField(max_length=10, choices=FileFormat.choices, null=True, blank=True)
 
     # File storage
-    audio_file = models.FileField(upload_to="audio_inputs/%Y/%m/%d/")
+    audio_file = models.FileField(upload_to="audio_inputs/%Y/%m/%d/", null=True, blank=True)
     file_size = models.PositiveIntegerField(null=True, blank=True)
     duration_seconds = models.PositiveIntegerField(null=True, blank=True)
 
@@ -215,6 +215,17 @@ class AudioInput(BaseInput):
         """Mark the input as successful and add the transcription"""
         self.transcribed_text = transcribed_text
         self.processing_time_seconds = processing_time
+        
+        # Delete the audio file after successful transcription to save storage space
+        if self.audio_file:
+            try:
+                if default_storage.exists(self.audio_file.name):
+                    default_storage.delete(self.audio_file.name)
+                self.audio_file = None
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Could not delete audio file for AudioInput {self.id}: {e}")
+        
         self.save()
 
 
